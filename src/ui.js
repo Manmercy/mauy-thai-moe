@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.20.0";
+const VERSION="1.20.1";
 const SAVE_KEY="mtm-save-v13";
 const CANON_IDS=["kati","mali","rin","ploy","fah"];
 let G=null;
@@ -941,7 +941,7 @@ function fightEnd(){const U=UI.fight;U.stage="done";AU.startMusic("hub");setTime
 
 // ---------- actions ----------
 function giftScene(id,res){const f=G.F[id];const mood=res.t==="dislike"?"pout":res.t==="love"?"flustered":"happy";
-  playScene([{n:id,f:mood,l:"casual",t:res.n&&res.t!=="dislike"?GIFT_AGAIN[id][Math.min(res.n-1,1)]:((GIFT_TALK[id]&&GIFT_TALK[id][res.g])||GIFT_LINES[id][res.t])},{n:"nar",t:`ความสนิทกับ${f.name} ${res.gain>=0?"+":""}${res.gain}`}],()=>{AU.startMusic("hub");render();},{bg:f.camp==="player"?"gym":"fair",look:"casual"});}
+  playScene([{n:id,f:mood,l:"casual",t:(res.n&&res.t!=="dislike"&&giftAgainLine(id,res.t,res.n))||((GIFT_TALK[id]&&GIFT_TALK[id][res.g])||GIFT_LINES[id][res.t])},{n:"nar",t:`ความสนิทกับ${f.name} ${res.gain>=0?"+":""}${res.gain}`}],()=>{AU.startMusic("hub");render();},{bg:f.camp==="player"?"gym":"fair",look:"casual"});}
 const ACT={
   spotnext:()=>{UI.spot++;if(UI.spot>=SPOT.length){UI.spot=null;G.seen.spot=true;save();}render();},
   spotskip:()=>{UI.spot=null;G.seen.spot=true;save();render();},

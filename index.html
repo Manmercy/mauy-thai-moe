@@ -2053,14 +2053,22 @@ function giftTier(id,g){const P=GIFT_PREF[id];return P.love.includes(g)?"love":P
 function giveGift(G,id,g){const f=G.F[id],it=GIFTS[g];if(G.cash<it.price||f.giftWeek===G.week)return null;G.cash-=it.price;f.giftWeek=G.week;
   // v1.16: the same gift again means less (and she says so)
   f.giftN=f.giftN||{};const n=f.giftN[g]||0;f.giftN[g]=n+1;
-  const t=giftTier(id,g),base=Math.round({love:6,like:4,ok:2,dislike:-2}[t]*(it.bond&&t!=="dislike"?1.5:1)),gain=base>0?Math.max(1,Math.round(base*(n===0?1:n===1?.5:.25))):base;
-  const before=f.bond;add(G,id,"bond",gain);if(t==="love"&&n<2)add(G,id,"morale",6);
+  const t=giftTier(id,g),base=Math.round({love:6,like:4,ok:2,dislike:-2}[t]*(it.bond&&t!=="dislike"?1.5:1)),gain=base>0?Math.max(1,Math.round(base*(n===0?1:t==="love"?(n===1?.6:.4):(n===1?.5:.25)))):base;
+  const before=f.bond;add(G,id,"bond",gain);if(t==="love")add(G,id,"morale",n<2?6:4);
   f.know["gift_"+g]=t;return {t,gain:Math.round((f.bond-before)*10)/10,g,n};}
-const GIFT_AGAIN={kati:["อ๊ะ อันนี้อีกแล้ว~ หนูมีสองอันแล้วนะคะ แต่ก็ขอบคุณค่ะ","สามอันแล้วนะคะ! …คุณจำไม่ได้ใช่ไหมว่าเคยให้แล้ว"],
-  mali:["อีกแล้วเหรอคะ~ มะลิชอบนะ แต่ครั้งหน้าลองอย่างอื่นบ้างสิ","มะลิจะเอาไปแบ่งเพื่อน ๆ ในค่ายแล้วกันนะ ฮิ ๆ"],
-  rin:["ข้อมูลซ้ำค่ะ… แต่ฉันก็ยังดีใจอยู่ดี","ครั้งที่สามแล้วนะคะ ฉันจดไว้ ลองเปลี่ยนตัวแปรดูไหม"],
-  ploy:["เหมือนครั้งก่อนเลยนะ… ไม่เป็นไร ขอบใจ","คุณนี่ยึดติดกับวิธีเดิมเหมือนฉันเลยนะ"],
-  fah:["ห้ะ อันเดิมอีกแล้ว? …ก็ได้ ๆ รับไว้","นายมีแค่อันนี้เป็นของขวัญเหรอ ฮ่า ๆ"]};
+// v1.20.1: repeat gifts stay warm — a favourite is still a favourite; lines just rotate so it doesn't feel canned
+const GIFT_AGAIN={
+ kati:{love:["อันนี้อีกแล้ว! คุณจำได้ว่าหนูชอบใช่ไหมคะ ดีใจจัง","ได้อีกแล้ว~ หนูเก็บไว้เรียงกันบนชั้นเลยนะคะ ไม่เคยเบื่อเลย","ทุกครั้งที่ได้อันนี้ หนูมีแรงซ้อมเพิ่มอีกสิบยกเลยค่ะ!"],
+   like:["ขอบคุณค่ะ อันนี้ใช้ดีจริง ๆ หนูใช้ทุกวันเลย","ได้มาเพิ่มพอดีเลยค่ะ อันเก่าเริ่มใช้จนเก่าแล้ว","หนูชอบอันนี้นะคะ ขอบคุณที่ยังจำได้"]},
+ mali:{love:["อีกแล้ว~! มะลิชอบที่สุดเลย คุณนี่รู้ใจจริง ๆ","ฮิ ๆ ได้อีกแล้ว! ยิ่งได้ยิ่งชอบ ไม่มีวันเบื่อหรอกค่ะ","มะลิจะแบ่งให้เพื่อน ๆ ในค่ายด้วย ทุกคนจะได้รู้ว่าคุณใจดีแค่ไหน~"],
+   like:["ขอบคุณค่ะ~ อันนี้มะลิใช้ทุกวันเลยนะ","ได้อีกแล้ว เย้~ มะลิจะเก็บไว้ใช้ตอนไปตลาดนัด","น่ารักเหมือนเดิมเลยค่ะ ขอบคุณนะคะ"]},
+ rin:{love:["ข้อมูลซ้ำ… แต่ผลลัพธ์ความดีใจของฉันก็ยังเท่าเดิมค่ะ","คุณสังเกตเก่งนะคะ จำได้ว่าฉันชอบอันนี้ ขอบคุณค่ะ","สถิติบอกว่าฉันไม่เคยเบื่ออันนี้เลยค่ะ …ขอบคุณ"],
+   like:["ขอบคุณค่ะ ของใช้ดีมีไว้หลายชิ้นไม่เสียหาย","ฉันจะเก็บไว้ใช้อย่างดีค่ะ","ยังใช้ประโยชน์ได้เต็มที่ค่ะ ขอบคุณนะคะ"]},
+ ploy:{love:["อันนี้อีกแล้ว… คุณจำได้จริง ๆ ด้วย ขอบใจนะ","พี่ไม่เคยเบื่อของแบบนี้หรอก ขอบใจ","ได้อีกแล้ว พี่จะเก็บไว้ใกล้ ๆ ตัว"],
+   like:["ขอบใจ พี่ใช้อันเก่าจนหมดพอดี","ใช้ได้ดีเหมือนเดิม ขอบใจนะ","พี่ชอบความสม่ำเสมอของคุณนะ"]},
+ fah:{love:["อันนี้อีกแล้ว!! นายรู้ใจฟ้าที่สุดเลย!","ฮ่า ๆ ให้อีกเลยเหรอ ฟ้าไม่เบื่อหรอก เอามาอีกได้เรื่อย ๆ!","ได้อีกแล้ว เยส! …อย่าบอกใครนะว่าฟ้าดีใจขนาดนี้"],
+   like:["อือ ขอบใจ ใช้ได้ดีอยู่","ได้อีกแล้วเหรอ ก็ดีนะ ฟ้าเอาไว้ใช้","ไม่เลวนี่ ขอบใจนะนาย"]}};
+const giftAgainLine=(id,t,n)=>{const L=GIFT_AGAIN[id]&&GIFT_AGAIN[id][t==="love"?"love":"like"];return L?L[(n-1)%L.length]:null;};
 
 // ---------- v1.3: more talk topics (no repeats) — only a fitting answer reveals the fact ----------
 const TALK_MORE={
@@ -3257,7 +3265,7 @@ const SETTINGS={music:true,sfx:true,coach:true,quick:false};
 try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"));}catch(e){}
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.20.0";
+const VERSION="1.20.1";
 const SAVE_KEY="mtm-save-v13";
 const CANON_IDS=["kati","mali","rin","ploy","fah"];
 let G=null;
@@ -4199,7 +4207,7 @@ function fightEnd(){const U=UI.fight;U.stage="done";AU.startMusic("hub");setTime
 
 // ---------- actions ----------
 function giftScene(id,res){const f=G.F[id];const mood=res.t==="dislike"?"pout":res.t==="love"?"flustered":"happy";
-  playScene([{n:id,f:mood,l:"casual",t:res.n&&res.t!=="dislike"?GIFT_AGAIN[id][Math.min(res.n-1,1)]:((GIFT_TALK[id]&&GIFT_TALK[id][res.g])||GIFT_LINES[id][res.t])},{n:"nar",t:`ความสนิทกับ${f.name} ${res.gain>=0?"+":""}${res.gain}`}],()=>{AU.startMusic("hub");render();},{bg:f.camp==="player"?"gym":"fair",look:"casual"});}
+  playScene([{n:id,f:mood,l:"casual",t:(res.n&&res.t!=="dislike"&&giftAgainLine(id,res.t,res.n))||((GIFT_TALK[id]&&GIFT_TALK[id][res.g])||GIFT_LINES[id][res.t])},{n:"nar",t:`ความสนิทกับ${f.name} ${res.gain>=0?"+":""}${res.gain}`}],()=>{AU.startMusic("hub");render();},{bg:f.camp==="player"?"gym":"fair",look:"casual"});}
 const ACT={
   spotnext:()=>{UI.spot++;if(UI.spot>=SPOT.length){UI.spot=null;G.seen.spot=true;save();}render();},
   spotskip:()=>{UI.spot=null;G.seen.spot=true;save();render();},
