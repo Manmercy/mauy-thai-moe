@@ -1516,7 +1516,7 @@ function genOffers(G){
     if(!weeks.length)continue;
     const n=myB.length?Math.max(1,nOff-2):nOff;const used=new Set(G.bookings.filter(b=>b.a===f.id).map(b=>b.b));
     for(let i=0;i<n;i++){
-      const wk=myB.length?weeks[weeks.length-1-(i%weeks.length)]:weeks[Math.min(i,weeks.length-1)];
+      const wk=myB.length?weeks[weeks.length-1-(i%weeks.length)]:weeks[Math.min(i*2,weeks.length-1)-(i===3&&weeks.length>2?1:0)];
       const tier=ranked&&wk<=stageEnd?st:"exhibition";
       const pool=Object.values(G.F).filter(o=>o.div===f.div&&o.camp!=="player"&&o.camp!=="free"&&o.injury===0&&!used.has(o.id)&&!isBooked(G,o.id,wk)&&(tier==="exhibition"||eligible(G,o)));
       if(!pool.length)continue;
@@ -3087,10 +3087,10 @@ EVENTS.push(
 
 // ---------- heartfelt camp moments ----------
 EVENTS.push(
- {id:"hf_coach_letter",look:"casual",bg:"night",when:G=>G.week>=34&&G.rep>=10,steps:[
-  {n:"nar",t:"ครูแดงยื่นจดหมายเก่าซองเหลืองให้คุณ หน้าซองเขียนว่า 'ถึงคนที่จะมาดูแลค่ายต่อจากผม'"},
-  {n:"coach",t:"ปู่ชัยเขียนไว้ก่อนเสีย สั่งให้ครูเก็บไว้จนกว่าจะเจอคนที่ใช่ …ครูว่าถึงเวลาแล้ว"},
-  {n:"nar",t:"'ค่ายมวยไม่ได้สร้างด้วยเวที แต่สร้างด้วยคนที่ไม่ยอมปล่อยมือกัน ถ้าคุณอ่านจดหมายนี้ แปลว่าคุณไม่ปล่อยมือหลานผม ขอบคุณ'"},
+ {id:"hf_coach_letter",look:"casual",bg:"night",when:G=>G.week>=34&&G.rep>=10&&inCamp(G,"kati"),steps:[
+  {n:"nar",t:"ครูแดงยื่นซองเหลืองเก่า ๆ ให้คุณ ลายมือหน้าซองเป็นของปู่ชัย 'ให้หลาน เมื่ออยู่ครบครึ่งปี'"},
+  {n:"coach",t:"ปู่ชัยสั่งไว้ ถ้าหลานอยู่ไม่ถึงครึ่งปี ให้เผาทิ้ง …ครูดีใจที่ไม่ต้องเผา"},
+  {n:"nar",t:"'หลาน ค่ายมวยไม่ได้สร้างด้วยเวที แต่สร้างด้วยคนที่ไม่ยอมปล่อยมือกัน กะทิไม่มีใครเหลือนอกจากค่ายนี้ ขอบใจที่ไม่ปล่อยมือเด็กคนนั้น — ปู่'"},
   {choice:[{t:"เก็บจดหมายไว้ในกรอบรูปที่ค่าย (กำลังใจทุกคน +6)",fx:G=>cheer(G,6),then:[{n:"coach",t:"…ดีแล้ว ให้เด็ก ๆ ได้อ่านทุกวัน"}]},{t:"ให้กะทิอ่าน (กะทิ ความเชื่อใจ +)",fx:G=>{add(G,"kati","trust",6);add(G,"kati","morale",6);},then:[{n:"kati",f:"sad",t:"ลายมือคุณปู่… (ร้องไห้) ขอบคุณที่ไม่ปล่อยมือหนูนะคะ"}]}]}]},
  {id:"hf_team_photo",look:"casual",bg:"gym",when:G=>G.week>=26&&inCamp(G,"kati")&&inCamp(G,"mali")&&inCamp(G,"rin"),steps:[
   {n:"nar",t:"เด็กข้างบ้านขอถ่ายรูปทีมให้ด้วยกล้องฟิล์มเก่าของพ่อ"},
@@ -3557,7 +3557,7 @@ const SETTINGS={music:true,sfx:true,coach:true,quick:false};
 try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"));}catch(e){}
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.21.0";
+const VERSION="1.21.1";
 const SAVE_KEY="mtm-save-v13";
 const CANON_IDS=["kati","mali","rin","ploy","fah"];
 let G=null;
@@ -3984,7 +3984,7 @@ function offersHTML(){const mine=G.bookings.filter(b=>G.F[b.a].camp==="player").
        <div class="meta">สด.${o.week} · ${TIER[o.tier].name} · ${styleOf(op.a)}${op.camp==="rival"?" · พยัคฆ์ทอง":""}${personaOf(op)?` · ${personaOf(op).tag}`:""}</div>${h2hText(op)?`<div class="meta goldt">${h2hText(op)}</div>`:""}
        <div class="meta">ค่าตัว ${fmt(o.lose)} · <b class="goldt">ชนะ +${fmt(o.win-o.lose)}</b> · <b class="${v.c}t">${v.t}</b>${ovr(op.a)-ovr(me.a)>.4?` · <b class="goldt">ชนะได้โบนัสแต้ม/ชื่อเสียง</b>`:""}</div>
        </div></div>
-       <div class="obtns3"><button class="btn sm" data-act="consider" data-v="${o.id}">${scouted(o.b)?"ข้อมูลคู่ชก":"ดูเทป"}</button>${coachOn()?`<button class="btn sm" data-act="otip" data-v="${o.id}">คำแนะนำครู</button>`:""}<button class="btn sm gold" data-act="accept" data-v="${o.id}">รับไฟต์</button></div></div>`;}).join("")||'<p class="lead">ไม่มีข้อเสนอ (มีไฟต์แล้ว บาดเจ็บ หรือหมดฤดูกาล)</p>'}</div></section>`;}
+       <div class="obtns3"><button class="btn sm" data-act="consider" data-v="${o.id}">${scouted(o.b)?"ข้อมูลคู่ชก":"ดูเทป"}</button>${coachOn()?`<button class="btn sm" data-act="otip" data-v="${o.id}">คำแนะนำครู</button>`:""}<button class="btn sm gold" data-act="accept" data-v="${o.id}">รับไฟต์</button></div></div>`;}).join("")||`<p class="lead">${G.bookings.length?"รับไฟต์แล้ว ข้อเสนอใหม่จะเข้ามาสัปดาห์หน้า":"ไม่มีข้อเสนอ (บาดเจ็บ หรือหมดฤดูกาล)"}</p>`}</div></section>`;}
 function rankHTML(){const st=stageOf(G.week),cut=st==="local"?4:st==="district"?4:0,d=UI.rdiv;const rows=standings(G,d);const mv=(G.rankMove&&G.rankMove[d])||{};
   return `<section class="px card"><div class="card-h"><div class="seg sm"><button data-act="rdiv" data-v="A" aria-pressed="${d==="A"}">รุ่น A</button><button data-act="rdiv" data-v="B" aria-pressed="${d==="B"}">รุ่น B</button></div>${G.champ[d]?`<span class="pill gold">แชมป์: ${esc(G.F[G.champ[d]].name)}</span>`:""}</div>
    <p class="meta">${st==="local"?"ท็อป 4 ไปรอบอำเภอ · ตัด สด.20":st==="district"?"ท็อป 4 ไปรองชิง · ตัด สด.40":"รองชิง สด.44 · ชิงแชมป์ สด.49"}</p>

@@ -463,7 +463,7 @@ function genOffers(G){
     if(!weeks.length)continue;
     const n=myB.length?Math.max(1,nOff-2):nOff;const used=new Set(G.bookings.filter(b=>b.a===f.id).map(b=>b.b));
     for(let i=0;i<n;i++){
-      const wk=myB.length?weeks[weeks.length-1-(i%weeks.length)]:weeks[Math.min(i,weeks.length-1)];
+      const wk=myB.length?weeks[weeks.length-1-(i%weeks.length)]:weeks[Math.min(i*2,weeks.length-1)-(i===3&&weeks.length>2?1:0)];
       const tier=ranked&&wk<=stageEnd?st:"exhibition";
       const pool=Object.values(G.F).filter(o=>o.div===f.div&&o.camp!=="player"&&o.camp!=="free"&&o.injury===0&&!used.has(o.id)&&!isBooked(G,o.id,wk)&&(tier==="exhibition"||eligible(G,o)));
       if(!pool.length)continue;
