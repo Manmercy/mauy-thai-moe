@@ -491,6 +491,12 @@ function genOffers(G){
       const mult=clamp(1+(ovr(o.a)-ovr(f.a))*.12,.7,1.6)*(o.canon?1.35:1)*(1+(f.lvl-1)*.04)*(1+Math.min(G.rep,40)/200);
       G.offers.push({id:`o${G.week}_${f.id}_${i}`,a:f.id,b:o.id,week:wk,tier,win:Math.round(TIER[tier].win*mult/100)*100,lose:Math.round(TIER[tier].lose*mult/100)*100});
     }
+    // v1.26: every 3 weeks a promoter offers a clearly stronger opponent for a bigger purse
+    if(G.week>=6&&G.week<=42&&G.week%3===0){const wk=weeks[weeks.length-1],tier=ranked&&wk<=stageEnd?st:"exhibition";
+      const hp=Object.values(G.F).filter(o=>o.div===f.div&&o.camp!=="player"&&o.camp!=="free"&&!o.canon&&o.injury===0&&!used.has(o.id)&&!isBooked(G,o.id,wk)&&(tier==="exhibition"||eligible(G,o)))
+        .map(o=>[o,ovr(o.a)-ovr(f.a)+((o.lvl||1)-(f.lvl||1))*.15]).filter(x=>x[1]>=.8&&x[1]<=2.1).sort((a,b)=>Math.abs(a[1]-1.4)-Math.abs(b[1]-1.4));
+      if(hp.length){const o=hp[0][0];used.add(o.id);const mult=1.5*clamp(1+(ovr(o.a)-ovr(f.a))*.12,.7,1.6)*(1+(f.lvl-1)*.04)*(1+Math.min(G.rep,40)/200);
+        G.offers.push({id:`o${G.week}_${f.id}_h`,a:f.id,b:o.id,week:wk,tier,hard:1,win:Math.round(TIER[tier].win*mult/100)*100,lose:Math.round(TIER[tier].lose*mult/100)*100});}}
     // v1.16: promoters stage cross-division star bouts a few times a season, so every rival pair can meet
     const X=CROSS_OF[f.id];if(X&&SPECIAL_WEEKS.includes(G.week)){const o=G.F[X],wk=G.week+3;
       if(o&&o.camp==="rival"&&!o.injury&&!isBooked(G,o.id,wk)&&!myB.some(x=>Math.abs(x-wk)<=1)&&wk<=47)G.offers.push({id:`o${G.week}_${f.id}_sp`,a:f.id,b:o.id,week:wk,tier:"special",win:TIER.special.win,lose:TIER.special.lose});}

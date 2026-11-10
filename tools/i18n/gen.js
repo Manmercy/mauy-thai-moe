@@ -1,4 +1,5 @@
 // build dict + generate English JS variants into ../v13/en/
+require('child_process').execSync('node extract.js',{cwd:__dirname,stdio:'inherit',env:process.env});
 const fs=require('fs');const SRC=(process.env.SRC||'../../src/');
 const old=JSON.parse(fs.readFileSync('segs_old.json'));const C=JSON.parse(fs.readFileSync('chunks.json'));
 const D={};C.forEach((ch,i)=>{const e=JSON.parse(fs.readFileSync('en/'+String(i).padStart(2,'0')+'.json'));ch.forEach((k,j)=>D[old[k]]=e[j]);});

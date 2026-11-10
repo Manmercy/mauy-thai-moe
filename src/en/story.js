@@ -40,7 +40,7 @@ const EVENTS=[
      {n:"kati",f:"flustered",t:"…Nobody's ever asked me that"},
      {n:"kati",f:"happy",t:"I want people to see that a girl from an old camp can be champion. No money, no fame, just heart"}]}]}]},
 
- {id:"rival_meet",look:"casual",when:G=>G.week>=4,bg:"fair",steps:[
+ {id:"rival_meet",look:"casual",when:G=>G.week>=5,bg:"fair",steps:[
   {n:"nar",t:"Saturday night market. You and Kati came out to buy hand-wrap tape, but run into people you'd rather not see"},
   {n:"fah",f:"happy",t:"Oh, Kati, your camp's not closed yet? Heard you got a rookie manager"},
   {n:"fah",f:"happy",t:G=>`So this is Uncle Chai's grandkid… hope you know fights aren't fought in Excel sheets`},
@@ -55,7 +55,32 @@ const EVENTS=[
   {n:"kati",f:"angry",t:"She's been gifted since birth, I have to train three times as hard to keep up… but this year I'll catch up!"},
   {fx:G=>{G.F.ploy.met=true;G.F.fah.met=true;}}]},
 
- {id:"mali_meet",look:"fight",when:G=>G.week>=6,bg:"fair",steps:[
+ {id:"first_student",look:"casual",when:G=>G.week>=3,bg:"camp",steps:[
+  {n:"nar",t:"Sunday afternoon. A small boy clings to the camp fence, holding a bag stuffed with mangoes"},
+  {n:"coach",t:"That's Auntie Saeng's boy, from the curry-rice shop. He's wanted to learn Muay Thai for ages, but his family doesn't have much"},
+  {n:"nar",t:"The boy holds out the bag. \"Mom says, can we pay in mangoes this month?\""},
+  {n:"kati",f:"happy",t:"Manager, I can teach him myself. I started out with no money too"},
+  {choice:[
+   {t:"Take him on. Mangoes count as tuition",fx:G=>{add(G,"kati","bond",5);add(G,"kati","morale",6);G.rep+=.5;G.stu=Math.min(studentCap(G),(G.stu||1)+2);},then:[
+     {n:"kati",f:"flustered",t:"Yay! My very first student!"},
+     {n:"nar",t:"The next week, Auntie Saeng tells the whole market. Two more new students walk into the camp"}]},
+   {t:"The camp is struggling. Cash, please",fx:G=>{G.cash+=600;},then:[
+     {n:"nar",t:"Auntie Saeng runs to borrow 600 baht from the neighbors. The boy walks into the gym quietly, head down"},
+     {n:"kati",f:"sad",t:"…Okay"}]}]}]},
+
+ {id:"early_ad",look:"casual",when:G=>G.week>=7,bg:"camp",steps:[
+  {n:"nar",t:"Auntie Taew from the som tam stall by the temple walks into the camp, phone in hand"},
+  {n:"nar",t:"\"I'm making an ad for my fermented-crab som tam. I want one of your fighters to kick a mortar on camera. I'll pay 2,500\""},
+  {n:"kati",f:"flustered",t:"Kick… a mortar?"},
+  {choice:[
+   {t:"Take the job! The camp needs money",fx:G=>{G.cash+=2500;G.rep+=1;add(G,"kati","fatigue",4);},then:[
+     {n:"nar",t:"The clip of Kati kicking a mortar to pieces mid-air gets 200,000 views. Auntie Taew sells out of som tam by 1 p.m."},
+     {n:"kati",f:"happy",t:"That mortar was tougher than some of my opponents"}]},
+   {t:"Send Coach Daeng instead",fx:G=>{G.cash+=1200;add(G,"kati","bond",3);},then:[
+     {n:"coach",t:"Coach can kick a mortar. But Coach is not dancing. Just so you know"},
+     {n:"nar",t:"In the end, Coach Daeng danced"}]}]}]},
+
+ {id:"mali_meet",look:"fight",when:G=>G.week>=4,bg:"fair",steps:[
   {n:"nar",t:"The annual temple fair. A temporary ring stands beside the Ferris wheel, pipes and drums echoing everywhere"},
   {n:"nar",t:"A small fighter with a topknot and a frangipani flower kicks a bigger opponent all the way back"},
   {n:"mali",f:"happy",t:"Yay! I won~ Thank you everyone!"},

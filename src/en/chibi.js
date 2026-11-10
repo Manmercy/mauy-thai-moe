@@ -95,7 +95,7 @@ function layerList(st,gray){
   out.push({key:"top",label:"Top",rows:topRows,map:cloth(top),move:"all"});
   out.push({key:"shorts",label:"Shorts",rows:L.shorts,map:cloth(sh),move:"none"});
   if(st.prajioud) out.push({key:"prajioud",label:"Prajiad armband",rows:L.prajioud,map:{x:gray?GRAY.base:"#d23a3a",y:gray?GRAY.light:"#f1c84b"},move:"all"});
-  out.push({key:"gloves",label:"Gloves",rows:L.gloves,map:{o:gl.outline,g:gl.light,h:gl.base,i:gl.dark},move:"all"});
+  out.push({key:"gloves",label:"Boxing gloves",rows:L.gloves,map:{o:gl.outline,g:gl.light,h:gl.base,i:gl.dark},move:"all"});
   out.push({key:"hairFront",label:"Bangs",rows:st.hairStyle==="crop"?L.hairFrontCrop:L.hairFrontBob,map:hairMap,move:"all"});
   if(st.mongkol) out.push({key:"mongkol",label:"Mongkhon headband",rows:L.mongkol,map:{o:gray?GRAY.outline:"#7a1f2a",x:gray?GRAY.light:"#f4f1ea",y:gray?GRAY.dark:"#c8283c"},move:"all"});
   return out;

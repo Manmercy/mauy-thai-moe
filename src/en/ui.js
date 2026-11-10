@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.25.0";
+const VERSION="1.26.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -432,8 +432,8 @@ function offersHTML(){const mine=G.bookings.filter(b=>G.F[b.a].camp==="player").
        <div class="bk-info"><div class="t">${esc(me.name)} vs ${esc(o.name)}</div><div class="meta">Week ${b.week} · ${TIER[b.tier].name} · ${b.rounds} rounds ${b.win?` · purse ${fmt(b.lose)} (+${fmt(b.win-b.lose)} if win)`:""}</div>
        <span class="pill ${b.week===G.week?"red":"gold"}">${b.week===G.week?"This week":`${b.week-G.week} wk`}</span></div><div class="bk-btns">${b.planSet?`<button class="btn sm done" data-act="fplan" data-id="${b.id}">✓ Plan: ${PLANS[b.plan||"balanced"].name}</button>`:`<button class="btn sm red" data-act="fplan" data-id="${b.id}">Set fight plan</button>`}${scouted(o.id)?`<button class="btn sm done" disabled>${G.F.rin.camp==="player"?"✓ Rin analyzed":"✓ Scouted"}</button>`:`<button class="btn sm" data-act="scout" data-v="${o.id}" ${G.cash<scoutCost()?"disabled":""}>${scoutLabel()}</button>`}</div></div>`;}).join("")}</div></section>`:""}
    <section class="px card"><div class="card-h"><h3>This week's offers</h3>${G.losses&&G.losses.length?`<button class="btn sm" data-act="lossrev">Review the loss</button>`:`<span class="legend"><i class="dot green"></i>Weaker <i class="dot gold"></i>Even <i class="dot red"></i>Stronger</span>`}</div><div class="list">${
-     [...G.offers].sort((x,y)=>(y.rv||y.beast||y.tier==="special"?1:0)-(x.rv||x.beast||x.tier==="special"?1:0)).map(o=>{const op=G.F[o.b],me=G.F[o.a];const A=adviseCached(o.a,o.b,3);const v=verdictOf(A.bestRate);
-       const sp=o.rv?["rv","Grudge match · the whole province is watching"]:o.beast?["beast",QK[o.beast].grp==="rooster"?"Wild bout · Human vs fighting rooster":"Wild bout · Bull wrestling, Muay Thai edition"]:o.tier==="special"?["sp","Special cross-division bout"]:null;
+     [...G.offers].sort((x,y)=>(y.rv||y.beast||y.hard||y.tier==="special"?1:0)-(x.rv||x.beast||x.hard||x.tier==="special"?1:0)).map(o=>{const op=G.F[o.b],me=G.F[o.a];const A=adviseCached(o.a,o.b,3);const v=verdictOf(A.bestRate);
+       const sp=o.rv?["rv","Grudge match · the whole province is watching"]:o.beast?["beast",QK[o.beast].grp==="rooster"?"Wild bout · Human vs fighting rooster":"Wild bout · Bull wrestling, Muay Thai edition"]:o.tier==="special"?["sp","Special cross-division bout"]:o.hard?["hard","Punch up · purse ×1.5"]:null;
        return `<div class="item offer ${v.c} ${sp?"spx "+sp[0]:""}">${sp?`<span class="ribbon">${sp[1]}</span>`:""}<button class="oxbtn" data-act="declo" data-v="${o.id}" aria-label="Decline this offer">✕</button><div class="l"><span class="vdot ${v.c}" aria-label="${v.t}"></span>${faceImg(op,"sm")}<div>
        <div class="t">${esc(me.name)} vs ${esc(op.name)}</div>
        <div class="meta">Wk ${o.week} · ${TIER[o.tier].name}${o.beast?" · off the record":""} · ${styleOf(op.a)}${op.camp==="rival"?" · Golden Tiger":""}${personaOf(op)?` · ${personaOf(op).tag}`:""}</div>${h2hText(op)?`<div class="meta goldt">${h2hText(op)}</div>`:""}
