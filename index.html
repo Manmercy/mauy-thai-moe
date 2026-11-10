@@ -1048,6 +1048,20 @@ body:has(.montage) .newspop,body:has(.fight) .newspop{display:none}
 .obub.sulk{background:#dfe8ff}.obub.sulk::after{border-top-color:#dfe8ff}
 @keyframes bubpop{from{transform:scale(.4) translateY(10px);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.obub{animation:none}}
+/* v1.22 home: the camp scene leads, fighters right under it, coach tips after; goal sits on the scene */
+.cvbox{position:relative}
+.goal.ov{position:absolute;left:6px;right:6px;bottom:6px;padding:4px 8px;background:rgba(12,8,24,.78);font-size:12px;line-height:1.35;box-shadow:inset 0 0 0 1px rgba(242,193,78,.5)}
+@media (max-width:979px){.homegrid .guide{order:2}.homegrid .fgrid{order:1}.homegrid .camp-wrap{order:0}.homegrid .newfighter{order:-1}}
+.homegrid .guide .gtxt p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.campact{padding:8px 12px}.campact b{font-size:15px}
+.newspop .ncrawl{padding-left:12%}
+.roadbtns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+/* v1.22 bigger text on phones where it was cramped */
+@media (max-width:520px){
+ .ofr .meta,.offer .meta,.bk-info .meta,.obtns3 .btn{font-size:13px}
+ .ctip span,.road{font-size:13.5px}.road b{font-size:14px}
+ .modal .meta{font-size:13px}
+}
 </style></head><body>
 <div id="app"></div>
 <script>
@@ -1185,7 +1199,7 @@ function trainWeek(G,f,rng){
   // v1.15: Kati's answer to talent — every honest training week builds "grit" that shows on fight night
   if(f.id==="kati"&&f.plan.preset!=="rest"&&f.plan.preset!=="prep")f.grit=Math.min(.1,(f.grit||0)+(f.plan.intensity==="heavy"?.004:f.plan.intensity==="normal"?.003:.0015));
   const pr=f.plan.preset,spec=st.some(k=>STAFF[k].pre===pr||STAFF[k].pre2===pr);
-  const coach=1+st.length*.02+(G.fac.daeng-1)*.05+(spec?.1:0)+(pr==="cond"?hill*.2:0),fac=1+G.fac.gym*.1;
+  const coach=dif(G).train*(1+st.length*.02+(G.fac.daeng-1)*.05+(spec?.1:0))+(pr==="cond"?hill*.2:0),fac=1+G.fac.gym*.1;
   const ms=mainStyle(f),core=pr===ms?STYLE_ATTRS[ms]:[];
   const ready=1-f.fatigue/160,mot=.8+f.morale/250;
   for(const [k,w] of Object.entries(p.w)){
@@ -1199,7 +1213,7 @@ function trainWeek(G,f,rng){
   f.fatigue=clamp(f.fatigue+load-(10+G.fac.recovery*5+G.fac.kitchen*2+clin*3)-(f.plan.preset==="rest"?22:0),0,100);
   if(f.plan.preset==="rest")f.morale=clamp(f.morale+3,0,100);
   f.prepBonus=f.plan.preset==="prep";
-  {const nb=G.bookings.filter(b=>b.a===f.id&&b.week>=G.week).sort((x,y)=>x.week-y.week)[0];const hit=!!(nb&&f.plan.preset===counterPreset(G.F[nb.b]));
+  {const nb=G.bookings.filter(b=>b.a===f.id&&b.week>=G.week).sort((x,y)=>x.week-y.week)[0];const sc=!!(nb&&G.scout&&G.scout[nb.b]!=null&&G.week-G.scout[nb.b]<=8);const hit=!!(nb&&sc&&f.plan.preset===counterPreset(G.F[nb.b]));
    // v1.14: counter work done before fight week carries into fight night if that week is spent on fight prep
    f.counterPrep=hit||!!(nb&&nb.week===G.week&&f.plan.preset==="prep"&&f.counterPrep);}
   if(f.fatigue>70&&rng()<(f.fatigue-70)/110*(1-G.fac.kitchen*.2)){f.injury=2+Math.floor(rng()*2);G.log.push(`⚠ ${f.name} บาดเจ็บเล็กน้อยจากการซ้อมหนัก (พัก ${f.injury} สัปดาห์)`);
@@ -1257,7 +1271,7 @@ const MASTERY_AT=13,MK=2,CK=3.5;
 function mastery(f){if(f.camp!=="player")return 0;const v=styleVal(f,mainStyle(f));return v<MASTERY_AT?0:.3+.7*clamp((v-MASTERY_AT)/4,0,1);}
 function fightSide(f,plan,rng){const sk=skillMods(f);{const m=mastery(f)*MK,s=mainStyle(f);if(m){if(s==="defense"){sk.evade+=.04*m;sk.ctr+=.06*m;sk.ctrDmg+=.25*m;}else{const w=s;sk.hit[w]=(sk.hit[w]||0)+.05*m;sk.dmg[w]=(sk.dmg[w]||0)+.2*m;sk.pts[w]=(sk.pts[w]||0)+.1*m;}}}if(f.aura)sk.evade+=f.aura*.5;const gr=f.grit||0;if(gr)sk.evade+=gr*.4;
   return {f,id:f.id,name:f.name,plan,instr:"none",hp:100-(f.injury?15:0)+Math.round(gr*30),sta:clamp(100-f.fatigue*.4,40,100),pts:0,rpts:0,kd:0,cuts:0,
-    thrown:0,landed:0,dmgDealt:0,legs:0,tac:{focus:"auto",pace:"steady",target:"head"},sk,prep:(f.prepBonus?.04:0)+(f.counterPrep?.03:0)+sk.prep+(f.aura||0)+(f.grit||0)+(f.camp==="player"?(f.facPrep||0):0),counterPrep:!!f.counterPrep,mor:(f.morale-60)/400+sk.mor,wl:{punch:0,kick:0,knee:0,elbow:0}};
+    thrown:0,landed:0,dmgDealt:0,legs:0,tac:{focus:"auto",pace:"steady",target:"head"},sk,prep:(f.prepBonus?.04:0)+(f.counterPrep?.05:0)+sk.prep+(f.aura||0)+(f.grit||0)+(f.camp==="player"?(f.facPrep||0):0),counterPrep:!!f.counterPrep,mor:(f.morale-60)/400+sk.mor,wl:{punch:0,kick:0,knee:0,elbow:0}};
 }
 function aiPlan(f,opp,rng){
   const a=f.a;const opts=[["balanced",1],["pressure",(a.punch+a.elbow+a.power)/30],["counter",(a.counter+a.iq)/22],["outside",(a.kick+a.foot)/22],["clinch",(a.knee+a.clinch)/22]];
@@ -1298,7 +1312,7 @@ function skillKind(sk){const e=sk.fx(1);const wk=e.hit||e.pts||e.dmg;if(wk)retur
 const SKILL_KIND_NAME={atk:"ไม้เด็ดโจมตี",def:"ตั้งรับสวนกลับ",rec:"เรียกแรงคืน"};
 function fightSkills(s){const L=SKILLS[s.f.id]||[],eq=equipped(s.f);return L.filter(k=>eq.includes(k.id)).map(k=>({...k,r:s.f.skills[k.id],...skillKind(k)}));}
 function useSkill(F,s,id){const o=s===F.A?F.B:F.A;s.skUsed=s.skUsed||{};if(F.over||s.skRound||s.skUsed[id])return null;const sk=fightSkills(s).find(k=>k.id===id);if(!sk)return null;
-  s.skUsed[id]=true;s.skRound=true;const pw=(.7+.15*sk.r)*(s.f.camp==="player"?1.1:.8);
+  s.skUsed[id]=true;s.skRound=true;const pw=(.7+.15*sk.r)*(s.f.camp==="player"?1.1:F.dai||.8);
   if(sk.k==="atk"){s.burst={k:"atk",w:sk.w,left:4,pw};s.sta=clamp(s.sta-6,0,100);}
   if(sk.k==="def")s.burst={k:"def",left:4,pw};
   if(sk.k==="rec"){s.sta=clamp(s.sta+22*pw,0,100);s.hp=clamp(s.hp+6*pw,0,100);s.mor+=.01;s.burst=null;}
@@ -1386,9 +1400,12 @@ const STAGE_NAME={local:"รอบตำบล",district:"รอบอำเภ�
 
 function ployAura(w){return Math.max(0,.42*(1-(w-1)/36));}
 function startLv(f){if(f.id==="ploy")f.aura=ployAura(1);if(f.id==="ploy")f.lvl=5;else if(f.id==="fah")f.lvl=3;else if(f.camp==="npc")f.lvl=clamp(Math.round(ovr(f.a)-7),1,6);}
+// v1.22 difficulty: easy = rivals grow slower + more class income; hard = rivals grow faster and use skills harder
+const DIFF={easy:{rival:.7,ai:.6,inc:1.2,train:1.12,name:"ง่าย"},normal:{rival:1,ai:.8,inc:1,train:1,name:"ปกติ"},hard:{rival:1.12,ai:.95,inc:.9,train:.97,name:"ยาก"}};
+const dif=G=>DIFF[(G&&G.diff)||"normal"]||DIFF.normal;
 function newGame(opts){
   const seed=(opts.seed??Math.floor(Math.random()*1e9))>>>0;const rng=mulberry32(seed);
-  const G={v:1,seed,week:1,player:{name:opts.name||"ต้น",gender:opts.gender||"m"},cash:60000,debt:120000,rep:5,
+  const G={v:1,seed,week:1,diff:opts.diff||"normal",player:{name:opts.name||"ต้น",gender:opts.gender||"m"},cash:60000,debt:120000,rep:5,
     fac:{gym:0,recovery:0,classroom:0,brand:0,dorm:0,kitchen:0,hill:0,video:0,ring:0,clinic:0,shrine:0,daeng:1,assistants:0},staff:[],rankMove:{A:{},B:{}},camp:{beauty:0},campUsed:null,levelUps:[],avatar:opts.avatar||null,F:{},rank:{A:{},B:{}},qual:{A:[],B:[]},finalists:{A:[],B:[]},semis:{A:[],B:[]},champ:{},
     bookings:[],offers:[],log:[],flags:{},seen:{},freeUsed:false,negWeeks:0,history:[],ended:null,lastReport:null,romance:null};
   for(const [id,d] of Object.entries(CANON))G.F[id]=baseFighter(id,d);
@@ -1396,6 +1413,8 @@ function newGame(opts){
   for(const f of Object.values(G.F))startLv(f);
   for(const f of Object.values(G.F))if(f.camp!=="player"&&f.camp!=="free")G.rank[f.div][f.id]={pts:0,w:0,l:0,d:0};
   G.rank.A.kati={pts:0,w:0,l:0,d:0};
+  // v1.22 difficulty also moves where the two stars start
+  {const d=G.diff,adj=d==="easy"?-.7:d==="hard"?.35:0;if(adj)for(const id of ["ploy","fah"]){const f=G.F[id];if(!f)continue;for(const [k] of ATTRS)f.a[k]=clamp(f.a[k]+adj,1,20);f.potential+=adj*.8;}}
   return G;
 }
 const roster=G=>Object.values(G.F).filter(f=>f.camp==="player");
@@ -1440,7 +1459,7 @@ const CAMP_LV_NAME=["","ค่ายเก่าทรุดโทรม","ค�
 function studentCap(G){return G.fac.daeng*8+G.fac.classroom*4+(G.staff?G.staff.length:G.fac.assistants)*6;}
 function studentDemand(G){const ramp=G.week<=12&&!(G.season>1)?.4+.6*G.week/12:1;return Math.round((4+Math.min(G.rep,30)*.45+G.fac.brand*3+(G.fac.ring||0)*3+campLevel(G)*2+(G.camp?G.camp.beauty:0)*.4)*ramp);}
 function students(G){return Math.min(studentCap(G),studentDemand(G));}
-const studentFee=G=>Math.round(560*(1+(G.fac.daeng-1)*.12)*(1+(campLevel(G)-1)*.25));
+const studentFee=G=>Math.round(dif(G).inc*560*(1+(G.fac.daeng-1)*.12)*(1+(campLevel(G)-1)*.25));
 const classIncome=G=>students(G)*studentFee(G);
 function campLook(G){return clamp(Math.round(facTotal(G)+(G.camp?G.camp.beauty:0)/2+Math.min(G.rep,30)/8),0,20);}
 function buyFacility(G,k){const F=FACILITIES[k],lv=G.fac[k]||0;if(lv>=F.cost.length||facLocked(G,k))return false;const c=F.cost[lv];if(G.cash<c)return false;
@@ -1612,7 +1631,7 @@ function weekTrain(G){
   if(G.F.ploy)G.F.ploy.aura=ployAura(G.week);
   for(const f of Object.values(G.F)){if(f.camp==="player")continue;
     if(f.injury>0){f.injury--;}f.fatigue=clamp(f.fatigue-8,0,100);
-    npcGrow(f,rng,f.id==="ploy"?(G.week>30?.036:.012):f.id==="fah"?(G.week>30?.042:.03):f.camp==="rival"?.035:f.camp==="free"?.025:.02);f.morale+=(60-f.morale)*.1;
+    npcGrow(f,rng,(f.canon&&f.camp==="rival"?dif(G).rival:1)*(f.id==="ploy"?(G.week>30?.036:.012):f.id==="fah"?(G.week>30?.042:.03):f.camp==="rival"?.035:f.camp==="free"?.025:.02));f.morale+=(60-f.morale)*.1;
     // v1.15: rivals and NPCs level up too, so the opposition visibly gets stronger over the season
     if(f.camp==="rival"||f.camp==="npc"){f.xp=(f.xp||0)+(f.camp==="rival"?30:18)+Math.floor(rng()*10);
       while(f.lvl<10&&f.xp>=xpNeed(f.lvl)){f.xp-=xpNeed(f.lvl);f.lvl++;if(f.camp==="rival"){const ks=Object.keys(f.a).sort((x,y)=>f.a[y]-f.a[x]).slice(0,2);ks.forEach(k=>f.a[k]=Math.min(20,f.a[k]+.2));}
@@ -2622,6 +2641,7 @@ function endingScene(G){
   else {key="survive";title="รักษาค่ายไว้ได้อย่างยากลำบาก";
     steps=[{n:"nar",bg:"camp",t:"ค่ายยังเปิดอยู่ หนี้ยังไม่หมด ผลงานยังไม่ดี แต่ไฟในค่ายยังไม่ดับ"},
       {n:"kati",f:"happy",t:"ปีแรกมันยากที่สุดค่ะ ปีหน้ามันต้องดีกว่านี้แน่ ๆ"}];}
+  if(key!=="bankrupt"&&typeof personalEnding==="function")steps.push(...personalEnding(G));
   if(G.romance&&key!=="bankrupt")steps.push({n:G.romance,f:"flustered",t:{kati:"ปีหน้า… ก็อยู่ด้วยกันแบบนี้นะคะ ทั้งในค่าย และนอกค่าย",mali:"ปีใหม่นี้ หนูจะพาคุณไปบ้านหนูนะคะ แม่อยากเจอ~",
     rin:"ฉันวางแผนปีหน้าไว้แล้วค่ะ มีชื่อคุณอยู่ทุกหน้าเลย",ploy:"ปีหน้าเราก็ยังเป็นคู่แข่ง… และเป็นคนสำคัญของกันและกัน",fah:"ปีหน้าก็ยังต้องเลี้ยงไส้กรอกฟ้าอยู่นะ ตลอดไปเลย!"}[G.romance]});
   steps.push(...season2Hooks(G,key));
@@ -3131,6 +3151,45 @@ CHATTER.push(
  {id:"c3_trio_dinner",need:G=>inCamp(G,"mali")&&inCamp(G,"rin"),bg:"camp",look:"casual",steps:[{n:"nar",t:"มื้อเย็นหลังซ้อม ทั้งสามคนนั่งล้อมวงหมูกระทะ"},{n:"mali",f:"happy",t:"ใครปิ้งไหม้ต้องล้างจาน~",with:"rin"},{n:"rin",f:"pout",t:"อุณหภูมิกระทะไม่สม่ำเสมอ นี่ไม่ใช่ความผิดฉันค่ะ"},{n:"kati",f:"happy",t:"รินไหม้ไปสามชิ้นแล้วนะ!"},
   {choice:[{t:"ช่วยรินล้างจาน",fx:G=>add(G,"rin","bond",3),then:[{n:"rin",f:"flustered",t:"…ไม่ต้องช่วยก็ได้ แต่ถ้าช่วย ฉันก็ไม่ห้าม"}]},{t:"ปิ้งให้ทุกคนเอง (กำลังใจทุกคน +3)",fx:G=>cheer(G,3),then:[{n:"mali",f:"happy",t:"ผู้จัดการปิ้งเก่งกว่าครูแดงอีก~"}]}]}]}
 );
+
+// ---------- v1.22 mid-season turning points ----------
+EVENTS.push(
+ {id:"tw_injury",look:"train",bg:"gym",when:G=>G.week>=22&&G.week<=27&&inCamp(G,"kati")&&!G.F.kati.injury,steps:[
+  {n:"nar",t:"ซ้อมชกตอนเย็น กะทิก้าวสลับเท้าเร็วเกินไป ข้อเท้าพลิกดังกึก แล้วทรุดลงกับพื้น"},
+  {n:"kati",f:"sad",t:"ไม่เป็นไรค่ะ! แค่… แค่เคล็ดนิดเดียว รอบอำเภอเพิ่งเริ่ม หนูหยุดตอนนี้ไม่ได้"},
+  {n:"coach",t:"ข้อเท้าบวมขนาดนี้ ถ้าฝืนชก อาจเจ็บยาวทั้งปี เลือกเอาเถอะ"},
+  {choice:[{t:"พักสองสัปดาห์ ไม่เสี่ยง (ความเชื่อใจ +)",fx:G=>{G.F.kati.injury=Math.max(G.F.kati.injury,2);add(G,"kati","trust",5);},then:[{n:"kati",f:"pout",t:"สองสัปดาห์… ก็ได้ค่ะ แต่หนูจะซ้อมมือบนเก้าอี้นะ ห้ามห้าม!"}]},
+   {t:"พาไปหมอนวดแผนไทยเจ้าดัง (−฿3,000 · พัก 1 สัปดาห์)",fx:G=>{G.cash-=3000;G.F.kati.injury=Math.max(G.F.kati.injury,1);add(G,"kati","bond",3);},then:[{n:"npc",who:"หมอเส็ง หมอนวดแผนไทย",t:"เอ็นเคล็ดนิดเดียว นวดสามวัน ประคบอีกสี่วัน วิ่งได้!"},{n:"kati",f:"happy",t:"ไม่เจ็บแล้วค่ะ! ผู้จัดการจ่ายแพงเลยใช่ไหม… หนูจะชกให้คุ้ม"}]},
+   {t:"ให้กะทิตัดสินใจเอง",fx:G=>{G.F.kati.fatigue=Math.min(100,G.F.kati.fatigue+12);G.F.kati.grit=Math.min(.12,(G.F.kati.grit||0)+.015);add(G,"kati","trust",3);},then:[{n:"kati",f:"angry",t:"พันข้อเท้าให้แน่นค่ะ หนูจะซ้อมต่อ คุณปู่เคยชกทั้งที่ซี่โครงร้าว"},{n:"coach",t:"…ดื้อเหมือนปู่ชัยไม่มีผิด ครูจะคอยดูไว้"},{n:"nar",t:"กะทิเหนื่อยขึ้นมาก แต่ความมุ่งมั่นแรงขึ้นอีกขั้น"}]}]}]},
+ {id:"tw_dirty",look:"casual",bg:"camp",when:G=>G.week>=30&&G.week<=36&&G.rep>=10,steps:[
+  {n:"nar",t:"เช้าวันจันทร์ เพจข่าวมวยดังโพสต์ว่า 'ค่ายศิริชัยใช้สารต้องห้าม' แหล่งข่าวไม่ระบุชื่อ แต่ทุกคนรู้ว่าใครอยู่เบื้องหลัง"},
+  {n:"npc",who:"เถ้าแก่เสือ ค่ายพยัคฆ์ทอง",t:"(ให้สัมภาษณ์) ผมไม่ได้พูดนะ ผมแค่ 'ตั้งคำถาม' ค่ายร้างกลับมาชนะเร็วขนาดนี้ มันแปลก ๆ"},
+  {n:"kati",f:"angry",t:"หนูซ้อมตีห้าทุกวัน! เขาพูดแบบนี้ได้ยังไง!"},
+  {choice:[{t:"เปิดแถลงข่าว ยื่นตรวจสารทั้งค่าย (−฿2,000 · ชื่อเสียง +1.5)",fx:G=>{G.cash-=2000;G.rep+=1.5;G.flags.payakShamed=true;},then:[{n:"nar",t:"ผลตรวจสะอาดทุกคน นักข่าวหันไปถามเถ้าแก่เสือแทน เพจลบโพสต์ภายในคืนเดียว"}]},
+   {t:"ให้รินรวบรวมหลักฐานว่าใครปล่อยข่าว",fx:G=>{if(inCamp(G,"rin")){G.rep+=2;G.flags.payakShamed=true;add(G,"rin","bond",3);}else{G.rep+=.5;}},then:[{n:"rin",f:"happy",t:"บัญชีที่โพสต์ล็อกอินจากไวไฟค่ายพยัคฆ์ทองค่ะ ฉันแคปไว้ครบสิบสองภาพ"},{n:"nar",t:"หลักฐานของรินถูกแชร์ไปทั่วจังหวัด เถ้าแก่เสือต้องออกมาขอโทษ"}]},
+   {t:"ไม่ตอบโต้ ให้หมัดพูดแทน (กำลังใจทุกคน +6)",fx:G=>cheer(G,6),then:[{n:"coach",t:"ดี คนที่ต้องตะโกนคือคนที่ไม่มั่นใจในนักมวยตัวเอง"}]}]},
+  {n:"nar",t:"ค่ำวันนั้น มีคนมายืนหน้าค่าย… พลอย"},
+  {n:"ploy",f:"sad",t:"พี่ไม่รู้เรื่องนี้เลย และพี่ไม่เห็นด้วย ขอโทษแทนค่ายพี่ด้วย"},
+  {n:"ploy",f:"happy",t:"ถ้าจะชนะเธอ พี่อยากชนะบนเวที ไม่ใช่ในเพจข่าว"},
+  {fx:G=>{G.F.ploy.met=true;add(G,"ploy","trust",4);}}]},
+ {id:"tw_ploy_night",look:"casual",bg:"night",when:G=>G.week>=43&&G.week<=47&&metR(G,"ploy")&&(G.F.ploy.bond||0)>=10,steps:[
+  {n:"nar",t:"สามคืนก่อนนัดชิง โทรศัพท์คุณสั่น ข้อความจากพลอย 'ว่างไหม พี่อยู่สนามว่างข้างวัด'"},
+  {n:"ploy",f:"sad",t:"เถ้าแก่สั่งให้พี่ชนะน็อกกะทิให้ได้ บอกว่าถ้าแพ้ ปีหน้าพี่ไม่ต้องอยู่ค่ายแล้ว"},
+  {n:"ploy",f:"sad",t:"พี่ชกมวยมาเพราะรัก… ตอนนี้พี่ไม่แน่ใจว่าชกเพื่ออะไร"},
+  {choice:[{t:"ชกเพื่อตัวเธอเอง ไม่ใช่เพื่อเถ้าแก่",fx:G=>{add(G,"ploy","trust",5);add(G,"ploy","bond",3);},then:[{n:"ploy",f:"happy",t:"เพื่อตัวเอง… ใช่ คืนวันชิง พี่จะชกให้สนุกที่สุดในชีวิต"},{n:"nar",t:"(พลอยจะขึ้นเวทีด้วยใจที่เบาลง และยังน่ากลัวเหมือนเดิม)"}]},
+   {t:"กะทิก็รอไฟต์นี้เหมือนกัน เธอนับถือเธอมาก",fx:G=>{add(G,"ploy","trust",3);add(G,"kati","morale",4);},then:[{n:"ploy",f:"happy",t:"…งั้นพี่จะไม่ออมมือ นั่นคือการให้เกียรติที่ดีที่สุด"}]},
+   {t:"ถ้าที่นั่นไม่ต้องการเธอ ที่นี่มีที่ว่างเสมอ",fx:G=>{add(G,"ploy","bond",5);G.flags.ployInvite=true;},then:[{n:"ploy",f:"flustered",t:"…อย่าพูดแบบนี้สามคืนก่อนชิงสิ พี่จะชกไม่ลง"},{n:"ploy",f:"happy",t:"ไว้หลังนัดชิง… พี่จะตอบ"}]}]}]}
+);
+
+// ---------- v1.22 personal ending: the person closest to you gets the last word of the season ----------
+const PERSONAL_END={
+ kati:[{n:"nar",t:"คืนสุดท้ายของปี กะทิพาคุณขึ้นไปบนหลังคาค่าย มองเห็นไฟเมืองเชียงใหม่ทั้งเมือง"},{n:"kati",f:"happy",l:"casual",t:"ปีที่แล้วตอนนี้ หนูนั่งตรงนี้คนเดียว คิดว่าค่ายจะต้องปิด"},{n:"kati",f:"flustered",l:"casual",t:"ปีนี้มีคุณนั่งข้าง ๆ… หนูว่าคุณปู่คงยิ้มอยู่บนนั้นค่ะ"}],
+ mali:[{n:"nar",t:"มะลิลากคุณไปตลาดนัดคืนสุดท้ายของปี ยืนอยู่หน้าร้านขนมครกร้านเล็ก ๆ"},{n:"mali",f:"happy",l:"casual",t:"วันหนึ่งมะลิจะเปิดร้านแบบนี้ ชื่อร้าน 'ขนมครกแชมป์' ฮิ ๆ"},{n:"mali",f:"flustered",l:"casual",t:"คุณต้องเป็นลูกค้าคนแรกนะคะ… ไม่สิ เป็นหุ้นส่วนเลยดีกว่า~"}],
+ rin:[{n:"nar",t:"รินยื่นแฟ้มหนาให้คุณ หน้าปกเขียนว่า 'แผนสามปี ค่ายศิริชัย'"},{n:"rin",f:"happy",l:"casual",t:"ฉันวางแผนไว้ถึงปีที่สาม ทุกหน้ามีชื่อคุณอยู่ค่ะ"},{n:"rin",f:"flustered",l:"casual",t:"…ไม่ใช่แค่เพราะคุณเป็นผู้จัดการนะคะ ตัวแปรนี้ฉันยังหาคำอธิบายไม่ได้"}],
+ ploy:[{n:"nar",t:"หลังนัดชิง พลอยรออยู่ที่ลานจอดรถ ผ้าพันมือยังไม่ได้แกะ"},{n:"ploy",f:"happy",l:"casual",t:"ปีนี้พี่ได้เรียนรู้ว่าการชกให้สนุกเป็นยังไง เพราะค่ายคุณ"},{n:"ploy",f:"flustered",l:"casual",t:"ปีหน้าเราจะเจอกันอีก จะในฐานะคู่แข่ง… หรืออะไรอย่างอื่น ก็แล้วแต่คุณ"}],
+ fah:[{n:"nar",t:"ฟ้าโผล่มาพร้อมมอเตอร์ไซค์คันเก่า 'ขึ้นมา ยายรอกินข้าวอยู่'"},{n:"fah",f:"pout",l:"casual",t:"ยายบอกว่าคืนสิ้นปีต้องกินข้าวกับคนสำคัญ ฟ้าเลย… เอ่อ… ยายบังคับ!"},{n:"fah",f:"flustered",l:"casual",t:"…ปีหน้าก็มากินอีกนะ ไม่ได้ขอร้องนะ แค่บอก"}]};
+function personalEnding(G){let id=G.romance;if(!id){const c=["kati","mali","rin","ploy","fah"].filter(k=>G.F[k]&&G.F[k].met&&(G.F[k].bond||0)>=40).sort((a,b)=>G.F[b].bond-G.F[a].bond);id=c[0];}
+  return id&&PERSONAL_END[id]?PERSONAL_END[id]:[];}
 // ================= MUAY THAI MOE v1.2 — PIXEL SYSTEMS =================
 const ASSET="a/";
 const IMGS={};
@@ -3557,7 +3616,7 @@ const SETTINGS={music:true,sfx:true,coach:true,quick:false};
 try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"));}catch(e){}
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.21.1";
+const VERSION="1.22.0";
 const SAVE_KEY="mtm-save-v13";
 const CANON_IDS=["kati","mali","rin","ploy","fah"];
 let G=null;
@@ -3745,6 +3804,7 @@ function creatorHTML(){const c=UI.creator,O=CHIBI.OPT;
       <button class="btn sm" data-act="crand">สุ่มทั้งหมด</button></div>
     <div class="px cr-opts">
       ${F("เพศ (มีผลกับบทพูด)",seg("gender",[["m","ชาย"],["f","หญิง"]]))}
+      ${F("ความยาก",seg("diff",[["easy","ง่าย"],["normal","ปกติ"],["hard","ยาก"]]))}<p class="meta">${{easy:"คู่แข่งพัฒนาช้าลง รายได้คลาสมากขึ้น เหมาะกับคนอยากเล่นเนื้อเรื่อง",normal:"สมดุลตามที่ออกแบบไว้",hard:"พลอยกับฟ้าโหดขึ้น ใช้สกิลแรงขึ้น เงินตึงขึ้น"}[c.diff||"normal"]}</p>
       ${F("ทรงผม",seg("hairStyle",O.hairStyle))}${F("สีผม",sw("hair",O.hair))}
       <div class="two">${F("สีผิว",sw("skin",O.skin))}${F("สีตา",sw("eyes",O.eyes))}</div>
       ${F("ชุด",seg("outfit",[["tee","เสื้อยืด"],["polo","โปโล"],["suit","สูท"],["hoodie","ฮู้ด"]])+sw("outfitColor",O.cloth))}
@@ -3760,12 +3820,21 @@ const TABS=[["home","หน้าค่าย"],["train","ฝึก"],["fights",
 // v1.12: warn before the money runs out, not after
 function weeksLeft(){const net=weeklyNet(G)-(G.debt>0?Math.min(5000,G.debt)/4:0);if(net>=0)return 99;return Math.max(0,Math.floor(G.cash/-net));}
 // v1.13 news ticker — boxing world, rival camps, our camp
+// v1.22: the ticker is mostly silly local news — it slides through once and is gone
+const FUNNY_NEWS=["ลุงหวังวินมอไซค์ประกาศ 'ใครแซงคิว เจอเข่าโค้งไชยา' วินเจ้าใหม่ย้ายซอยหนีแล้ว","ป้าแต๋วเปิดเมนูส้มตำ 'เผ็ดระดับกะทิ' ลูกค้าน้ำตาไหลยกร้าน","ไก่ชนข้างค่ายศิริชัยจิกกระสอบทรายขาด เจ้าของยืนยัน 'มันซ้อมอยู่'",
+ "แมวส้มประจำค่ายน้ำหนักขึ้น 2 กิโล ตัวการคือถุงขนมครกที่หายไปทุกคืน","ครูแดงถูกพบยิ้มมุมปากเป็นครั้งแรกในรอบสิบปี พยานยังช็อก","นักท่องเที่ยวใส่มงคลเดินห้าง คนไหว้ตลอดทางจนห้างต้องประกาศเสียงตามสาย",
+ "วัดใกล้ค่ายจัดงานวัด ซุ้มยิงลูกโป่งขาดทุนหนักหลังมีสาวแว่นยิงแตกสิบนัดติด","เถ้าแก่ค่ายพยัคฆ์ทองซื้อรถตู้ใหม่สีทองทั้งคัน ชาวบ้านนึกว่ารถแห่","ผลสำรวจ: ชาวบ้าน 8 ใน 10 ได้ยินเสียงกระสอบทรายจากค่ายศิริชัยตอนตีห้า และไม่เคยได้นอนตื่นสายอีกเลย",
+ "เจ๊หมวยเจ้าของที่ดินเดินทางไปญี่ปุ่น ฝากคิทแคทชาเขียวไว้ทั้งซอย","ร้านคาราโอเกะข้างค่ายขอร้อง 'ห้ามนักมวยร้องเพลงลูกทุ่งหลังสี่ทุ่ม'","เด็กข้างบ้านเปิดคลาสสอนไหว้ครูให้ตุ๊กตา ค่าเรียนเป็นลูกอม",
+ "เสี่ยสวนลำไยประกาศ 'ใครชนะน็อก แถมลำไยตันนึง' ค่ายมวยทั่วจังหวัดสั่นสะเทือน","สนามมวยอำเภอติดแอร์ใหม่ แต่ลืมติดตั้งในห้องพักนักมวย","กรรมการมวยท่านหนึ่งยืนยัน 'ผมไม่ได้หลับ ผมแค่หลับตาฟังเสียงหมัด'",
+ "วินมอไซค์หน้าค่ายเปิดบริการ 'ส่งนักมวยถึงเวทีใน 5 นาที' ค่าโดยสารเป็นลายเซ็น","ไลฟ์ขายนวมของค่ายพยัคฆ์ทองล่ม เพราะคนเข้าไปถามแต่ว่า 'พลอยกินอะไร'","ป้าขายหมูปิ้งหน้าสนามยืนยัน 'นักมวยที่ซื้อหมูปิ้งป้าชนะทุกคน' (ยกเว้นคนที่แพ้)"];
+function funnyNews(n){const o=[];for(let i=0;i<n;i++)o.push(FUNNY_NEWS[(G.week*7+i*5+(G.seed%11))%FUNNY_NEWS.length]);return o;}
 function newsItems(){const N=[...(G.lvNews||[])],st=standings(G,"A").slice(0,3),R=roster(G);
   if(st[0])N.push(`ตารางรุ่น A: ${G.F[st[0].id].name} นำเป็นอันดับ 1`);
   const rv=Object.values(G.F).filter(f=>f.camp==="rival");if(rv.length)N.push(`ค่ายพยัคฆ์ทองส่งนักมวยลงแข่ง ${rv.length} คน เถ้าแก่ประกาศ "ปีนี้แชมป์ต้องเป็นของเรา"`);
   for(const f of R){const h=f.rec||{w:0,l:0};if(h.w>=3)N.push(`${f.name} ค่ายศิริชัย ฟอร์มแรง ชนะแล้ว ${h.w} ไฟต์`);}
   if(G.rep>=10)N.push(`ค่ายมวยศิริชัยกลับมาเป็นที่พูดถึงอีกครั้ง หลังเงียบไปหลายปี`);
   const nb=G.bookings.filter(b=>G.F[b.a].camp==="player").sort((a,b)=>a.week-b.week)[0];if(nb)N.push(`โปรแกรมสัปดาห์ ${nb.week}: ${G.F[nb.a].name} ปะทะ ${G.F[nb.b].name}`);
+  N.splice(1,0,...funnyNews(2));
   N.push(["ราคาน้ำมันมวยปรับขึ้น 5 บาท แม่ค้าบอก 'ช่วงนี้ขายดี'","สนามมวยอำเภอติดแอร์ใหม่ คนดูไม่ต้องพัดวีแล้ว","ครูมวยโคราชวัย 80 ยังสอนหมัดเหวี่ยงควายทุกเช้า","มวยหญิงได้รับความนิยมขึ้น ผู้ชมเพิ่มเกือบเท่าตัว","ชาวต่างชาติแห่เรียนมวยไทยช่วงไฮซีซัน"][G.week%5]);
   return N;}
 function weekTodo(){const R=roster(G),todo=[];if(R.some(f=>!f.injury&&!trLocked(f)))todo.push("ยังไม่ได้ยืนยันโปรแกรมฝึกบางคน");if(!G.campUsed)todo.push("ยังไม่ได้เลือกกิจกรรมค่าย");
@@ -3846,8 +3915,8 @@ function homeHTML(){const R=roster(G);
       <button class="xbtn" data-act="hideguide" aria-label="ปิดคำแนะนำสัปดาห์นี้">✕</button></section>`;}
   const lv=campLevel(G);
   return `<div class="homegrid">${(()=>{const r=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
-     return r.length?`<button class="px newfighter" data-act="tab" data-v="camp" data-sub="staff"><span class="newb">NEW!</span>${r.map(([id])=>`<img src="${faceSrc(id,"happy")}" alt="">`).join("")}<span><b>${r.map(([id])=>esc(G.F[id].name)).join(" และ ")} อยากเข้าค่าย</b><small>แตะเพื่อดูสัญญา</small></span><span class="chev">▸</span></button>`:"";})()}<section class="px camp-wrap"><canvas class="campcv" width="640" height="360" data-camp="1" aria-label="ภาพรวมค่ายมวยศิริชัย"></canvas>
-    <div class="goal">${goalText()}</div>
+     return r.length?`<button class="px newfighter" data-act="tab" data-v="camp" data-sub="staff"><span class="newb">NEW!</span>${r.map(([id])=>`<img src="${faceSrc(id,"happy")}" alt="">`).join("")}<span><b>${r.map(([id])=>esc(G.F[id].name)).join(" และ ")} อยากเข้าค่าย</b><small>แตะเพื่อดูสัญญา</small></span><span class="chev">▸</span></button>`:"";})()}<section class="px camp-wrap"><div class="cvbox"><canvas class="campcv" width="640" height="360" data-camp="1" aria-label="ภาพรวมค่ายมวยศิริชัย"></canvas>
+    <div class="goal ov">${goalText()}</div></div>
     ${G.campUsed?`<button class="campact done" data-act="campacts"><span class="ci">✓</span><span><small>กิจกรรมค่ายสัปดาห์นี้</small><b>${esc(CAMP_ACTIONS[G.campUsed].name)}</b></span></button>`
       :`<button class="campact" data-act="campacts"><span class="ci"></span><span><small>กิจกรรมค่ายสัปดาห์นี้ · ยังไม่ได้เลือก</small><b>เลือกกิจกรรมค่าย</b></span><span class="chev">▸</span></button>`}
     <div class="camp-info"><button class="cinfo" data-act="tab" data-v="camp"><small>ระดับค่าย</small><b>Lv.${lv} ${CAMP_LV_NAME[lv]}</b></button><button class="cinfo" data-act="studinfo"><small>นักเรียน</small><b>${students(G)}/${studentCap(G)} คน</b></button></div></section>
@@ -3919,12 +3988,12 @@ function adviceHTML(id){const f=G.F[id],A=trainAdvice(f);const same=f.plan.prese
   if(A.two)return `<h2>ครูแดงแนะนำ · ${esc(f.name)}</h2><div class="ctip big"><img src="${faceSrc("coach")}" alt=""><span>${esc(A.why)}</span></div>
    <div class="kv-row"><span>ตอนนี้</span><b>${PRESETS[f.plan.preset].name} · ${INTENSITY[f.plan.intensity].name}</b></div>${twoRoads(f,A.two)}
    ${planTip(f)}<p class="meta">${masteryLine(f)} · ครูแค่ให้ความเห็น ตัดสินใจเองนะ</p>
-   <div class="mfoot"><button class="btn primary" data-act="closeModal">เข้าใจแล้ว</button></div>`;
+   <div class="mfoot roadbtns">${trLocked(f)?`<span class="meta">ยืนยันโปรแกรมสัปดาห์นี้ไปแล้ว</span>`:`<button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.two.strong.p}" data-i="${A.two.strong.i}">ใช้ทางที่ 1</button><button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.two.weak.p}" data-i="${A.two.weak.i}">ใช้ทางที่ 2</button>`}<button class="btn primary" data-act="closeModal">ปิด</button></div>`;
   return `<h2>ครูแดงแนะนำ · ${esc(f.name)}</h2><div class="ctip big"><img src="${faceSrc("coach")}" alt=""><span>${esc(A.why)}</span></div>
    <div class="kv-row"><span>ตอนนี้</span><b>${PRESETS[f.plan.preset].name} · ${INTENSITY[f.plan.intensity].name}</b></div>
    <div class="kv-row"><span>ครูแนะนำ</span><b class="goldt">${PRESETS[A.p].name} · ${INTENSITY[A.i].name}</b></div>
    ${planTip(f)}<p class="meta">${same?"ตอนนี้ตั้งตรงกับที่ครูคิดไว้แล้ว":"ครูแค่ให้ความเห็น ตัดสินใจเองนะ"}</p>
-   <div class="mfoot"><button class="btn primary" data-act="closeModal">เข้าใจแล้ว</button></div>`;}
+   <div class="mfoot roadbtns">${!same&&!trLocked(f)?`<button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.p}" data-i="${A.i}">ใช้ตามนี้</button>`:""}<button class="btn primary" data-act="closeModal">ปิด</button></div>`;}
 const trLocked=f=>f?f.lockWeek===G.week:false;
 function trainHTML(){const R=roster(G);if(!R.length)return "";
   // v1.13: each fighter gets her own card with the big training animation; programmes are picked in a sheet, then the week is locked in
@@ -4467,7 +4536,7 @@ function coachNote(F,me){const A=F.A,B=F.B,r=F.result,w=r.win==="A";
   return "แพ้ไม่ใช่จุดจบ ครูยังเชื่อในตัวเธอ ปรับแผนแล้วกลับมาใหม่";}
 function rinNote(F){const A=F.A;const best=Object.entries(A.wl).sort((a,b)=>b[1]-a[1])[0];return `เข้าเป้า ${A.landed}/${A.thrown} ครั้ง อาวุธที่ได้ผลที่สุดคือ${WNAME[best[0]]} (${best[1]} ครั้ง)`;}
 function fightStart(quick){const U=UI.fight,b=U.b;AU.resume();
-  U.F=newFight(G.F[b.a],G.F[b.b],{seed:(G.seed+G.week*131+b.b.length*7)>>>0,rounds:b.rounds,tier:b.tier,planA:U.plan,forceRage:!quick&&!(G.flags&&G.flags.rageShown)});
+  U.F=newFight(G.F[b.a],G.F[b.b],{seed:(G.seed+G.week*131+b.b.length*7)>>>0,rounds:b.rounds,tier:b.tier,planA:U.plan,forceRage:!quick&&!(G.flags&&G.flags.rageShown)});U.F.dai=(DIFF[G.diff||"normal"]||DIFF.normal).ai;
   if(b.wai==="phrom")U.F.A.careMor=.02;if(b.wai==="phra")U.F.A.careMor=.01;if(b.cheer)U.F.A.mor+=b.cheer*.01;setTactics(U.F,U.tac);
   if(quick){FS.init(null,TIER_BG[b.tier]||"bg_local.webp",G.F[b.a],G.F[b.b]);const F=U.F;while(!F.over){F.A.instr=aiCorner(F,F.A,F.B);F.B.instr=aiCorner(F,F.B,F.A);const lg=fightRound(F);U.shown.push({rd:`ยกที่ ${F.round}`},...lg);}fightEnd();return;}
   FS.init(null,TIER_BG[b.tier]||"bg_local.webp",G.F[b.a],G.F[b.b]);AU.setTempo(126);AU.startMusic();playRound();}
@@ -4527,12 +4596,12 @@ const ACT={
   loadslot:d=>{const s=loadSlot(+d.v);if(!s)return;G=fixSave(s);const pk=G.F.ploy&&G.F.ploy.skills;if(pk&&pk.korat){G.F.ploy.skills={kr_swing:2,captain:1};}UI.slot=+d.v;UI.tab="home";UI.modal=null;UI.advCache={};AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   askdelslot:d=>{UI.delSlot=+d.v;render();},canceldel:()=>{UI.delSlot=null;render();},
   delslot:()=>{clearSave(UI.delSlot);UI.delSlot=null;if(!loadSave())UI.modal=null;render();},
-  beginNew:i=>{UI.slot=i;UI.modal=null;AU.startMusic("hub");UI.creator={name:"",...CHIBI.randomManager(Math.random),gender:"m",outfit:"tee",hat:"none",glasses:"none"};UI.modal=null;render();},
+  beginNew:i=>{UI.slot=i;UI.modal=null;AU.startMusic("hub");UI.creator={name:"",...CHIBI.randomManager(Math.random),gender:"m",diff:"normal",outfit:"tee",hat:"none",glasses:"none"};UI.modal=null;render();},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},
   cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator[d.k]=d.v;render();},
-  crand:()=>{const n=(document.getElementById("pname")||{}).value||"";UI.creator={...CHIBI.randomManager(Math.random),name:n};render();},
+  crand:()=>{const n=(document.getElementById("pname")||{}).value||"";UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:(UI.creator&&UI.creator.diff)||"normal"};render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"ต้น":"ดาว");
-    const {name,...look}=c;G=newGame({name,gender:c.gender,avatar:look});genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
+    const {name,diff,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look});genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
     playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"night",look:"train"});},
   continue:()=>{G=loadSave();if(!G)return;fixSave(G);UI.slot=UI.slot||1;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
@@ -4578,6 +4647,7 @@ const ACT={
   give:d=>{const r=giveGift(G,d.id,d.v);if(!r)return;UI.modal=null;UI.tab="people";save();AU.startMusic("date");giftScene(d.id,r);},
   buyfac:d=>{const before=campLevel(G);if(buyFacility(G,d.v)){save();const after=campLevel(G);AU.sfx("level");toast(after>before?`ค่ายเลื่อนเป็น Lv.${after}: ${CAMP_LV_NAME[after]}!`:`อัปเกรด${FACILITIES[d.v].name}แล้ว`);}},
   daeng:()=>{if(upgradeDaeng(G)){save();toast(`ครูแดงผ่านการอบรม Lv.${G.fac.daeng}`);}},
+  useroad:d=>{const f=G.F[d.id];if(!f||trLocked(f)||!PRESETS[d.p])return;f.plan={...f.plan,preset:d.p,intensity:d.i};UI.modal=null;save();toast(`ตั้ง${f.name}: ${PRESETS[d.p].name} · ${INTENSITY[d.i].name} แล้ว อย่าลืมกดยืนยัน`);},
   equip:d=>{if(toggleEquip(G,d.id,d.v)){AU.sfx("ui");save();render();}else toast(`เลือกได้สูงสุด ${MAX_EQUIP} สกิล เอาออกก่อน 1 ท่า`);},
   hirestaff:d=>{if(hireStaff(G,d.v)){AU.sfx("level");save();toast(`${STAFF[d.v].name}เข้าร่วมค่ายแล้ว`);render();}},
   firestaff:d=>{fireStaff(G,d.v);save();toast(`เลิกจ้าง${STAFF[d.v].name}แล้ว`);render();},

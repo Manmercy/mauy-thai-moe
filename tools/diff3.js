@@ -21,7 +21,7 @@ function fightP(G,b,P,seed){const fa=G.F[b.a],fb=G.F[b.b];let plan="balanced";
   const F=E.newFight(fa,fb,{seed,rounds:b.rounds,tier:b.tier,planA:plan});
   while(!F.over){F.A.instr=P==="casual"?"none":E.aiCorner(F,F.A,F.B);F.B.instr=E.aiCorner(F,F.B,F.A);E.fightRound(F);}return F;}
 let aiC=null;const FT=[];
-function season(seed,P){const G=E.newGame({seed});E.genOffers(G);const rng=E.mulberry32(seed*99);let kpFinal=null,kp=[];
+function season(seed,P){const G=E.newGame({diff:process.env.DIFF||'normal',seed});E.genOffers(G);const rng=E.mulberry32(seed*99);let kpFinal=null,kp=[];
   while(!G.ended){
     if(P!=="casual"&&G.week>=10&&G.F.mali.camp!=="player"&&G.cash>(P==="expert"?14000:20000)){G.F.mali.camp="player";G.cash-=8000;if(E.stageOf(G.week)==="local")G.rank.B.mali={pts:0,w:0,l:0,d:0};E.genOffers(G);}
     if(P==="casual"&&G.week===14&&G.cash>15000){G.F.mali.camp="player";G.cash-=8000;if(E.stageOf(G.week)==="local")G.rank.B.mali={pts:0,w:0,l:0,d:0};}
@@ -35,7 +35,7 @@ function season(seed,P){const G=E.newGame({seed});E.genOffers(G);const rng=E.mul
       if(P==="casual"){if(os[0]&&f.fatigue<60)E.acceptOffer(G,os[0].id);continue;}
       if(f.fatigue>55||G.bookings.some(b=>b.a===f.id&&Math.abs(b.week-(os[0]||{}).week)<=(P==="expert"?2:1)))continue;
       const sc=os.map(o=>({o,r:winRate(G,o.a,o.b,o.rounds||3,P==="expert"?14:8)})).sort((x,y)=>y.r-x.r);if(sc[0]&&sc[0].r>=(P==="expert"?.5:.42))E.acceptOffer(G,sc[0].o.id);}
-    train(G,P,rng);if(NEW&&P!=="casual")for(const f of E.roster(G)){const pr=f.plan.preset;if(!f.injury&&pr!=='rest'&&pr!=='prep'){const n=f.plan.intensity==='light'?2:3;let b=0;for(let i=0;i<n;i++){const r=rng();b+=r<.3?4:r<.85?2:0;}f.drillBonus=b/100;}}E.weekTrain(G);
+    if(P!=="casual"){G.scout=G.scout||{};for(const b of G.bookings)if(G.F[b.a].camp==="player"&&!(G.scout[b.b]!=null&&G.week-G.scout[b.b]<=8)&&G.cash>(P==="expert"?1000:3000)){G.scout[b.b]=G.week;G.cash-=400;}}train(G,P,rng);if(NEW&&P!=="casual")for(const f of E.roster(G)){const pr=f.plan.preset;if(!f.injury&&pr!=='rest'&&pr!=='prep'){const n=f.plan.intensity==='light'?2:3;let b=0;for(let i=0;i<n;i++){const r=rng();b+=r<.3?4:r<.85?2:0;}f.drillBonus=b/100;}}E.weekTrain(G);
     for(const b of G.bookings.filter(b=>b.week===G.week)){const pl=G.F[b.a].camp==="player";
       const F=pl?fightP(G,b,P,G.seed+G.week*13+b.a.length):E.quickFight(G.F[b.a],G.F[b.b],G.seed+G.week*13+b.a.length,b.rounds);
       if(b.tier==="final"&&b.a==="kati")FT.push([G.F.kati.fatigue,G.F.kati.injury,G.F.kati.morale,G.F.kati.grit||0,E.mastery(G.F.kati),F.result.win]);if(b.tier==="final"&&((b.a==="kati"&&b.b==="ploy")||(b.a==="ploy"&&b.b==="kati")))kpFinal=(F.result.win==="A")===(b.a==="kati");

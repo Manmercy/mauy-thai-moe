@@ -1044,3 +1044,17 @@ body:has(.montage) .newspop,body:has(.fight) .newspop{display:none}
 .obub.sulk{background:#dfe8ff}.obub.sulk::after{border-top-color:#dfe8ff}
 @keyframes bubpop{from{transform:scale(.4) translateY(10px);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.obub{animation:none}}
+/* v1.22 home: the camp scene leads, fighters right under it, coach tips after; goal sits on the scene */
+.cvbox{position:relative}
+.goal.ov{position:absolute;left:6px;right:6px;bottom:6px;padding:4px 8px;background:rgba(12,8,24,.78);font-size:12px;line-height:1.35;box-shadow:inset 0 0 0 1px rgba(242,193,78,.5)}
+@media (max-width:979px){.homegrid .guide{order:2}.homegrid .fgrid{order:1}.homegrid .camp-wrap{order:0}.homegrid .newfighter{order:-1}}
+.homegrid .guide .gtxt p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.campact{padding:8px 12px}.campact b{font-size:15px}
+.newspop .ncrawl{padding-left:12%}
+.roadbtns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+/* v1.22 bigger text on phones where it was cramped */
+@media (max-width:520px){
+ .ofr .meta,.offer .meta,.bk-info .meta,.obtns3 .btn{font-size:13px}
+ .ctip span,.road{font-size:13.5px}.road b{font-size:14px}
+ .modal .meta{font-size:13px}
+}
