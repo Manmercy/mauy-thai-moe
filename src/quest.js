@@ -181,12 +181,18 @@ function lineSVG(pts,key,col,fmtY){if(pts.length<2)return `<p class="meta">ย�
    <text x="${P-4}" y="${y(mx)+4}" text-anchor="end" class="gt">${fmtY(mx)}</text><text x="${P-4}" y="${y(mn)+4}" text-anchor="end" class="gt">${fmtY(mn)}</text>
    <text x="${x(0)}" y="${H-3}" class="gt">สด.${pts[0].w}</text><text x="${x(pts.length-1)}" y="${H-3}" text-anchor="end" class="gt">สด.${pts[pts.length-1].w}</text></svg>`;}
 const kfmt=v=>Math.abs(v)>=1000?(v<0?"-":"")+"฿"+(Math.abs(v)/1000).toFixed(Math.abs(v)>=10000?0:1)+"k":fmt(v);
-function cashflowHTML(){const H=(G.history||[]);const L=H.slice(-8).reverse();const inc=classIncome(G),up=upkeep(G),wg=wages(G);
-  return `<h2>กระแสเงินสด</h2>${lineSVG(H.slice(-26),"cash","var(--gold)",kfmt)}
-   <h3>ต่อสัปดาห์ตอนนี้</h3><div class="kv-row"><span>ค่าเรียน ${students(G)} คน</span><b class="num pos">+${fmt(inc)}</b></div><div class="kv-row"><span>ค่าดูแลค่าย</span><b class="num neg">−${fmt(up)}</b></div><div class="kv-row"><span>ค่าจ้างนักมวย+ครู</span><b class="num neg">−${fmt(wg)}</b></div><div class="kv-row tot"><span>สุทธิประจำ</span><b class="num ${inc-up-wg<0?"neg":"pos"}">${fmt(inc-up-wg)}</b></div>
-   <h3>ย้อนหลัง</h3><div class="tbl-wrap"><table class="cft"><thead><tr><th>สด.</th><th>ประจำ</th><th>ไฟต์</th><th>อื่น ๆ</th><th>คงเหลือ</th></tr></thead><tbody>${L.map(h=>`<tr><td class="num">${h.w}</td><td class="num ${h.inc!=null&&h.inc-h.up-h.wg-(h.debt||0)<0?"negt":""}">${h.inc!=null?kfmt(h.inc-h.up-h.wg-(h.debt||0)):"–"}</td><td class="num">${h.fight?"+"+kfmt(h.fight):"–"}</td><td class="num ${h.oth<0?"negt":""}">${h.oth!=null&&Math.abs(h.oth)>=1?kfmt(h.oth):"–"}</td><td class="num">${kfmt(h.cash)}</td></tr>`).join("")}</tbody></table></div>
-   <p class="meta">"ประจำ" = ค่าเรียน − ค่าดูแล − ค่าจ้าง − หนี้ · "อื่น ๆ" = ซื้อของ อัปเกรด ของขวัญ เหตุการณ์ จดหมาย</p>`;}
-function repgraphHTML(){return `<h2>ชื่อเสียงค่าย ${G.rep.toFixed(1)}</h2>${lineSVG((G.history||[]).slice(-30),"rep","var(--pink,#ff7b9c)",v=>v.toFixed(0))}${G.rep>40?`<p class="meta warnt">ชื่อเสียงเกิน 40 จะค่อย ๆ ลดลงเองทุกสัปดาห์ ต้องชนะต่อเนื่องเพื่อรักษาไว้</p>`:""}`+repInfoHTML().replace(/^<h2>.*?<\/h2>/,"");}
+function cashflowHTML(){const H=(G.history||[]);const inc=classIncome(G),up=upkeep(G),wg=wages(G),net=inc-up-wg;
+  const L=H.slice(-7).map((h,i,a)=>i?{w:h.w,d:h.cash-a[i-1].cash,cash:h.cash,fight:h.fight}:null).filter(Boolean).reverse();
+  const tip=net<0?(G.cash/-net<6?`รายจ่ายประจำมากกว่ารายรับ เงินพอใช้อีกราว ${Math.max(1,Math.floor(G.cash/-net))} สัปดาห์ ควรรับไฟต์หรือเปิดตู้จดหมายหารายได้`:`รายจ่ายประจำมากกว่ารายรับ ต้องอาศัยค่าตัวไฟต์ เพิ่มนักเรียนด้วยการอัปเกรดห้องเรียนจะช่วยได้`):G.cash>25000?`เงินเหลือเยอะ ลองอัปเกรดค่ายหรือจ้างครูเพิ่ม`:`การเงินไปได้ดี เก็บเงินไว้อัปเกรดค่ายชิ้นถัดไป`;
+  return `<h2>การเงิน</h2><div class="bigcash"><small>เงินสดตอนนี้</small><b class="num">${fmt(G.cash)}</b><span class="num ${net<0?"negt":"post"}">${net<0?"−":"+"}${fmt(Math.abs(net))} ต่อสัปดาห์</span></div>
+   <div class="ctip"><img src="${ASSET}coach.webp" alt=""><span>${tip}</span></div>
+   <div class="kv-row"><span>ค่าเรียน ${students(G)} คน</span><b class="num pos">+${fmt(inc)}</b></div><div class="kv-row"><span>ค่าดูแลค่าย + ค่าจ้าง</span><b class="num neg">−${fmt(up+wg)}</b></div>
+   <h3>เงินเข้าออกล่าสุด</h3>${L.length?L.map(h=>`<div class="kv-row"><span>สัปดาห์ ${h.w}${h.fight?" · มีค่าตัวไฟต์":""}</span><b class="num ${h.d<0?"negt":"post"}">${h.d<0?"−":"+"}${fmt(Math.abs(Math.round(h.d)))}</b></div>`).join(""):`<p class="meta">ยังไม่มีประวัติ เล่นต่ออีกสักสัปดาห์</p>`}`;}
+function repgraphHTML(){const r=G.rep,S=repSteps();const nx=S.find(([n])=>r<n),pv=[...S].reverse().find(([n])=>r>=n);const lo=pv?pv[0]:0,hi=nx?nx[0]:Math.max(lo+1,r);
+  return `<h2>ชื่อเสียงค่าย</h2><div class="repg"><div class="repg-h"><b class="num">${r.toFixed(1)}</b><span>${nx?`อีก ${(nx[0]-r).toFixed(1)} ปลดล็อก: ${nx[1]}`:"ปลดล็อกครบทุกขั้นแล้ว"}</span></div>
+    <div class="gauge" role="img" aria-label="ชื่อเสียง ${r.toFixed(1)}"><i style="width:${Math.round(100*Math.min(1,(r-lo)/(hi-lo)))}%"></i></div><div class="repg-f"><small class="num">${lo}</small><small class="num">${nx?hi:""}</small></div></div>
+   <p class="meta">ได้จากชนะไฟต์ กิจกรรมค่าย และจัดศึกที่ค่าย · ยิ่งสูง นักเรียนและค่าตัวไฟต์ยิ่งมาก${r>40?" · เกิน 40 จะค่อย ๆ ลดเอง ต้องชนะต่อเนื่อง":""}</p>
+   <div class="replist">${S.map(([n,t])=>`<div class="${r>=n?"on":""}"><b>${r>=n?"✓":n}</b><span>${t}</span></div>`).join("")}</div>`;}
 // fight calendar under the rankings
 function calendarHTML(){const past={},next={};for(const c of G.cal||[])(past[c.wk]=past[c.wk]||[]).push(c);for(const b of G.bookings)if(G.F[b.a]&&G.F[b.a].camp==="player")(next[b.week]=next[b.week]||[]).push(b);
   const mark={20:"ตัดรอบตำบล",40:"ตัดรอบอำเภอ",44:"รองชิง",49:"ชิงแชมป์"};

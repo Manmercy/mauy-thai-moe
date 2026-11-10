@@ -181,22 +181,18 @@ function creatorHTML(){const c=UI.creator,O=CHIBI.OPT;
   const sw=(prop,list)=>`<div class="sw">${list.map(v=>`<button style="background:${v}" aria-label="${v}" aria-pressed="${c[prop]===v}" data-act="cset" data-k="${prop}" data-v="${v}"></button>`).join("")}</div>`;
   const seg=(prop,list)=>`<div class="seg">${list.map(([v,t])=>`<button data-act="cset" data-k="${prop}" data-v="${v}" aria-pressed="${c[prop]===v}">${t}</button>`).join("")}</div>`;
   const F=(label,inner)=>`<div class="field"><span class="lb">${label}</span>${inner}</div>`;
-  return `<div class="creator"><div class="cr-in">
-   <header class="cr-head"><h1>The new camp owner</h1><p class="lead">You are Grandpa Chai's grandchild, heir to Sirichai Muay Thai Camp. Dress the way you are</p></header>
-   <div class="cr-grid">
-    <div class="px cr-preview"><div class="cr-stage"><canvas width="240" height="320" data-chibi="creator" aria-label="Character preview"></canvas></div>
-      <div class="field"><label for="pname">Name</label><input id="pname" maxlength="14" value="${esc(c.name||"")}" autocomplete="off" placeholder="${c.gender==="m"?"Start":"Dao"}"></div>
-      <button class="btn sm" data-act="crand">Randomize all</button></div>
-    <div class="px cr-opts">
-      ${F("Gender (affects dialogue)",seg("gender",[["m","Male"],["f","Female"]]))}
-      ${F("Difficulty",seg("diff",[["easy","Easy"],["normal","Normal"],["hard","Hard"]]))}<p class="meta">${{easy:"Rivals grow slower, more class income. For players who want the story",normal:"Balanced as designed",hard:"Ploy and Fah are tougher, use stronger skills, money is tighter"}[c.diff||"normal"]}</p>
-      ${F("Hairstyle",seg("hairStyle",O.hairStyle))}${F("Hair color",sw("hair",O.hair))}
-      <div class="two">${F("Skin tone",sw("skin",O.skin))}${F("Eye color",sw("eyes",O.eyes))}</div>
-      ${F("Outfit",seg("outfit",[["tee","T-shirt"],["polo","Polo"],["suit","Suit"],["hoodie","Hoodie"]])+sw("outfitColor",O.cloth))}
-      ${F("Pants",seg("pants",[["long","Long"],["shorts","Shorts"]])+sw("pantsColor",["#1f1f24","#2c3e6b","#5a4a3a","#8a8f99","#e8dcc0"]))}
-      <div class="two">${F("Hat",seg("hat",[["none","None"],["cap","Cap"],["bucket","Bucket"]]))}${F("Glasses",seg("glasses",[["none","None"],["glasses","Prescription"],["sun","Sunglasses"]]))}</div>
-      ${c.hat!=="none"?F("Hat color",sw("hatColor",O.cloth)):""}
-    </div></div>
+  const tab=c.tab||"base";
+  const T={base:F("Gender (affects dialogue)",seg("gender",[["m","Male"],["f","Female"]]))+F("Difficulty",seg("diff",[["easy","Easy"],["normal","Normal"],["hard","Hard"]]))+`<p class="meta">${{easy:"Rivals grow slower, more class income. For players who want the story",normal:"Balanced as designed",hard:"Ploy and Fah are tougher, use stronger skills, money is tighter"}[c.diff||"normal"]}</p>`,
+   face:F("Hairstyle",seg("hairStyle",O.hairStyle))+F("Hair color",sw("hair",O.hair))+`<div class="two">${F("Skin tone",sw("skin",O.skin))}${F("Eye color",sw("eyes",O.eyes))}</div>`,
+   wear:F("Outfit",seg("outfit",[["tee","T-shirt"],["polo","Polo"],["suit","Suit"],["hoodie","Hoodie"]])+sw("outfitColor",O.cloth))+F("Pants",seg("pants",[["long","Long"],["shorts","Shorts"]])+sw("pantsColor",["#1f1f24","#2c3e6b","#5a4a3a","#8a8f99","#e8dcc0"])),
+   acc:F("Hat",seg("hat",[["none","None"],["cap","Cap"],["bucket","Bucket"]]))+(c.hat!=="none"?F("Hat color",sw("hatColor",O.cloth)):"")+F("Glasses",seg("glasses",[["none","None"],["glasses","Prescription"],["sun","Sunglasses"]]))};
+  return `<div class="creator v2"><div class="cr-in">
+   <header class="cr-head"><h1>The new camp owner</h1><p class="lead">You are Grandpa Chai's grandchild, heir to Sirichai Camp</p></header>
+   <div class="px cr-top"><div class="cr-stage"><canvas width="240" height="320" data-chibi="creator" aria-label="Character preview"></canvas></div>
+     <div class="cr-id"><div class="field"><label for="pname">Name</label><input id="pname" maxlength="14" value="${esc(c.name||"")}" autocomplete="off" placeholder="${c.gender==="m"?"Start":"Dao"}"></div>
+      <button class="btn sm" data-act="crand">Randomize all</button></div></div>
+   <div class="seg cr-tabs" role="tablist">${[["base","Basics"],["face","Hair · Face"],["wear","Outfit"],["acc","Extras"]].map(([k,t])=>`<button role="tab" data-act="ctab" data-v="${k}" aria-pressed="${tab===k}">${t}</button>`).join("")}</div>
+   <div class="px cr-opts">${T[tab]}</div>
    <div class="cr-foot"><button class="btn ghost" data-act="cancelCreate">Back</button><button class="btn primary" data-act="startGame">Inherit the camp ▸</button></div>
   </div></div>`;}
 
@@ -628,10 +624,10 @@ function warmChar(id,look){if(id==="coach"){warm(`${ASSET}coach.webp`);return;}i
   (look==="casual"?["happy","flustered","pout"]:["happy","sad","surprised","angry"]).forEach(m=>warm(stand(id,look,m)));}
 function warmSteps(steps,look){const walk=list=>(list||[]).forEach(st=>{if(!st)return;const n=typeof st.n==="function"?null:st.n;if(n)warmChar(n,st.l==="casual"?"casual":look==="casual"&&!st.l?"casual":"fight");
   if(st.with)warmChar(st.with,look==="casual"?"casual":"fight");if(st.bg&&BGIMG[st.bg])warm(ASSET+BGIMG[st.bg]);if(st.choice)st.choice.forEach(c=>walk(c.then));});walk(steps);}
-const WARMQ=[];let warmBusy=false;
-function warmLater(list){WARMQ.push(...list.filter(s=>!WARMED[s]));if(!warmBusy)warmNext();}
-function warmNext(){const src=WARMQ.shift();if(!src){warmBusy=false;return;}warmBusy=true;if(WARMED[src]){warmNext();return;}
-  const i=new Image();WARMED[src]=i;i.onload=i.onerror=()=>setTimeout(warmNext,60);i.src=src;}
+const WARMQ=[];let warmBusy=0;
+function warmLater(list){WARMQ.push(...list.filter(s=>!WARMED[s]));while(warmBusy<3&&WARMQ.length)warmNext();}
+function warmNext(){let src;do{src=WARMQ.shift();}while(src&&WARMED[src]);if(!src)return;warmBusy++;
+  const i=new Image();i.decoding="async";WARMED[src]=i;i.onload=i.onerror=()=>{warmBusy--;warmNext();};i.src=src;}
 function warmAll(){const L=[];CANON_IDS.forEach(id=>["happy","sad","surprised","angry"].forEach(m=>L.push(stand(id,"fight",m))));
   CANON_IDS.forEach(id=>["happy","flustered","pout"].forEach(m=>L.push(stand(id,"casual",m))));
   Object.values(BGIMG).concat(Object.values(TIER_BG),["gym2.webp","gym3.webp"]).filter(Boolean).forEach(b=>L.push(ASSET+b));warmLater(L);}
@@ -819,7 +815,7 @@ function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
     if(U.stage==="done")mid+=resultHTML();
     mid+=`<details class="logd"><summary>Full fight log</summary><div class="flog">${U.shown.map(l=>l.rd?`<div class="rd">${l.rd}</div>`:`<div class="${l.s}">${esc(l.t||"")}</div>`).join("")}</div></details>`;}
   const tw=UI.confirmTowel?`<div class="tconfirm" role="alertdialog"><div class="px"><h3>🏳️ Throw in the towel?</h3><p>This fight counts as a loss immediately, but your fighter won't get hurt any worse</p><div class="ctrl"><button class="btn" data-act="towelno">Keep fighting</button><button class="btn primary" data-act="towelyes">Surrender</button></div></div></div>`:"";
-  return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":""}" data-sk="fight" role="dialog" aria-label="Fight"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b><span class="meta">${b.rounds} rounds</span></div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
+  return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":U.stage==="done"?"isdone":""}" data-sk="fight" role="dialog" aria-label="Fight"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b><span class="meta">${b.rounds} rounds</span></div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
 function liveStats(){const U=UI.fight,F=U.F;if(!F)return "";let la=0,lb=0;
   for(const e of U.shown){if(!e.ev)continue;const sd=sideOf(e,F);if(e.ev==="hit"||e.ev==="counter"){if(sd==="A")la++;else lb++;}}
   const ctl=la+lb?Math.round(la/(la+lb)*100):50;
@@ -998,7 +994,8 @@ const ACT={
   beginNew:i=>{UI.slot=i;UI.modal=null;AU.startMusic("hub");UI.creator={name:"",...CHIBI.randomManager(Math.random),gender:"m",diff:"normal",outfit:"tee",hat:"none",glasses:"none"};UI.modal=null;render();},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},
   cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator[d.k]=d.v;render();},
-  crand:()=>{const n=(document.getElementById("pname")||{}).value||"";UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:(UI.creator&&UI.creator.diff)||"normal"};render();},
+  crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab};render();},
+  ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator.tab=d.v;render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"Start":"Dao");
     const {name,diff,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look});genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
     playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"night",look:"train"});},

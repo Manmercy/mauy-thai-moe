@@ -181,12 +181,18 @@ function lineSVG(pts,key,col,fmtY){if(pts.length<2)return `<p class="meta">Not e
    <text x="${P-4}" y="${y(mx)+4}" text-anchor="end" class="gt">${fmtY(mx)}</text><text x="${P-4}" y="${y(mn)+4}" text-anchor="end" class="gt">${fmtY(mn)}</text>
    <text x="${x(0)}" y="${H-3}" class="gt">wk ${pts[0].w}</text><text x="${x(pts.length-1)}" y="${H-3}" text-anchor="end" class="gt">wk ${pts[pts.length-1].w}</text></svg>`;}
 const kfmt=v=>Math.abs(v)>=1000?(v<0?"-":"")+"฿"+(Math.abs(v)/1000).toFixed(Math.abs(v)>=10000?0:1)+"k":fmt(v);
-function cashflowHTML(){const H=(G.history||[]);const L=H.slice(-8).reverse();const inc=classIncome(G),up=upkeep(G),wg=wages(G);
-  return `<h2>Cash flow</h2>${lineSVG(H.slice(-26),"cash","var(--gold)",kfmt)}
-   <h3>Per week right now</h3><div class="kv-row"><span>Class fees, ${students(G)} students</span><b class="num pos">+${fmt(inc)}</b></div><div class="kv-row"><span>Camp upkeep</span><b class="num neg">−${fmt(up)}</b></div><div class="kv-row"><span>Fighter + coach wages</span><b class="num neg">−${fmt(wg)}</b></div><div class="kv-row tot"><span>Regular net</span><b class="num ${inc-up-wg<0?"neg":"pos"}">${fmt(inc-up-wg)}</b></div>
-   <h3>History</h3><div class="tbl-wrap"><table class="cft"><thead><tr><th>Wk</th><th>Regular</th><th>Fights</th><th>Other</th><th>Balance</th></tr></thead><tbody>${L.map(h=>`<tr><td class="num">${h.w}</td><td class="num ${h.inc!=null&&h.inc-h.up-h.wg-(h.debt||0)<0?"negt":""}">${h.inc!=null?kfmt(h.inc-h.up-h.wg-(h.debt||0)):"–"}</td><td class="num">${h.fight?"+"+kfmt(h.fight):"–"}</td><td class="num ${h.oth<0?"negt":""}">${h.oth!=null&&Math.abs(h.oth)>=1?kfmt(h.oth):"–"}</td><td class="num">${kfmt(h.cash)}</td></tr>`).join("")}</tbody></table></div>
-   <p class="meta">"Regular" = class fees − upkeep − wages − debt · "Other" = purchases, upgrades, gifts, events, mail</p>`;}
-function repgraphHTML(){return `<h2>Camp fame ${G.rep.toFixed(1)}</h2>${lineSVG((G.history||[]).slice(-30),"rep","var(--pink,#ff7b9c)",v=>v.toFixed(0))}${G.rep>40?`<p class="meta warnt">Fame above 40 slowly drops each week. Keep winning to hold it</p>`:""}`+repInfoHTML().replace(/^<h2>.*?<\/h2>/,"");}
+function cashflowHTML(){const H=(G.history||[]);const inc=classIncome(G),up=upkeep(G),wg=wages(G),net=inc-up-wg;
+  const L=H.slice(-7).map((h,i,a)=>i?{w:h.w,d:h.cash-a[i-1].cash,cash:h.cash,fight:h.fight}:null).filter(Boolean).reverse();
+  const tip=net<0?(G.cash/-net<6?`Regular costs exceed income. Cash lasts about ${Math.max(1,Math.floor(G.cash/-net))} weeks. Take a fight or check the mailbox for income`:`Regular costs exceed income, so you rely on fight purses. More students (upgrade the classroom) will help`):G.cash>25000?`Plenty of cash. Try upgrading the camp or hiring another coach`:`Money is healthy. Save up for the next camp upgrade`;
+  return `<h2>Finances</h2><div class="bigcash"><small>Cash right now</small><b class="num">${fmt(G.cash)}</b><span class="num ${net<0?"negt":"post"}">${net<0?"−":"+"}${fmt(Math.abs(net))} per week</span></div>
+   <div class="ctip"><img src="${ASSET}coach.webp" alt=""><span>${tip}</span></div>
+   <div class="kv-row"><span>Class fees, ${students(G)} students</span><b class="num pos">+${fmt(inc)}</b></div><div class="kv-row"><span>Upkeep + wages</span><b class="num neg">−${fmt(up+wg)}</b></div>
+   <h3>Recent money in / out</h3>${L.length?L.map(h=>`<div class="kv-row"><span>Week ${h.w}${h.fight?" · fight purse":""}</span><b class="num ${h.d<0?"negt":"post"}">${h.d<0?"−":"+"}${fmt(Math.abs(Math.round(h.d)))}</b></div>`).join(""):`<p class="meta">No history yet. Play another week</p>`}`;}
+function repgraphHTML(){const r=G.rep,S=repSteps();const nx=S.find(([n])=>r<n),pv=[...S].reverse().find(([n])=>r>=n);const lo=pv?pv[0]:0,hi=nx?nx[0]:Math.max(lo+1,r);
+  return `<h2>Camp fame</h2><div class="repg"><div class="repg-h"><b class="num">${r.toFixed(1)}</b><span>${nx?`${(nx[0]-r).toFixed(1)} more to unlock: ${nx[1]}`:"Everything unlocked"}</span></div>
+    <div class="gauge" role="img" aria-label="Fame ${r.toFixed(1)}"><i style="width:${Math.round(100*Math.min(1,(r-lo)/(hi-lo)))}%"></i></div><div class="repg-f"><small class="num">${lo}</small><small class="num">${nx?hi:""}</small></div></div>
+   <p class="meta">Earned by winning fights, camp activities and hosting fight nights · higher fame means more students and bigger purses ${r>40?" · above 40 it slowly drops, so keep winning":""}</p>
+   <div class="replist">${S.map(([n,t])=>`<div class="${r>=n?"on":""}"><b>${r>=n?"✓":n}</b><span>${t}</span></div>`).join("")}</div>`;}
 // fight calendar under the rankings
 function calendarHTML(){const past={},next={};for(const c of G.cal||[])(past[c.wk]=past[c.wk]||[]).push(c);for(const b of G.bookings)if(G.F[b.a]&&G.F[b.a].camp==="player")(next[b.week]=next[b.week]||[]).push(b);
   const mark={20:"Subdistrict cut",40:"District cut",44:"Semifinal",49:"Final"};

@@ -19,7 +19,7 @@ for(const f in pos){let code=fs.readFileSync(SRC+f+'.js','utf8');const L=pos[f].
   const PO=JSON.parse(fs.readFileSync('post.json'));for(const [a,b] of (PO[f]||[])){if(!code.includes(a))console.log('POST MISS',f,a);code=code.split(a).join(b);}
   fs.writeFileSync(SRC+'en/'+f+'.js',code);
   const left=(code.match(/[฀-๿][^\n]{0,40}/g)||[]);if(left.length)console.log(f,'thai left',left.length,left.slice(0,5));}
-console.log('missing',[...miss]);
+console.log('missing',[...miss]);fs.writeFileSync('missing.json',JSON.stringify([...miss]));
 // dict for save conversion: only strings that could live in saves (short-ish, no html)
 const SD={};for(const k in D){if(k.length<=60&&!/[<>$]/.test(k)&&D[k].trim().length>=1)SD[k]=D[k];}
 fs.writeFileSync(SRC+'i18n_dict.json',JSON.stringify(SD));console.log('dict',Object.keys(SD).length);

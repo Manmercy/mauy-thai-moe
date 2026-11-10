@@ -181,22 +181,18 @@ function creatorHTML(){const c=UI.creator,O=CHIBI.OPT;
   const sw=(prop,list)=>`<div class="sw">${list.map(v=>`<button style="background:${v}" aria-label="${v}" aria-pressed="${c[prop]===v}" data-act="cset" data-k="${prop}" data-v="${v}"></button>`).join("")}</div>`;
   const seg=(prop,list)=>`<div class="seg">${list.map(([v,t])=>`<button data-act="cset" data-k="${prop}" data-v="${v}" aria-pressed="${c[prop]===v}">${t}</button>`).join("")}</div>`;
   const F=(label,inner)=>`<div class="field"><span class="lb">${label}</span>${inner}</div>`;
-  return `<div class="creator"><div class="cr-in">
-   <header class="cr-head"><h1>เจ้าของค่ายคนใหม่</h1><p class="lead">คุณคือหลานของปู่ชัย ผู้รับช่วงค่ายมวยศิริชัย แต่งตัวแบบที่คุณเป็น</p></header>
-   <div class="cr-grid">
-    <div class="px cr-preview"><div class="cr-stage"><canvas width="240" height="320" data-chibi="creator" aria-label="ตัวอย่างตัวละคร"></canvas></div>
-      <div class="field"><label for="pname">ชื่อ</label><input id="pname" maxlength="14" value="${esc(c.name||"")}" autocomplete="off" placeholder="${c.gender==="m"?"ต้น":"ดาว"}"></div>
-      <button class="btn sm" data-act="crand">สุ่มทั้งหมด</button></div>
-    <div class="px cr-opts">
-      ${F("เพศ (มีผลกับบทพูด)",seg("gender",[["m","ชาย"],["f","หญิง"]]))}
-      ${F("ความยาก",seg("diff",[["easy","ง่าย"],["normal","ปกติ"],["hard","ยาก"]]))}<p class="meta">${{easy:"คู่แข่งพัฒนาช้าลง รายได้คลาสมากขึ้น เหมาะกับคนอยากเล่นเนื้อเรื่อง",normal:"สมดุลตามที่ออกแบบไว้",hard:"พลอยกับฟ้าโหดขึ้น ใช้สกิลแรงขึ้น เงินตึงขึ้น"}[c.diff||"normal"]}</p>
-      ${F("ทรงผม",seg("hairStyle",O.hairStyle))}${F("สีผม",sw("hair",O.hair))}
-      <div class="two">${F("สีผิว",sw("skin",O.skin))}${F("สีตา",sw("eyes",O.eyes))}</div>
-      ${F("ชุด",seg("outfit",[["tee","เสื้อยืด"],["polo","โปโล"],["suit","สูท"],["hoodie","ฮู้ด"]])+sw("outfitColor",O.cloth))}
-      ${F("กางเกง",seg("pants",[["long","ขายาว"],["shorts","ขาสั้น"]])+sw("pantsColor",["#1f1f24","#2c3e6b","#5a4a3a","#8a8f99","#e8dcc0"]))}
-      <div class="two">${F("หมวก",seg("hat",[["none","ไม่ใส่"],["cap","แก๊ป"],["bucket","บักเก็ต"]]))}${F("แว่น",seg("glasses",[["none","ไม่ใส่"],["glasses","สายตา"],["sun","กันแดด"]]))}</div>
-      ${c.hat!=="none"?F("สีหมวก",sw("hatColor",O.cloth)):""}
-    </div></div>
+  const tab=c.tab||"base";
+  const T={base:F("เพศ (มีผลกับบทพูด)",seg("gender",[["m","ชาย"],["f","หญิง"]]))+F("ความยาก",seg("diff",[["easy","ง่าย"],["normal","ปกติ"],["hard","ยาก"]]))+`<p class="meta">${{easy:"คู่แข่งพัฒนาช้าลง รายได้คลาสมากขึ้น เหมาะกับคนอยากเล่นเนื้อเรื่อง",normal:"สมดุลตามที่ออกแบบไว้",hard:"พลอยกับฟ้าโหดขึ้น ใช้สกิลแรงขึ้น เงินตึงขึ้น"}[c.diff||"normal"]}</p>`,
+   face:F("ทรงผม",seg("hairStyle",O.hairStyle))+F("สีผม",sw("hair",O.hair))+`<div class="two">${F("สีผิว",sw("skin",O.skin))}${F("สีตา",sw("eyes",O.eyes))}</div>`,
+   wear:F("ชุด",seg("outfit",[["tee","เสื้อยืด"],["polo","โปโล"],["suit","สูท"],["hoodie","ฮู้ด"]])+sw("outfitColor",O.cloth))+F("กางเกง",seg("pants",[["long","ขายาว"],["shorts","ขาสั้น"]])+sw("pantsColor",["#1f1f24","#2c3e6b","#5a4a3a","#8a8f99","#e8dcc0"])),
+   acc:F("หมวก",seg("hat",[["none","ไม่ใส่"],["cap","แก๊ป"],["bucket","บักเก็ต"]]))+(c.hat!=="none"?F("สีหมวก",sw("hatColor",O.cloth)):"")+F("แว่น",seg("glasses",[["none","ไม่ใส่"],["glasses","สายตา"],["sun","กันแดด"]]))};
+  return `<div class="creator v2"><div class="cr-in">
+   <header class="cr-head"><h1>เจ้าของค่ายคนใหม่</h1><p class="lead">คุณคือหลานของปู่ชัย ผู้รับช่วงค่ายมวยศิริชัย</p></header>
+   <div class="px cr-top"><div class="cr-stage"><canvas width="240" height="320" data-chibi="creator" aria-label="ตัวอย่างตัวละคร"></canvas></div>
+     <div class="cr-id"><div class="field"><label for="pname">ชื่อ</label><input id="pname" maxlength="14" value="${esc(c.name||"")}" autocomplete="off" placeholder="${c.gender==="m"?"ต้น":"ดาว"}"></div>
+      <button class="btn sm" data-act="crand">สุ่มทั้งหมด</button></div></div>
+   <div class="seg cr-tabs" role="tablist">${[["base","พื้นฐาน"],["face","ผม · หน้า"],["wear","ชุด"],["acc","ของเสริม"]].map(([k,t])=>`<button role="tab" data-act="ctab" data-v="${k}" aria-pressed="${tab===k}">${t}</button>`).join("")}</div>
+   <div class="px cr-opts">${T[tab]}</div>
    <div class="cr-foot"><button class="btn ghost" data-act="cancelCreate">ย้อนกลับ</button><button class="btn primary" data-act="startGame">รับมรดกค่าย ▸</button></div>
   </div></div>`;}
 
@@ -628,10 +624,10 @@ function warmChar(id,look){if(id==="coach"){warm(`${ASSET}coach.webp`);return;}i
   (look==="casual"?["happy","flustered","pout"]:["happy","sad","surprised","angry"]).forEach(m=>warm(stand(id,look,m)));}
 function warmSteps(steps,look){const walk=list=>(list||[]).forEach(st=>{if(!st)return;const n=typeof st.n==="function"?null:st.n;if(n)warmChar(n,st.l==="casual"?"casual":look==="casual"&&!st.l?"casual":"fight");
   if(st.with)warmChar(st.with,look==="casual"?"casual":"fight");if(st.bg&&BGIMG[st.bg])warm(ASSET+BGIMG[st.bg]);if(st.choice)st.choice.forEach(c=>walk(c.then));});walk(steps);}
-const WARMQ=[];let warmBusy=false;
-function warmLater(list){WARMQ.push(...list.filter(s=>!WARMED[s]));if(!warmBusy)warmNext();}
-function warmNext(){const src=WARMQ.shift();if(!src){warmBusy=false;return;}warmBusy=true;if(WARMED[src]){warmNext();return;}
-  const i=new Image();WARMED[src]=i;i.onload=i.onerror=()=>setTimeout(warmNext,60);i.src=src;}
+const WARMQ=[];let warmBusy=0;
+function warmLater(list){WARMQ.push(...list.filter(s=>!WARMED[s]));while(warmBusy<3&&WARMQ.length)warmNext();}
+function warmNext(){let src;do{src=WARMQ.shift();}while(src&&WARMED[src]);if(!src)return;warmBusy++;
+  const i=new Image();i.decoding="async";WARMED[src]=i;i.onload=i.onerror=()=>{warmBusy--;warmNext();};i.src=src;}
 function warmAll(){const L=[];CANON_IDS.forEach(id=>["happy","sad","surprised","angry"].forEach(m=>L.push(stand(id,"fight",m))));
   CANON_IDS.forEach(id=>["happy","flustered","pout"].forEach(m=>L.push(stand(id,"casual",m))));
   Object.values(BGIMG).concat(Object.values(TIER_BG),["gym2.webp","gym3.webp"]).filter(Boolean).forEach(b=>L.push(ASSET+b));warmLater(L);}
@@ -819,7 +815,7 @@ function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
     if(U.stage==="done")mid+=resultHTML();
     mid+=`<details class="logd"><summary>บันทึกการชกทั้งหมด</summary><div class="flog">${U.shown.map(l=>l.rd?`<div class="rd">${l.rd}</div>`:`<div class="${l.s}">${esc(l.t||"")}</div>`).join("")}</div></details>`;}
   const tw=UI.confirmTowel?`<div class="tconfirm" role="alertdialog"><div class="px"><h3>🏳️ โยนผ้ายอมแพ้?</h3><p>ไฟต์นี้จะนับเป็นแพ้ทันที แต่นักมวยจะไม่เจ็บหนักกว่านี้</p><div class="ctrl"><button class="btn" data-act="towelno">ชกต่อ</button><button class="btn primary" data-act="towelyes">ยอมแพ้</button></div></div></div>`:"";
-  return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":""}" data-sk="fight" role="dialog" aria-label="การชก"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b><span class="meta">${b.rounds} ยก</span></div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
+  return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":U.stage==="done"?"isdone":""}" data-sk="fight" role="dialog" aria-label="การชก"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b><span class="meta">${b.rounds} ยก</span></div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
 function liveStats(){const U=UI.fight,F=U.F;if(!F)return "";let la=0,lb=0;
   for(const e of U.shown){if(!e.ev)continue;const sd=sideOf(e,F);if(e.ev==="hit"||e.ev==="counter"){if(sd==="A")la++;else lb++;}}
   const ctl=la+lb?Math.round(la/(la+lb)*100):50;
@@ -998,7 +994,8 @@ const ACT={
   beginNew:i=>{UI.slot=i;UI.modal=null;AU.startMusic("hub");UI.creator={name:"",...CHIBI.randomManager(Math.random),gender:"m",diff:"normal",outfit:"tee",hat:"none",glasses:"none"};UI.modal=null;render();},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},
   cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator[d.k]=d.v;render();},
-  crand:()=>{const n=(document.getElementById("pname")||{}).value||"";UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:(UI.creator&&UI.creator.diff)||"normal"};render();},
+  crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab};render();},
+  ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator.tab=d.v;render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"ต้น":"ดาว");
     const {name,diff,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look});genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
     playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"night",look:"train"});},
