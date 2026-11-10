@@ -70,7 +70,7 @@ for(let w=0;w<60;w++){
   await ev(()=>{ACT.tab({v:'home'})});await p.waitForTimeout(100);
   if(await tap('[data-act=campacts]')){if(!seenModal.has('campacts')){seenModal.add('campacts');await shot('campacts');await audit('campacts');}
     const acts=await p.$$('[data-act=campick]:not([disabled])');if(acts.length){await acts[w%acts.length].click().catch(()=>{});await tap('[data-act=campok]');await p.waitForTimeout(1200);if(w%7===3)await shot('campfx_w'+S.wk);await ev(()=>{UI.modal=null;render();});}else await tap('.modal .xbtn');}
-  await ev(()=>{const order=['classroom','gym','recovery','brand','kitchen','video','hill','ring','dorm','clinic','shrine'];for(const k of order){const F=FACILITIES[k],l=G.fac[k]||0;if(l<F.cost.length&&!facLocked(G,k)&&G.cash-F.cost[l]>25000){buyFacility(G,k);break;}}
+  await ev(()=>{const order=['classroom','gym','recovery','brand','kitchen','video','hill','ring','dorm','clinic','shrine','van','sauna','lights','hall'];for(const k of order){const F=FACILITIES[k],l=G.fac[k]||0;if(l<F.cost.length&&!facLocked(G,k)&&G.cash-F.cost[l]>25000){buyFacility(G,k);break;}}
     for(const k of ['nok','paeng','jan','wit','ying','yai','tong'])if(G.cash>40000&&hireStaff(G,k))break;save();});
   // end week
   await ev(()=>{ACT.tab({v:'home'})});

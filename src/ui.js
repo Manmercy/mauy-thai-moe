@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.22.1";
+const VERSION="1.23.0";
 const SAVE_KEY="mtm-save-v13";
 const CANON_IDS=["kati","mali","rin","ploy","fah"];
 let G=null;
@@ -19,7 +19,7 @@ const stand=(id,look,mood)=>{if(id==="coach")return `${ASSET}coach.webp`;
   return `${ASSET}${id}_fight_${FMOOD(mood)}.webp`;};
 const faceSrc=(id,mood,look)=>id==="coach"?`${ASSET}coach_face.webp`:look&&look!=="fight"?`${ASSET}${id}_${look}_face.webp`:`${ASSET}${id}_${["happy","sad","flustered"].includes(mood)?mood:"happy"}_face.webp`;
 const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp"};
-const TIER_BG={semi:"bg_hall.webp",local:"bg_local.webp",district:"bg_district.webp",final:"bg_final.webp",exhibition:"bg_fair.webp",special:"bg_district.webp"};
+const TIER_BG={semi:"bg_hall.webp",local:"bg_local.webp",district:"bg_district.webp",final:"bg_final.webp",exhibition:"bg_fair.webp",special:"bg_district.webp",quest:"bg_food.webp",beast:"bg_fair.webp"};
 const gymBg=()=>`gym${G?campLevel(G):1}.webp`;
 // v1.13 pixel icons — no emoji in the fight UI
 function pxIcon(rows,pal){const h=rows.length,w=rows[0].length;let r="";rows.forEach((row,y)=>[...row].forEach((c,x)=>{if(c!=="."&&pal[c])r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${pal[c]}"/>`;}));
@@ -111,9 +111,8 @@ function render(){
   document.querySelectorAll(".pxscroll[data-sk]").forEach(e=>{const k=e.dataset.sk;if(keep[k]!=null&&!UI.resetScroll)e.scrollTop=keep[k];});UI.resetScroll=false;
   const fc=document.getElementById("fstage");if(fc)FS.attach(fc);
   const lg=document.querySelector(".flog");if(lg)lg.scrollTop=lg.scrollHeight;
-  mountCanvases();pxBars();spotPaint();
-  {const old=document.querySelector(".newspop");if(G&&!UI.scene&&!UI.fight&&!UI.montage&&!UI.modal&&document.querySelector(".hud")&&UI.newsWeek!==G.week&&UI.spot==null&&!old){document.querySelector(".hud").insertAdjacentHTML("beforeend",newsHTML());
-    const cr=document.querySelector(".newspop .ncrawl");if(cr)cr.addEventListener("animationend",()=>{UI.newsWeek=G.week;const el=document.querySelector(".newspop");if(el){el.classList.add("out");setTimeout(()=>el.remove(),450);}});}}
+  mountCanvases();if(typeof mountQSprites==="function")mountQSprites();pxBars();spotPaint();
+  if(typeof newsSync==="function")newsSync();
 }
 // v1.12.1 spotlight intro: dim the screen and teach one part of it at a time
 const SPOT=[
@@ -240,8 +239,8 @@ function hubHTML(){
   return `<header class="hud"><div class="hud-in">
     <div class="brand">MUAY THAI <b>MOE</b></div>
     <div class="wk"><strong class="num">สัปดาห์ ${Math.min(G.week,52)}<small>/52</small></strong><span>${G.season>1?`ฤดูกาล ${G.season} · `:""}${stageLabel()}</span></div>
-    <div class="stats"><div class="stat"><span>เงินสด</span><b class="num ${G.cash<0||weeksLeft()<=4?"neg":""}">${fmt(G.cash)}${weeksLeft()<=6?`<i class="cashwarn" title="เงินจะหมดในราว ${weeksLeft()} สัปดาห์">⚠</i>`:""}</b></div><button class="stat repbtn" data-act="repinfo"><span>ชื่อเสียง ▸</span><b class="num">${G.rep.toFixed(1)}</b></button></div>
-    <button class="iconbtn" data-act="settings" aria-label="ตั้งค่า">${icon("gear")}</button>
+    <div class="stats"><button class="stat cashbtn" data-act="cashflow"><span>เงินสด ▸</span><b class="num ${G.cash<0||weeksLeft()<=4?"neg":""}">${fmt(G.cash)}${weeksLeft()<=6?`<i class="cashwarn" title="เงินจะหมดในราว ${weeksLeft()} สัปดาห์">⚠</i>`:""}</b></button><button class="stat repbtn" data-act="repgraph"><span>ชื่อเสียง ▸</span><b class="num">${G.rep.toFixed(1)}</b></button></div>
+    <div class="hbtns"><button class="iconbtn mailbtn" data-act="mail" aria-label="ตู้จดหมาย${mailBadge()?` มี ${mailBadge()} ฉบับใหม่`:""}">${MAILBOX_PX}${mailBadge()?`<i class="mbadge">${mailBadge()}</i>`:""}</button><button class="iconbtn" data-act="settings" aria-label="ตั้งค่า">${icon("gear")}</button></div>
     <button class="btn primary endweek ${weekTodo().length?"":"ready"}" data-act="endweek">${weekTodo().length?`จบสัปดาห์ ▸ <small>(เหลือ ${weekTodo().length} อย่าง)</small>`:"พร้อมแล้ว · จบสัปดาห์ ▸"}</button>
   </div>
   <nav class="tabs" aria-label="เมนู">${TABS.map(([k,t])=>`<button data-act="tab" data-v="${k}" ${UI.tab===k?'aria-current="page"':""}>${icon(k)}<span>${t}</span>${dots[k]?'<i class="dot" aria-hidden="true"></i>':""}</button>`).join("")}</nav></header>
@@ -263,7 +262,7 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
   if(weeksLeft()<=6)T.push({p:10,t:`⚠ ถ้ารายรับเท่าเดิม เงินจะหมดในราว ${weeksLeft()} สัปดาห์! รับไฟต์ สอนคลาสพิเศษ หรือลดค่าจ้าง`,act:{k:"tab",v:"fights",label:"ดูไฟต์"}});
   else if(weeklyNet(G)<0){const full=studentDemand(G)>studentCap(G);T.push({p:6,t:full?`รายจ่ายมากกว่ารายรับ ${fmt(-weeklyNet(G))}/สัปดาห์ คนอยากเรียนเกินที่รับไหว จ้างผู้ช่วยครูหรือขยายลานสอนจะได้เงินเพิ่ม`:`รายจ่ายมากกว่ารายรับ ${fmt(-weeklyNet(G))}/สัปดาห์ ลองสอนคลาสพิเศษหรือรับไฟต์เพิ่ม`,act:full?{k:"tab",v:"camp",sub:"staff",label:"ไปจ้างผู้ช่วยครู"}:{k:"campacts",label:"เลือกกิจกรรมค่าย"}});}
   if(G.cash<0)T.push({p:10,t:`เงินติดลบมา ${G.negWeeks} สัปดาห์ ถ้าติดลบ 4 สัปดาห์จนเกิน ฿10,000 ค่ายจะล้มละลาย`});
-  if(studentDemand(G)>studentCap(G)+2)T.push({p:5,t:`มีคนอยากเรียนมากกว่าที่ค่ายรับไหว ${studentDemand(G)-studentCap(G)} คน จ้างผู้ช่วยครูหรือขยายลานสอนจะได้เงินเพิ่ม`,act:{k:"tab",v:"camp",sub:"staff",label:"ไปจ้างผู้ช่วยครู"}});
+  if(studentDemand(G)>studentCap(G)+2)T.push({p:5,t:`นักเรียนเต็มค่ายแล้ว ยังมีคนอยากเรียนอีก ${studentDemand(G)-studentCap(G)} คน อัปลานสอนคอร์สจะรับเพิ่มได้ทีละ 3 คน`,act:{k:"tab",v:"camp",sub:"fac",label:"ไปอัปลานสอน"}});
   if(!G.campUsed)T.push({p:3,t:"ยังไม่ได้เลือกกิจกรรมค่ายสัปดาห์นี้",act:{k:"campacts",label:"เลือกกิจกรรม"}});
   if(!G.freeUsed)T.push({p:2,t:"อย่าลืมใช้เวลาว่างกับนักมวย ความสนิทช่วยเรื่องกำลังใจ",act:{k:"tab",v:"people",label:"ไปหาตัวละคร"}});
   if(G.flags.maliRecruit&&G.F.mali.camp==="free")T.push({p:6,t:"มะลิพร้อมเซ็นสัญญาแล้ว",act:{k:"tab",v:"camp",sub:"staff",label:"ไปเซ็นสัญญา"}});
@@ -430,20 +429,21 @@ function offersHTML(){const mine=G.bookings.filter(b=>G.F[b.a].camp==="player").
        <div class="bk-info"><div class="t">${esc(me.name)} vs ${esc(o.name)}</div><div class="meta">สัปดาห์ ${b.week} · ${TIER[b.tier].name} · ${b.rounds} ยก${b.win?` · ค่าตัว ${fmt(b.lose)} (+${fmt(b.win-b.lose)} ถ้าชนะ)`:""}</div>
        <span class="pill ${b.week===G.week?"red":"gold"}">${b.week===G.week?"สัปดาห์นี้":`อีก ${b.week-G.week} สด.`}</span></div><div class="bk-btns">${b.planSet?`<button class="btn sm done" data-act="fplan" data-id="${b.id}">✓ แผน: ${PLANS[b.plan||"balanced"].name}</button>`:`<button class="btn sm red" data-act="fplan" data-id="${b.id}">ตั้งแผนไฟต์</button>`}${scouted(o.id)?`<button class="btn sm done" disabled>${G.F.rin.camp==="player"?"✓ รินวิเคราะห์แล้ว":"✓ ดูเทปแล้ว"}</button>`:`<button class="btn sm" data-act="scout" data-v="${o.id}" ${G.cash<scoutCost()?"disabled":""}>${scoutLabel()}</button>`}</div></div>`;}).join("")}</div></section>`:""}
    <section class="px card"><div class="card-h"><h3>ข้อเสนอสัปดาห์นี้</h3>${G.losses&&G.losses.length?`<button class="btn sm" data-act="lossrev">ทบทวนความพ่ายแพ้</button>`:`<span class="legend"><i class="dot green"></i>อ่อนกว่า <i class="dot gold"></i>สูสี <i class="dot red"></i>เก่งกว่า</span>`}</div><div class="list">${
-     G.offers.map(o=>{const op=G.F[o.b],me=G.F[o.a];const A=adviseCached(o.a,o.b,3);const v=verdictOf(A.bestRate);
-       return `<div class="item offer ${v.c}"><div class="l"><span class="vdot ${v.c}" aria-label="${v.t}"></span>${faceImg(op,"sm")}<div>
+     [...G.offers].sort((x,y)=>(y.rv||y.beast||y.tier==="special"?1:0)-(x.rv||x.beast||x.tier==="special"?1:0)).map(o=>{const op=G.F[o.b],me=G.F[o.a];const A=adviseCached(o.a,o.b,3);const v=verdictOf(A.bestRate);
+       const sp=o.rv?["rv","ศึกล้างตา · ทั้งจังหวัดรอดู"]:o.beast?["beast",QK[o.beast].grp==="rooster"?"ศึกพิสดาร · คนปะทะไก่ชน":"ศึกพิสดาร · ล้มวัวฉบับมวยไทย"]:o.tier==="special"?["sp","ศึกพิเศษข้ามรุ่น"]:null;
+       return `<div class="item offer ${v.c} ${sp?"spx "+sp[0]:""}">${sp?`<span class="ribbon">${sp[1]}</span>`:""}<button class="oxbtn" data-act="declo" data-v="${o.id}" aria-label="ปฏิเสธข้อเสนอนี้">✕</button><div class="l"><span class="vdot ${v.c}" aria-label="${v.t}"></span>${faceImg(op,"sm")}<div>
        <div class="t">${esc(me.name)} vs ${esc(op.name)}</div>
-       <div class="meta">สด.${o.week} · ${TIER[o.tier].name} · ${styleOf(op.a)}${op.camp==="rival"?" · พยัคฆ์ทอง":""}${personaOf(op)?` · ${personaOf(op).tag}`:""}</div>${h2hText(op)?`<div class="meta goldt">${h2hText(op)}</div>`:""}
+       <div class="meta">สด.${o.week} · ${TIER[o.tier].name}${o.beast?" · ไม่นับสถิติ":""} · ${styleOf(op.a)}${op.camp==="rival"?" · พยัคฆ์ทอง":""}${personaOf(op)?` · ${personaOf(op).tag}`:""}</div>${h2hText(op)?`<div class="meta goldt">${h2hText(op)}</div>`:""}
        <div class="meta">ค่าตัว ${fmt(o.lose)} · <b class="goldt">ชนะ +${fmt(o.win-o.lose)}</b> · <b class="${v.c}t">${v.t}</b>${ovr(op.a)-ovr(me.a)>.4?` · <b class="goldt">ชนะได้โบนัสแต้ม/ชื่อเสียง</b>`:""}</div>
        </div></div>
        <div class="obtns3"><button class="btn sm" data-act="consider" data-v="${o.id}">${scouted(o.b)?"ข้อมูลคู่ชก":"ดูเทป"}</button>${coachOn()?`<button class="btn sm" data-act="otip" data-v="${o.id}">คำแนะนำครู</button>`:""}<button class="btn sm gold" data-act="accept" data-v="${o.id}">รับไฟต์</button></div></div>`;}).join("")||`<p class="lead">${G.bookings.length?"รับไฟต์แล้ว ข้อเสนอใหม่จะเข้ามาสัปดาห์หน้า":"ไม่มีข้อเสนอ (บาดเจ็บ หรือหมดฤดูกาล)"}</p>`}</div></section>`;}
 function rankHTML(){const st=stageOf(G.week),cut=st==="local"?4:st==="district"?4:0,d=UI.rdiv;const rows=standings(G,d);const mv=(G.rankMove&&G.rankMove[d])||{};
   return `<section class="px card"><div class="card-h"><div class="seg sm"><button data-act="rdiv" data-v="A" aria-pressed="${d==="A"}">รุ่น A</button><button data-act="rdiv" data-v="B" aria-pressed="${d==="B"}">รุ่น B</button></div>${G.champ[d]?`<span class="pill gold">แชมป์: ${esc(G.F[G.champ[d]].name)}</span>`:""}</div>
-   <p class="meta">${st==="local"?"ท็อป 4 ไปรอบอำเภอ · ตัด สด.20":st==="district"?"ท็อป 4 ไปรองชิง · ตัด สด.40":"รองชิง สด.44 · ชิงแชมป์ สด.49"}</p>
+   <div class="rkhelp"><p class="meta">${st==="local"?"ท็อป 4 (เส้นทอง) ไปรอบอำเภอ · ตัดรอบ สด.20":st==="district"?"ท็อป 4 (เส้นทอง) ไปรองชิงจังหวัด · ตัดรอบ สด.40":"รองชิง สด.44 · ชิงแชมป์ สด.49"} · ชนะ 3 แต้ม</p><button class="btn sm" data-act="rankhelp">อันดับมีผลยังไง?</button></div>
    ${st==="final"||st==="off"?`<p class="meta">รองชิง (สด.44): ${(()=>{const t=(G.semis||{})[d]||[];return t.length===4?`<b>${esc(G.F[t[0]].name)}</b> vs <b>${esc(G.F[t[3]].name)}</b> · <b>${esc(G.F[t[1]].name)}</b> vs <b>${esc(G.F[t[2]].name)}</b>`:"—";})()}<br>ชิงแชมป์ (สด.49): ${G.finalists[d].map(id=>`<b>${esc(G.F[id].name)}</b>`).join(" vs ")||"รอผลรองชิง"}</p>`:""}
    <div class="tbl-wrap"><table><thead><tr><th>#</th><th></th><th>นักมวย</th><th>แต้ม</th><th>ช-พ-ส</th><th>ฟอร์ม</th></tr></thead><tbody>
    ${rows.map((r,i)=>`<tr class="${r.f.camp==="player"?"me":r.f.camp==="rival"?"rival":""} ${cut&&i<cut?"zone":""} ${cut&&i===cut-1?"cut":""}"><td class="num">${i+1}</td><td>${moveIcon(mv[r.id])}</td><td>${esc(r.f.name)}</td><td class="num"><b>${r.pts}</b></td><td class="num">${r.w}-${r.l}-${r.d}</td><td>${formHTML(r.f)}</td></tr>`).join("")}
-   </tbody></table></div></section>`;}
+   </tbody></table></div></section>${calendarHTML()}`;}
 
 function peopleHTML(){const met=CANON_IDS.map(id=>G.F[id]).filter(f=>f.met);
   return `<div class="card-h"><p class="meta">ใช้เวลาด้วยกันได้สัปดาห์ละ 1 ครั้ง</p>${G.freeUsed?'<span class="pill">เวลาว่าง: ใช้แล้ว</span>':'<span class="pill gold">เวลาว่าง: เหลือ 1</span>'}</div>
@@ -468,11 +468,11 @@ function campHTML(){const inc=classIncome(G),up=upkeep(G),wg=wages(G),lv=campLev
     <div class="kv-row"><span>หนี้ ${fmt(G.debt)} · ผ่อนทุก 4 สัปดาห์ ${fmt(Math.min(5000,G.debt))}</span><button class="btn sm" data-act="paydebt" ${G.cash<10000||G.debt<=0?"disabled":""}>โปะ ฿10,000</button></div></section>
    <section class="px card cpane ${cs==="staff"?"on":""}"><h3>ครูและนักเรียน</h3>
     <div class="kv-row"><span>คนอยากเรียน ${studentDemand(G)} · รับได้ ${studentCap(G)}</span><b class="${studentDemand(G)>studentCap(G)?"goldt":""}">${studentDemand(G)>studentCap(G)?"ล้น!":"พอดี"}</b></div>
-    <div class="item nw"><div class="l"><img class="face sm" src="${faceSrc("coach")}" alt=""><div><div class="t">ครูแดง Lv.${G.fac.daeng}</div><div class="meta">รับนักเรียน ${G.fac.daeng*8} คน · ค่าเรียน +12%/ระดับ · ฝึก +5%/ระดับ</div></div></div>
+    <div class="item nw"><div class="l"><img class="face sm" src="${faceSrc("coach")}" alt=""><div><div class="t">ครูแดง Lv.${G.fac.daeng}</div><div class="meta">รับนักเรียน +${(G.fac.daeng-1)*2} คน · ค่าเรียน +12%/ระดับ · ฝึก +5%/ระดับ</div></div></div>
      ${G.fac.daeng<3?`<button class="btn sm gold" data-act="daeng" ${G.cash<DAENG_COST[G.fac.daeng]?"disabled":""}>ส่งอบรม ${fmt(DAENG_COST[G.fac.daeng])}</button>`:'<span class="pill green">สูงสุด</span>'}</div>
     ${staffHTML()}</section>
    </div>
-   <section class="px card cpane ${cs==="fac"?"on":""}"><h3>สิ่งอำนวยความสะดวก</h3><div class="facs">${Object.entries(FACILITIES).map(([k,F])=>{const l=G.fac[k]||0,m=F.cost.length,lk=facLocked(G,k);
+   <section class="px card cpane ${cs==="fac"?"on":""}"><h3>สิ่งอำนวยความสะดวก</h3><div class="facs">${(()=>{const E=Object.entries(FACILITIES),lk=E.filter(([k])=>facLocked(G,k));return [...E.filter(([k])=>!facLocked(G,k)),...lk.slice(0,1)];})().map(([k,F])=>{const l=G.fac[k]||0,m=F.cost.length,lk=facLocked(G,k);
      return `<div class="item fac ${lk?"locked":""}"><div><div class="t">${F.name} ${dots(l,m)}${F.req&&!l&&!lk?' <span class="newb sm">ใหม่</span>':""}</div><div class="meta">${F.desc}</div></div>${lk?`<span class="pill">ปลดล็อก: ${lk}</span>`:l<m?`<button class="btn sm gold" data-act="buyfac" data-v="${k}" ${G.cash<F.cost[l]?"disabled":""}>${fmt(F.cost[l])}</button>`:'<span class="pill green">สูงสุด</span>'}</div>`;}).join("")}</div></section>
    <section class="px card cpane ${cs==="fac"?"on":""}"><h3>ลงทุนพิเศษ</h3>
     <div class="item nw"><div><div class="t">เชิญครูมวยโบราณมาสอน</div><div class="meta">${fmt(18000)} · นักมวยได้แต้มสกิล +1 และค่าสถานะตามสำนัก · คนละครั้งต่อฤดูกาล · เปิดสัปดาห์ 16</div></div><button class="btn sm gold" data-act="mastersOpen" ${G.week<16?"disabled":""}>เลือก</button></div>
@@ -482,7 +482,7 @@ function campHTML(){const inc=classIncome(G),up=upkeep(G),wg=wages(G),lv=campLev
 
 // v1.18: hired trainers with their own pixel sprite
 function staffHTML(){const st=G.staff||[],n=staffSlots(G);
-  return `<div class="kv-row"><span>ทีมครูฝึก</span><b>${st.length}/${n} ตำแหน่ง</b></div><p class="meta">ตำแหน่งเพิ่มตามระดับค่าย และเวทีมาตรฐาน · ครูแต่ละคนรับนักเรียน +6 ฝึก +2%</p>
+  return `<div class="kv-row"><span>ทีมครูฝึก</span><b>${st.length}/${n} ตำแหน่ง</b></div><p class="meta">ตำแหน่งเพิ่มตามระดับค่าย และเวทีมาตรฐาน · ครูแต่ละคนรับนักเรียน +1 ฝึก +2%</p>
    <div class="staffs">${Object.entries(STAFF).map(([k,S])=>{const h=st.includes(k),lk=staffLocked(G,k);
     return `<div class="staff ${h?"on":""} ${lk?"locked":""}"><canvas width="84" height="84" data-staff="${k}" aria-label="${S.name}"></canvas>
      <div class="sinfo"><b>${S.name}</b><span class="role">${S.role}</span><span class="meta">${S.desc}</span><span class="meta">ค่าจ้าง ${fmt(S.wage)}/สัปดาห์${h?"":` · ค่าเซ็น ${fmt(S.fee)}`}</span></div>
@@ -506,16 +506,19 @@ function fighterHTML(f){const mine=f.camp==="player";const P=PROFILES[f.id];
       ${mine?`<p class="meta goldt">${masteryLine(f)}</p>`:""}<p class="meta">ฟอร์ม ${formHTML(f)}${nb?` · ไฟต์ถัดไปสัปดาห์ ${nb.week}`:""}</p><details><summary>ค่าสถานะละเอียด</summary>${attrsHTML(f,mine)}</details></div></div>`;}
   if(t==="train"){body=`<div class="fp-train"><div class="tr-anim big" style="background-image:url(${ASSET}${gymBg()})"><canvas width="260" height="200" data-sprite="${f.id}" data-floor="1"></canvas><span class="tr-tag">${PRESETS[f.plan.preset].name}</span></div>
      <div><p class="meta">${PRESETS[f.plan.preset].desc} · ความล้าสัปดาห์หน้า ${Math.round(projFatigue(f))}</p>${presetPicker(f)}${radarSVG(f,200)}</div></div>`;}
-  if(t==="skill")body=(SIGNATURE[f.id]?`<div class="sigcard ${hasSignature(f)?"on":""}"><b>${hasSignature(f)?"✦":"🔒"} ท่าไม้ตาย: ${SIGNATURE[f.id].name}</b><span class="meta">${SIGNATURE[f.id].desc}${hasSignature(f)?"":` · ตอนนี้ความสนิท ${Math.round(f.bond||0)}/60`}</span></div>`:"")+skillGrid(f,mine)+`<p class="meta">ได้แต้มสกิล 1 แต้มทุกเลเวลอัป · ท่าใหม่ปลดล็อกตามเลเวล · แต่ละท่าอัปได้ 3 ขั้น · ผลของสกิลมีเฉพาะท่าที่เลือกใช้</p>`;
+  if(t==="skill")body=skillGrid(f,mine)+(SIGNATURE[f.id]?`<details class="sigcard ${hasSignature(f)?"on":""}"><summary><b>${hasSignature(f)?"✦":"🔒"} ท่าไม้ตาย: ${SIGNATURE[f.id].name}</b></summary><span class="meta">${SIGNATURE[f.id].desc}${hasSignature(f)?"":` · ตอนนี้ความสนิท ${Math.round(f.bond||0)}/60`}</span></details>`:"")+`<details class="skhelp"><summary>สกิลทำงานยังไง?</summary><p class="meta">ได้แต้มสกิล 1 แต้มทุกเลเวลอัป · ท่าใหม่ปลดล็อกตามเลเวล · แต่ละท่าอัปได้ 3 ขั้น · ตอนชกกดใช้ได้เฉพาะ 3 ท่าที่ "ใช้" · แตะชื่อท่าเพื่อดูรายละเอียด</p></details>`;
   if(t==="rel")body=relHTML(f);
   return head+`<div class="fp-body">${body}</div>`;}
 function skillGrid(f,mine){const L=SKILLS[f.id]||[];const sc=SCHOOLS[L[0]&&L[0].school]||{name:"",motto:""};
-  return `<div class="school" style="--c:${sc.color}"><b>${sc.name}</b><span>“${sc.motto}”</span>${mine?`<span class="pill ${f.sp>0?"gold":""}">แต้มสกิล ${f.sp}</span>`:""}</div>
-   ${mine?`<div class="eqbar"><b>สกิลที่ใช้ขึ้นชก ${equipped(f).length}/${MAX_EQUIP}</b><span class="meta">แตะ "ใช้" เพื่อเลือก · ตอนชกกดใช้ได้เฉพาะ 3 ท่านี้</span></div>`:""}
-   <div class="skgrid">${L.map(s=>{const r=f.skills[s.id]||0,lk=(s.lv||1)>f.lvl,eq=equipped(f).includes(s.id),k=skillKind(s);
-     return `<div class="sktile ${r?"has":""} ${lk?"lockd":""} ${eq?"eq":""}"><div class="skh">${PIX["sk_"+k.k]}<b>${s.name}</b>${mine&&!lk?`<button class="plus" data-act="learn" data-id="${f.id}" data-v="${s.id}" ${f.sp<1||r>=3?"disabled":""} aria-label="อัป ${s.name}">${r>=3?"MAX":"+"}</button>`:""}</div>
-     ${lk?`<span class="pill">ปลดล็อก Lv.${s.lv}</span>`:`<span class="pips">${[1,2,3].map(i=>`<i class="${i<=r?"on":""}"></i>`).join("")}</span>`}<small>${s.desc}</small>
-     ${mine&&r?`<button class="btn sm eqbtn ${eq?"on":""}" data-act="equip" data-id="${f.id}" data-v="${s.id}" ${!eq&&equipped(f).length>=MAX_EQUIP?"disabled":""}>${eq?"กำลังใช้":"ใช้"}</button>`:""}</div>`;}).join("")}</div>`;}
+  // v1.23: compact — unlocked moves as short rows (tap the name for details), locked ones folded away
+  const op=L.filter(s=>(s.lv||1)<=f.lvl),lk=L.filter(s=>(s.lv||1)>f.lvl),eqd=equipped(f);
+  const row=s=>{const r=f.skills[s.id]||0,eq=eqd.includes(s.id),k=skillKind(s),o=UI.skOpen===f.id+s.id;
+    return `<div class="skrow ${r?"has":""} ${eq?"eq":""}"><button class="skn" data-act="skdesc" data-v="${f.id+s.id}" aria-expanded="${o}">${PIX["sk_"+k.k]}<b>${s.name}</b><span class="pips">${[1,2,3].map(i=>`<i class="${i<=r?"on":""}"></i>`).join("")}</span></button>
+     ${mine?`<span class="skb">${r?`<button class="btn sm eqbtn ${eq?"on":""}" data-act="equip" data-id="${f.id}" data-v="${s.id}" ${!eq&&eqd.length>=MAX_EQUIP?"disabled":""}>${eq?"ใช้อยู่":"ใช้"}</button>`:""}<button class="plus" data-act="learn" data-id="${f.id}" data-v="${s.id}" ${f.sp<1||r>=3?"disabled":""} aria-label="อัป ${s.name}">${r>=3?"MAX":"+"}</button></span>`:""}
+     ${o?`<small class="skd">${s.desc}</small>`:""}</div>`;};
+  return `<div class="school sm" style="--c:${sc.color}"><b>${sc.name}</b>${mine?`<span class="pill ${f.sp>0?"gold":""}">แต้มสกิล ${f.sp}</span><span class="pill">ใช้ขึ้นชก ${eqd.length}/${MAX_EQUIP}</span>`:""}</div>
+   <div class="sklist">${op.map(row).join("")||`<p class="meta">ยังไม่มีท่าที่ปลดล็อก</p>`}</div>
+   ${lk.length?`<details class="sklock"><summary>ท่าที่ยังล็อก ${lk.length} ท่า · ถัดไป Lv.${lk[0].lv}</summary>${lk.map(s=>`<div class="sklk"><span>Lv.${s.lv}</span><b>${s.name}</b><small>${s.desc}</small></div>`).join("")}</details>`:""}`;}
 function relHTML(f){const P=PROFILES[f.id],b=f.bond;
   const L=(ok,need,v)=>ok?esc(v):`<span class="lock">🔒 สนิท ${need}</span>`;
   const chips=(arr,pre,all)=>arr.map((x,i)=>f.know[pre+i]||b>=all?`<span class="tchip">${esc(x)}</span>`:`<span class="tchip lock">???</span>`).join("");
@@ -532,7 +535,8 @@ function relHTML(f){const P=PROFILES[f.id],b=f.bond;
    <details class="pf-sec"><summary>เรื่องราว & ความลับ</summary><h4>เรื่องราว</h4><p>${L(b>=UNLOCK.story,UNLOCK.story,P.story)}</p><h4>ความลับ</h4><p>${L(b>=UNLOCK.secret,UNLOCK.secret,P.secret)}</p></details>`;}
 function giftHTML(id){const f=G.F[id];
   const E=giftsFor(id).map(k=>[k,{...GIFTS[k],bond:giftBond(id,k)}]).sort((x,y)=>(x[1].bond||0)-(y[1].bond||0)||(x[1].only?1:0)-(y[1].only?1:0));
-  return `<h2>ของขวัญให้${esc(f.name)}</h2><p class="meta">ซื้อแล้วให้ทันที · คนละ 1 ชิ้นต่อสัปดาห์ · ยิ่งสนิทยิ่งมีของให้เลือก · เงินสด ${fmt(G.cash)}</p><div class="gifts">${E.map(([k,g])=>{const kn=f.know["gift_"+k],lk=(g.bond||0)>(f.bond||0);
+  {const lk=E.filter(([k,g])=>(g.bond||0)>(f.bond||0));const nx=lk[0];const hid=lk.length-(nx?1:0);E.splice(0,E.length,...E.filter(([k,g])=>(g.bond||0)<=(f.bond||0)),...(nx?[nx]:[]));E.hidden=hid;}
+  return `<h2>ของขวัญให้${esc(f.name)}</h2><p class="meta">ซื้อแล้วให้ทันที · คนละ 1 ชิ้นต่อสัปดาห์ · ยิ่งสนิทยิ่งมีของให้เลือก${E.hidden?` (ยังซ่อนอีก ${E.hidden} ชิ้น)`:""} · เงินสด ${fmt(G.cash)}</p><div class="gifts">${E.map(([k,g])=>{const kn=f.know["gift_"+k],lk=(g.bond||0)>(f.bond||0);
    if(lk)return `<div class="giftbtn lockg"><b>???</b><small>ปลดล็อกเมื่อสนิท ${g.bond}</small></div>`;
    return `<button class="giftbtn ${g.only?"own":g.bond?"spec":""}" data-act="give" data-id="${id}" data-v="${k}" ${G.cash<g.price?"disabled":""}><b>${g.name}</b><small>${fmt(g.price)}${kn?` · ${kn==="love"?"ชอบมาก ♥♥":kn==="like"?"ชอบ ♥":kn==="dislike"?"ไม่ชอบ ✕":"เฉย ๆ"}`:""}</small></button>`;}).join("")}</div>`;}
 function considerHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,o.b,3);const pct=x=>Math.round(x*100);const v=verdictOf(A.bestRate);const sc=scouted(op.id);const P=personaOf(op);
@@ -542,17 +546,22 @@ function considerHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,
    ${sc?`<div class="planbars">${Object.entries(A.rates).sort((a,b)=>b[1]-a[1]).map(([k,x])=>`<div class="bar"><span>${PLANS[k].name}</span><i style="--v:${pct(x)}%;--bc:${k===A.best?"var(--gold)":"var(--blue)"}"></i><b class="num">${pct(x)}%</b></div>`).join("")}</div>`:`<p class="meta">ดูเทปเพื่อเห็นแผนที่ได้เปรียบ</p>`}
    <p class="meta">สัปดาห์ ${o.week} · ${TIER[o.tier].name} · ค่าตัว ${fmt(o.lose)} · ชนะได้เพิ่ม ${fmt(o.win-o.lose)}</p>
    <div class="mfoot"><button class="btn primary" data-act="closeModal">ปิด</button></div>`;}
+function actNear(a){let s=0;if(a.rep)s+=Math.max(0,a.rep-G.rep)*2;if(a.week)s+=Math.max(0,a.week-G.week);if(a.fac)s+=20;if(a.lv)s+=15;return s;}
 function campActsHTML(){const pk=UI.modal.pick;if(pk){const a=CAMP_ACTIONS[pk];return `<h2>ยืนยันกิจกรรม?</h2><div class="px confirm"><b>${a.name}</b><p class="meta">${a.desc}${a.cost?` · ค่าใช้จ่าย ${fmt(a.cost)}`:""}</p><p class="meta">ทำได้สัปดาห์ละ 1 อย่าง</p></div><div class="mfoot"><button class="btn ghost" data-act="campback">ย้อนกลับ</button><button class="btn primary" data-act="campok">ยืนยัน</button></div>`;}
-  return `<h2>กิจกรรมค่ายสัปดาห์นี้</h2><p class="meta">เลือกได้ 1 อย่างต่อสัปดาห์</p><div class="acts">${Object.entries(CAMP_ACTIONS).map(([k,a])=>{const lock=campActLocked(G,a);return `<button class="actbtn ${lock?"lockd":""}" data-act="campick" data-v="${k}" ${lock||G.campUsed||G.cash<a.cost?"disabled":""}><b>${a.name}</b><small>${lock?`ปลดล็อก: ${lock}`:a.desc+(a.cost?` · ${fmt(a.cost)}`:"")}</small></button>`;}).join("")}</div>`;}
+  // v1.23: locked activities stay hidden except the next one to open, so the list stays short
+  const all=Object.entries(CAMP_ACTIONS),open=all.filter(([k,a])=>!campActLocked(G,a)),lockd=all.filter(([k,a])=>campActLocked(G,a));
+  const nx=lockd.sort((x,y)=>actNear(x[1])-actNear(y[1]))[0];
+  return `<h2>กิจกรรมค่ายสัปดาห์นี้</h2><p class="meta">เลือกได้ 1 อย่างต่อสัปดาห์${lockd.length>1?` · ยังมีอีก ${lockd.length-1} กิจกรรมที่ซ่อนอยู่`:""}</p><div class="acts">${[...open,...(nx?[nx]:[])].map(([k,a])=>{const lock=campActLocked(G,a);return `<button class="actbtn ${lock?"lockd":""}" data-act="campick" data-v="${k}" ${lock||G.campUsed||G.cash<a.cost?"disabled":""}><b>${a.name}</b><small>${lock?`ปลดล็อก: ${lock}`:a.desc+(a.cost?` · ${fmt(a.cost)}`:"")}</small></button>`;}).join("")}</div>`;}
 function studInfoHTML(){const n=students(G),cap=studentCap(G),d=studentDemand(G),fee=studentFee(G);
   return `<h2>นักเรียนคอร์สมวย</h2><div class="px confirm"><img class="face sm" src="${faceSrc("coach")}" alt="" style="float:left;margin:0 10px 4px 0">
    <p>นักท่องเที่ยวกับเด็กแถวค่ายที่มาเรียนมวยกับครูแดง ไม่ใช่นักมวยที่ขึ้นชก แต่เป็น<b>รายได้หลักของค่าย</b> จ่ายค่าเรียนทุกสัปดาห์</p></div>
    <div class="kv-row"><span>ตอนนี้มาเรียน</span><b class="num">${n} คน</b></div>
    <div class="kv-row"><span>ค่าเรียนต่อคน/สัปดาห์</span><b class="num">${fmt(fee)}</b></div>
    <div class="kv-row"><span>รายได้ต่อสัปดาห์</span><b class="num pos">+${fmt(n*fee)}</b></div>
-   <h3>คนมาเรียนเพิ่มจาก</h3><ul class="mlist"><li>ชื่อเสียง · ป้ายค่าย · ระดับค่าย</li></ul>
-   <h3>รับได้สูงสุด ${cap} คน</h3><ul class="mlist"><li>ครูแดง +8/ระดับ · ลานสอน +4 · ผู้ช่วยครู +6</li></ul>
-   ${d>cap?`<p class="meta goldt">อยากเรียน ${d} คน รับได้ ${cap} · ขยายได้ที่จัดการค่าย</p>`:""}`;}
+   <p class="meta">นักเรียนมาเพิ่มทีละ 1–2 คนต่อสัปดาห์ จนถึงจำนวนที่อยากเรียนหรือที่ค่ายรับไหว ค่ายเต็มที่สุดรับได้ ${STU_MAX} คน</p>
+   <h3>คนอยากเรียน ${d} คน มาจาก</h3><ul class="mlist"><li>ชื่อเสียง · ป้ายค่าย · รถสองแถว · เวทีมาตรฐาน · ระดับค่าย</li></ul>
+   <h3>รับได้สูงสุด ${cap} คน</h3><ul class="mlist"><li>เริ่มต้น 6 · ลานสอน +3/ระดับ · อัปครูแดง +2/ระดับ · ครูที่จ้าง +1/คน (สูงสุด 5)</li></ul>
+   ${d>cap?`<p class="meta goldt">อยากเรียน ${d} คน แต่รับได้ ${cap} · อัปลานสอนที่จัดการค่าย</p>`:n<Math.min(d,cap)?`<p class="meta">กำลังมาเพิ่ม: อีก ${Math.min(d,cap)-n} คน</p>`:""}`;}
 function weekCards(r){const R=roster(G);if(!R.length)return "";const P={};(r.prog||[]).forEach(p=>P[p.id]=p);
   return `<div class="wkcards">${R.map(f=>{const p=P[f.id];const nb=nextBooking(f);return `<div class="wkc px">${faceImg(f,"sm")}<b>${esc(f.name)} <span class="lv">Lv.${f.lvl}</span></b>
     <div class="minis"><span>EXP</span>${mini(f.xp/Math.max(1,xpNeed(f))*100,"var(--gold)")}<span>ล้า</span>${mini(f.fatigue,f.fatigue>=52?"var(--red)":"var(--warn)")}</div>
@@ -594,6 +603,7 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
      <div class="kv-row"><span>ค่าเซ็น</span><b class="num">${fmt(f.fee)}</b></div><div class="kv-row"><span>ค่าจ้าง</span><b class="num">${fmt(f.wage)}/สัปดาห์</b></div><div class="kv-row"><span>สุทธิต่อสัปดาห์หลังเซ็น</span><b class="num ${net<0?"neg":"pos"}">${fmt(net)}</b></div>
      <div class="mfoot"><button class="btn ghost" data-act="closeModal">รอก่อน</button><button class="btn primary" data-act="sign" data-v="${f.id}" data-ok="1">เซ็นเลย</button></div>`;}
   if(m.type==="levelup"){body=`<h2 class="lvup">LEVEL UP!</h2>${m.ids.map(id=>{const f=G.F[id];return `<div class="lvrow"><div class="l">${faceImg(f,"sm")}<b>${esc(f.name)} Lv.${f.lvl}</b></div>${coachOn()&&f.sp>0?`<p class="hinttxt"><img src="${faceSrc("coach")}" alt=""><span>${skillTip(f)}</span></p>`:""}${skillGrid(f,true)}</div>`;}).join("")}`;}
+  if(typeof XMODAL!=="undefined"&&XMODAL[m.type]){const r=XMODAL[m.type](m);body=r.body;foot=r.foot;}
   return `<div class="overlay" data-act="closeModalBg"><div class="px modal pxscroll m-${m.type}" data-sk="modal-${m.type}" role="dialog" aria-modal="true"><button class="xbtn" data-act="closeModal" aria-label="ปิด">✕</button>${body}
     ${foot?`<div class="mfoot"><button class="btn primary" data-act="closeModal">${m.type==="report"||m.type==="levelup"?"ไปต่อ ▸":"ปิด"}</button></div>`:""}</div></div>`;}
 
@@ -686,7 +696,7 @@ function pendingEvents(){return EVENTS.filter(e=>e.when&&!G.seen[e.id]&&e.when(G
 function runEvents(done){const list=pendingEvents();let played=0;
   const step=()=>{const e=list.shift();if(!e||G.ended){done&&done(played);return;}if(G.seen[e.id]||!e.when(G)){step();return;}
     G.seen[e.id]=true;played++;playScene(e.steps,step,{bg:e.bg,look:e.look});};step();}
-function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);
+function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);if(typeof questExtra==="function"&&questExtra(done,mulberry32(G.seed+G.week*59)))return;
   const dil=(typeof DILEMMAS!=="undefined"?DILEMMAS:[]).filter(d=>!G.seen[d.id]&&G.week>=d.from&&G.week<=d.to&&d.need(G));
   const sinceD=G.week-(G.lastDilemma||0);
   // v1.21: something happens most weeks — a decision every couple of weeks, chatter or a happening in between
@@ -696,7 +706,7 @@ function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);
   const chats2=chats.filter(c=>!c.need2||c.need2(G)),haps2=haps.filter(h=>!h.need||h.need(G));
   let pick=null;if(chats2.length&&rng()<.6)pick=chats2[Math.floor(rng()*chats2.length)];else if(haps2.length&&rng()<.7)pick=haps2[Math.floor(rng()*haps2.length)];
   if(!pick){done();return;}G.seen[pick.id]=true;playScene(pick.steps,done,{bg:pick.bg==="camp"?"gym":pick.bg,look:pick.look||"train"});}
-function afterWeekFlow(){runEvents(played=>{const fin=()=>{if(G.ended){startEnding();return;}
+function afterWeekFlow(){if(typeof mailWeekly==="function"&&!G.ended)mailWeekly(G);runEvents(played=>{const fin=()=>{if(G.ended){startEnding();return;}
     if(G.levelUps&&G.levelUps.length){const ids=[...new Set(G.levelUps)];G.levelUps=[];AU.sfx("level");UI.modal={type:"levelup",ids};}render();};
     const go=()=>coachBackScene(()=>aftermathScene(()=>tiredScene(()=>rinScene(fin))));if(played)go();else weeklyExtra(go);});}
 // v1.15: a worn-out fighter asks for a rest week herself
@@ -730,7 +740,7 @@ function rinScene(done){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0||
 // ---------- week flow ----------
 function endWeek(){if(UI.scene||UI.fight||UI.montage)return;AU.resume();UI.tipIdx=0;
   weekTrain(G);
-  for(const b of G.bookings.filter(b=>b.week===G.week&&b.npc)){const F=quickFight(G.F[b.a],G.F[b.b],G.seed+G.week*97+b.id.length,b.rounds);applyResult(G,F,b);finishBracket(G,b,F);
+  for(const b of G.bookings.filter(b=>b.week===G.week&&b.npc)){const F=quickFight(G.F[b.a],G.F[b.b],G.seed+G.week*97+b.id.length,b.rounds);finishBracket(G,b,F);applyResult(G,F,b);
     G.log.push(`${TIER[b.tier].name} รุ่น ${G.F[b.a].div}: ${G.F[b.a].name} ${F.result.win==="A"?"ชนะ":"แพ้"} ${G.F[b.b].name} (${F.result.type})`);}
   const queue=G.bookings.filter(b=>b.week===G.week&&!b.npc);
   UI.montage={week:G.week,items:roster(G).map(f=>({id:f.id,gains:{...f.gains},xp:f.xpGain||0,preset:f.plan.preset,injury:f.injury})),fights:queue.length,queue};if(SETTINGS.quick){montageDone();return;}render();}
@@ -887,7 +897,7 @@ function fightInsight(F,U){const A=F.A,B=F.B,win=F.result.win==="A",W={punch:"�
 function resultHTML(){const U=UI.fight,F=U.F,r=F.result;const win=r.win==="A",draw=r.win==="D";const me=G.F[U.b.a];
   const acc=s=>s.thrown?Math.round(s.landed/s.thrown*100)+"%":"—";
   return `<div class="result px"><div class="big ${win?"win":draw?"":"lose"}">${win?"ชนะ!":draw?"เสมอ":"แพ้"}</div>
-   <div>${esc(r.type)}${r.score?` · ${r.score}`:""} · ยก ${r.round}</div>${U.res?`<div class="meta">ค่าตัวเข้าค่าย ${fmt(U.res.pay)} · EXP เพิ่มขึ้น</div>`:""}
+   <div>${esc(r.type)}${r.score?` · ${r.score}`:""} · ยก ${r.round}</div>${U.res?`<div class="meta">${U.res.pay||!TIER[U.b.tier].off?`ค่าตัวเข้าค่าย ${fmt(U.res.pay)}`:"ไม่นับสถิติ · ค่าตอบแทน (ถ้ามี) ส่งมาทางตู้จดหมาย"} · EXP เพิ่มขึ้น</div>`:""}
    <ul class="insight">${fightInsight(F,U)}</ul>
    <div class="statgrid"><b class="r num">${F.A.landed}/${F.A.thrown}</b><span class="c">เข้าเป้า</span><b class="num">${F.B.landed}/${F.B.thrown}</b>
      <b class="r num">${acc(F.A)}</b><span class="c">ความแม่น</span><b class="num">${acc(F.B)}</b><b class="r num">${F.A.kd}</b><span class="c">ถูกนับ</span><b class="num">${F.B.kd}</b></div>
@@ -924,8 +934,8 @@ function rinNote(F){const A=F.A;const best=Object.entries(A.wl).sort((a,b)=>b[1]
 function fightStart(quick){const U=UI.fight,b=U.b;AU.resume();
   U.F=newFight(G.F[b.a],G.F[b.b],{seed:(G.seed+G.week*131+b.b.length*7)>>>0,rounds:b.rounds,tier:b.tier,planA:U.plan,forceRage:!quick&&!(G.flags&&G.flags.rageShown)});U.F.dai=(DIFF[G.diff||"normal"]||DIFF.normal).ai;
   if(b.wai==="phrom")U.F.A.careMor=.02;if(b.wai==="phra")U.F.A.careMor=.01;if(b.cheer)U.F.A.mor+=b.cheer*.01;setTactics(U.F,U.tac);
-  if(quick){FS.init(null,TIER_BG[b.tier]||"bg_local.webp",G.F[b.a],G.F[b.b]);const F=U.F;while(!F.over){F.A.instr=aiCorner(F,F.A,F.B);F.B.instr=aiCorner(F,F.B,F.A);const lg=fightRound(F);U.shown.push({rd:`ยกที่ ${F.round}`},...lg);}fightEnd();return;}
-  FS.init(null,TIER_BG[b.tier]||"bg_local.webp",G.F[b.a],G.F[b.b]);AU.setTempo(126);AU.startMusic();playRound();}
+  if(quick){FS.init(null,b.bg||TIER_BG[b.tier]||"bg_local.webp",G.F[b.a],G.F[b.b]);const F=U.F;while(!F.over){F.A.instr=aiCorner(F,F.A,F.B);F.B.instr=aiCorner(F,F.B,F.A);const lg=fightRound(F);U.shown.push({rd:`ยกที่ ${F.round}`},...lg);}fightEnd();return;}
+  FS.init(null,b.bg||TIER_BG[b.tier]||"bg_local.webp",G.F[b.a],G.F[b.b]);AU.setTempo(126);AU.startMusic();playRound();}
 function playRound(){const U=UI.fight,F=U.F;AU.setTempo(126+F.round*10);F.B.instr=aiCorner(F,F.B,F.A);F.A.autoSkill=false;roundBegin(F);
   const rng=mulberry32(F.seed+F.round);U.rng=rng;U.tiredShown=false;
   F.tier=F.tier||U.b.tier;const sl=startLine(F,rng);U.pending=[{rd:`ยกที่ ${F.round}`,cap:{text:sl.text,side:"",heat:sl.heat},bell:true}];
@@ -963,7 +973,7 @@ function fightEnd(){const U=UI.fight;U.stage="done";{const w=U.F.result.win;U.bu
   AU.cheer(r.win==="A"?1:.4);
   U.caption={text:r.win==="A"?`${me.name} ชนะ! ${r.type}`:r.win==="D"?"เสมอกันไป":`${G.F[U.b.b].name} ชนะ ${r.type}`,side:r.win==="A"?"A":"B"};
   G.log.push(`${me.name} ${r.win==="A"?"ชนะ":r.win==="B"?"แพ้":"เสมอ"} ${G.F[U.b.b].name} (${r.type})`);
-  {const op=G.F[U.b.b];if(r.win!=="D"&&(op.canon||U.b.tier==="semi"||U.b.tier==="final"||/KO/.test(r.type)))G.lastBig={a:me.id,b:op.id,win:r.win,wk:G.week,shown:false};}
+  {const op=G.F[U.b.b];if(r.win!=="D"&&!TIER[U.b.tier].off&&(op.canon||U.b.tier==="semi"||U.b.tier==="final"||/KO/.test(r.type)))G.lastBig={a:me.id,b:op.id,win:r.win,wk:G.week,shown:false};}
   if(r.win==="B"){const F=U.F,st=s=>({landed:s.landed,thrown:s.thrown,wl:{...s.wl},sta:Math.round(s.sta),kd:s.kd,legs:Math.round(s.legs)});
     G.losses=(G.losses||[]).concat([{wk:G.week,a:me.id,b:U.b.b,type:r.type,round:r.round,cards:F.cards.map(c=>[...c]),A:st(F.A),B:st(F.B),sc:scouted(U.b.b),od:Math.round(ovr(G.F[U.b.b])-ovr(me)),plan:U.plan||"balanced",tg:(F.A.tac&&F.A.tac.target)||"",care:U.careOK||0}]).slice(-6);}
   save();render();}
@@ -1010,7 +1020,7 @@ const ACT={
   intensity:d=>{if(trLocked(G.F[d.f]))return;G.F[d.f].plan.intensity=d.v;save();render();},
   consider:d=>{UI.modal={type:"consider",id:d.v};render();},
   accept:d=>{const o=G.offers.find(x=>x.id===d.v);if(!o)return;const A=adviseCached(o.a,o.b,3);acceptOffer(G,d.v);UI.modal=null;save();toast(`รับไฟต์แล้ว: ${G.F[o.a].name} vs ${G.F[o.b].name} สัปดาห์ ${o.week}`);},
-  fsub:d=>{UI.fsub=d.v;render();},csub:d=>{UI.csub=d.v;render();},rdiv:d=>{UI.rdiv=d.v;render();},
+  fsub:d=>{UI.fsub=d.v;if(d.v==="rank"&&G&&!(G.flags&&G.flags.rankGuide)){G.flags.rankGuide=1;UI.modal={type:"rankhelp"};save();}render();},csub:d=>{UI.csub=d.v;render();},rdiv:d=>{UI.rdiv=d.v;render();},
   tipnext:()=>{UI.tipIdx++;render();},hideguide:()=>{G.guideHidden=G.week;save();render();},
   tipact:d=>{if(d.k==="setrest"||d.k==="setprep"){ACT.tab({v:"train"});if(!trLocked(G.F[d.id])){UI.modal={type:"tpick",id:d.id};render();}}
     else if(d.k==="tab"&&d.sub){UI.csub=d.sub;ACT.tab({v:d.v});}
@@ -1070,6 +1080,7 @@ const ACT={
   corner:d=>{AU.sfx("ui");UI.fight.F.A.instr=d.v;playRound();},
   chint:()=>{UI.fight.hint=!UI.fight.hint;render();},
   repinfo:()=>{UI.modal={type:"repinfo"};render();},
+  skdesc:d=>{UI.skOpen=UI.skOpen===d.v?null:d.v;render();},
   cshow:()=>{UI.fight.cshow=!UI.fight.cshow;render();},
   frev:()=>{UI.fight.rev=!UI.fight.rev;render();},
   otip:d=>{UI.modal={type:"otip",id:d.v};render();},

@@ -233,15 +233,29 @@ const START_HOT={
  last:["ยกสุดท้ายแล้วครับ!! ใครอยากชนะต้องเทหมดหน้าตัก!","ยกสุดท้าย! ปี่ชวาเร่งถี่ยิบ กองเชียร์ลุกทั้งสนาม!","ยกตัดสิน!! สามนาทีที่จะจำไปทั้งชีวิต!"],
  close:["คะแนนสูสีมาก! ยกนี้ตัดสินทุกอย่าง!","ยังไม่มีใครทิ้งห่าง! กรรมการต้องดูกันตาไม่กะพริบ!"]};
 const KO_HOT=["จบแล้วครับ! จบแล้ว!! {a} ชนะน็อก! ประวัติศาสตร์เกิดขึ้นต่อหน้าเรา!!","{d} ลุกไม่ขึ้น!! {a}!! {a}!! ทั้งสนามตะโกนชื่อเดียวกัน!!"];
-const TIER_HEAT={exhibition:0,local:0,special:1,district:1,semi:2,final:3};
+const TIER_HEAT={exhibition:0,local:0,special:1,district:1,semi:2,final:3,quest:1,beast:1};
 function fightHeat(F){const base=TIER_HEAT[F.tier]??0;const sc=F.cards.reduce((x,c)=>x+c[0]-c[1],0);
   return Math.max(0,Math.min(4,base-(F.round<=1&&base>=2?1:0)+(F.round>=F.rounds&&F.rounds>1?1:0)+(Math.abs(sc)<=1&&F.round>=3?1:0)+((F.A.kd+F.B.kd)>0?1:0)+(F.week>=40&&base>0?0:0)));}
 function startLine(F,rng){const R=a=>a[Math.floor(rng()*a.length)];const h=fightHeat(F);const sc=F.cards.reduce((x,c)=>x+c[0]-c[1],0);
   let t=F.round>=F.rounds&&F.rounds>1&&TIER_HEAT[F.tier]>=1?R(START_HOT.last):START_HOT[F.tier]?R(START_HOT[F.tier]):R(COM.start);
   if(F.round>=3&&Math.abs(sc)<=1&&TIER_HEAT[F.tier]>=1)t+=" "+R(START_HOT.close);return {text:t.replace("{r}",F.round),heat:h};}
+// v1.23: a funnier, louder booth — two commentators who can't help themselves, plus lines for the odd opponents
+const FUN={
+ hit:["โอ๊ย! ผมเจ็บแทน! เจ็บถึงกระเป๋าตังค์!","เข้าเต็ม ๆ ครับ! เสียงดังกว่าแม่ผมเรียกกลับบ้านกินข้าว!","คุณพี่ผู้บรรยายข้างผมหกน้ำแดงใส่กางเกงไปแล้วครับ!","หมัดนี้ส่งตรงถึงบ้าน! เก็บเงินปลายทาง!","ผมว่า {d} คงต้องไปถามหมอดูแล้วว่าโดนอะไรมา!","อันนี้ไม่ต้องรีเพลย์ครับ คนดูจำได้ทั้งชาติ!"],
+ miss:["ลมล้วน ๆ ครับ! พัดลมยังเย็นกว่านี้!","พลาดครับ! {a} ชกอากาศจนอากาศยอมแพ้!","{d} หลบเหมือนหลบเจ้าหนี้ตอนสิ้นเดือน!","วืดดด! เสียงวืดนี้ผมจะตั้งเป็นริงโทน!"],
+ counter:["สวนกลับครับ! สวยเหมือนโฆษณาผงซักฟอก!","จังหวะนี้ซื้อตั๋วมาคุ้มแล้วครับ!"],
+ kd:["ล้ม! ล้มครับ! พี่ข้าง ๆ ผมลุกจนเก้าอี้ล้มตามไปด้วย!","{d} ลงไปนอนดูดาว! ทั้งที่ยังไม่มืดเลยครับ!"],
+ cheer:["กองเชียร์ป้าแต๋วตีกะละมังรัว ๆ ครับ!","มีคุณลุงแถวหน้าตะโกนว่า 'เตะ ๆ ๆ' ทั้งที่ยังไม่ได้ซื้อตั๋ว!","เสียงปี่ชวาเร็วจนคนเป่าหน้าเขียวแล้วครับ!","ผมขอน้ำหน่อยครับ พากย์จนเสียงแหบเหมือนเป็ดแล้ว!"]};
+const CREATURE_COM={
+ rooster:["ไก่จิกหัวครับ! กรรมการยังเปิดกติกาหาอยู่ว่าข้อไหน!","กระพือปีกบังตา! นี่มันมวยไทยหรือรายการสารคดี!","เอ้กอีเอ้ก! เสียงขันกลางเวที คนดูขันตาม!","ขนไก่ปลิวว่อนเวที! แม่บ้านสนามร้องไห้แล้วครับ!","{a} กระโดดถีบสองเท้า! ไก่ชนสายไชยาชัด ๆ!"],
+ bull:["วัวพุ่งชนครับ! เวทีสะเทือนถึงร้านส้มตำหน้าสนาม!","มอออ! เสียงนี้ไม่ใช่ปี่ชวานะครับท่านผู้ชม!","{a} ส่ายหางข่มขวัญ! ผมไม่รู้ว่ากติกาอนุญาตหรือเปล่า!","ระวังเขาครับ! เขาไม่ได้ห่อนวม!","กระดิ่งที่คอดังกรุ๋งกริ๋ง ใครฟังแล้วนึกว่าไอติมผ่าน!"],
+ gang:["หมวกกันน็อกกระเด็นไปตกแถวสามครับ! ใครเก็บได้คืนเจ้าของด้วย!","ลูกน้องข้างเวทีบีบแตรมอไซค์เชียร์ครับ! ตำรวจจราจรมองอยู่นะ!","พวกหมวกกันน็อกเริ่มถอยไปหาที่จอดรถแล้วครับ!","แม่ค้าทั้งตลาดลุกขึ้นเคาะตะหลิว! นี่คือเสียงของประชาชน!"]};
 function comLine(e,F,rng){const R=a=>a[Math.floor(rng()*a.length)];const fill=(s,o)=>s.replace(/\{(\w)\}/g,(m,k)=>o[k]??"");
-  const o={a:e.an,d:e.dn,w:WNAME[e.w]||""};const h=fightHeat(F);const hype=x=>{if(!h||!x)return x;const big=e.crit||e.ev==="kd"||e.ev==="skill"||e.ev==="rage";
-    if(rng()>=(big?.75:.06+h*.08))return x;const L=HYPE[Math.min(4,h+(big&&h>=2?1:0))].filter(y=>y!==F.lastHype);const y=R(L);F.lastHype=y;return x+" "+y;};
+  const o={a:e.an,d:e.dn,w:WNAME[e.w]||""};const h=fightHeat(F);
+  const fun=x=>{if(!x)return x;const grp=F.B.f&&F.B.f.grp;if(grp&&CREATURE_COM[grp]&&rng()<.33&&(e.ev==="hit"||e.ev==="miss"||e.ev==="counter"))return fill(R(CREATURE_COM[grp]),{a:F.B.name,d:F.A.name})+" "+x;
+    const L=FUN[e.ev==="counter"?"counter":e.ev==="kd"?"kd":e.ev==="miss"?"miss":e.ev==="hit"?"hit":""];if(L&&rng()<(e.ev==="kd"?.5:.16))return x+" "+fill(R(L),o);if(e.ev==="hit"&&rng()<.06)return x+" "+R(FUN.cheer);return x;};
+  const hype=x=>{x=fun(x);if(!h||!x)return x;const big=e.crit||e.ev==="kd"||e.ev==="skill"||e.ev==="rage";
+    if(rng()>=(big?.8:.1+h*.1))return x;const L=HYPE[Math.min(4,h+(big&&h>=2?1:0))].filter(y=>y!==F.lastHype);const y=R(L);F.lastHype=y;return x+" "+y;};
   return hype(baseLine(e,F,R,fill,o,h));}
 function baseLine(e,F,R,fill,o,h){
   if(e.ev==="ko"&&h>=2)return fill(R(KO_HOT),o);

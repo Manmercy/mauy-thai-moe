@@ -17,6 +17,7 @@ const NPC_HUES=[0,215,130,45,280,22,180,330,95,255];
 function npcBase(id){const h=hashStr(id);return {base:"npc"+(1+h%5),hue:NPC_HUES[(h>>>5)%NPC_HUES.length],dark:((h>>>9)%7)===0};}
 function sheetFor(f){
   if(f.canon)return img(f.id+"_sheet.webp");
+  if(f.sprite)return img(f.sprite+"_sheet.webp"); // v1.23: gang, roosters, bulls
   if(TINTS[f.id])return TINTS[f.id];
   const {base,hue,dark}=npcBase(f.id);const src=img(base+"_sheet.webp");if(!src.complete||!src.naturalWidth)return src;
   const c=document.createElement("canvas");c.width=src.naturalWidth;c.height=src.naturalHeight;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(src,0,0);
@@ -120,7 +121,12 @@ function drawCamp(ctx,G,t){
   if(look>=12){P(rx+20,ry-44,10,16,"#c8283c");P(rx+110,ry-44,10,16,"#2c5fb3");P(rx+22,ry-40,6,6,"#ffd36b");P(rx+112,ry-40,6,6,"#ffd36b");}
   if(look>=15){P(300,40,2,70,"#d8d8d8");const w=Math.sin(t/300)*1;["#c8283c","#f2f2f2","#2c5fb3","#2c5fb3","#f2f2f2","#c8283c"].forEach((c,i)=>P(302,42+i*2+w,14,2,c));}
   // classroom mats
-  for(let i=0;i<G.fac.classroom;i++)P(6+i*38,150,34,22,["#c8283c","#2c5fb3","#2f8a4f"][i]);
+  for(let i=0;i<G.fac.classroom;i++)P(6+i*24,152,22,18,["#c8283c","#2c5fb3","#2f8a4f","#d9a520","#7a3fc0"][i%5]);
+  // v1.23 props for the late facilities
+  if(G.fac.van){P(232,160,40,14,"#2f8a4f");P(234,154,26,8,"#e8e0c8");P(262,156,8,6,"#9fd6ff");P(236,172,6,4,"#1f1f24");P(262,172,6,4,"#1f1f24");if(G.fac.van>=2){P(232,164,40,2,"#d9a520");}}
+  if(G.fac.sauna){P(296,146,22,16,"#7a4a2a");for(let i=0;i<6;i++)P(294+i,140+i,26-i*2,1,"#5a3a2a");P(303,152,7,10,"#3b2518");for(let k=0;k<3;k++){const y=136-((t/40+k*9)%16);P(299+k*6+Math.sin(t/300+k)*2,y,2,2,"rgba(255,255,255,.55)");}}
+  if(G.fac.lights){for(const lx of [150,300]){P(lx,46,2,62,"#9aa0a8");P(lx-4,44,10,4,"#3a3550");P(lx-3,45,8,2,Math.floor(t/700)%2&&G.fac.lights>=2?"#fff7c4":"#ffe9a0");}}
+  if(G.fac.hall){P(286,112,22,24,"#5a3a2a");P(288,114,18,18,"#2a1d2e");P(293,117,8,6,"#f7d24a");P(295,123,4,6,"#d9a520");if(G.fac.hall>=2){P(289,128,6,3,"#c8283c");P(299,128,6,3,"#2c5fb3");}}
   // dorm house
   if(G.fac.dorm>=1){P(268,70,44,36,"#b88a5a");for(let i=0;i<9;i++)P(264+i,62+i,52-i*2,1,"#7a4a3a");P(284,88,10,18,"#5a3a2a");P(272,78,8,7,"#ffd98a");P(298,78,8,7,"#ffd98a");if(G.fac.dorm>=2){P(266,58,48,3,"#c8283c");}}
   // kitchen stall
@@ -140,7 +146,10 @@ function drawCamp(ctx,G,t){
       if(i===who)bubble.push([w.x+9,w.y-2]);}}
   // coach paces in front of the class, assistants help out
   const cw=wander(77,t,[40,112,130,118],4200);chib(COACH_LOOK,"coach",cw.x,cw.y,.85,cw.flip,cw.moving?Math.floor(t/140)%2:Math.floor(t/500)%2);
-  for(let i=0;i<Math.min(G.fac.assistants,ASSIST_LOOKS.length);i++){const a=wander(500+i,t+i*1300,[20,136,140,158],3900);chib(ASSIST_LOOKS[i],"as"+i,a.x,a.y,.8,a.flip,a.moving?Math.floor(t/130)%2:Math.floor(t/450+i)%2);}
+  // v1.23: hired trainers walk the yard with their own pixel sprites
+  (G.staff||[]).forEach((k,i)=>{const a=wander(500+i,t+i*1300,[16,128,148,160],3900+i*300);const sf={id:"staff_"+k,canon:false};const ph=hashStr(sf.id)%2000;
+    const row=a.moving?"walk":Math.floor((t+ph)/2600)%3===2?"guard":"idle";const fr=Math.floor(t/(row==="idle"?260:150))%4;
+    D.push({y:a.y+24,f:()=>{ctx.imageSmoothingEnabled=true;drawFrame(ctx,sheetFor(sf),ROW[row],fr,(a.x+10)*S,(a.y+24)*S,30*S,a.flip);}});});
   if(G.avatar){const pw=wander(31,t,[110,132,300,152],5200);chib(G.avatar,"player",pw.x,pw.y,.85,pw.flip,pw.moving?Math.floor(t/130)%2:Math.floor(t/420)%2);}
   // soi dog and chickens
   {const dw=wander(5,t,[10,162,300,170],2600);const dx=dw.x,dy=dw.y+8,fl=dw.flip?-1:1,leg=dw.moving&&Math.floor(t/90)%2;
