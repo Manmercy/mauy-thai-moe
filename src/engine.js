@@ -456,7 +456,7 @@ function isBooked(G,id,week){return G.bookings.some(b=>(b.a===id||b.b===id)&&(we
 const CROSS_OF={kati:"fah",mali:"ploy",rin:"fah"},SPECIAL_WEEKS=[8,13,18,23,28,33,38,42];
 // v1.21: promoters keep calling even when a fight is booked (further out), more calls with fame,
 // and each batch mixes an easier bout, an even one and (with fame) a step up — a real challenge curve
-const OFFER_BANDS=[-1.3,0,1.0,.3];
+const OFFER_BANDS=[-.7,.45,1.4,.9];
 function genOffers(G){
   const rng=mulberry32(G.seed+G.week*7919+11);G.offers=[];const st=stageOf(G.week);
   const stageEnd=st==="local"?20:st==="district"?40:0;const nOff=2+(G.rep>=12?1:0)+(G.rep>=25?1:0);
@@ -504,7 +504,7 @@ function applyResult(G,F,booking){
     if(booking.tier!=="exhibition"&&booking.tier!=="special"&&booking.tier!=="final"){const rk=G.rank[me.div][me.id];if(rk){rk.pts+=res==="W"?3+(upset?1:0):res==="D"?1:0;rk[res==="W"?"w":res==="L"?"l":"d"]++;}}
     if(me.camp==="player"){
       const W=booking.win||tier.win,Lo=booking.lose||tier.lose;const pay=res==="W"?W:res==="D"?(W+Lo)/2:Lo;G.cash+=pay;
-      G.rep=Math.max(0,G.rep+(res==="W"?tier.rep*(upset?1.5:1):res==="L"?0:.5));
+      G.rep=Math.max(0,G.rep+(res==="W"?tier.rep*(upset?1.5:1):res==="L"?0:.5)/(1+Math.max(0,G.rep-25)/25));
       if(res==="W"&&!G.flags.firstWin)G.flags.firstWin=me.id;
       if(res==="L"&&!G.flags.firstLoss)G.flags.firstLoss=me.id;
       if(op.id==="fah"||op.id==="ploy")G.flags[`vs_${op.id}`]=res;
@@ -572,7 +572,8 @@ function weekTrain(G){
 }
 // week phase 3: npc sim, economy, transitions, advance
 function rankSnapshot(G){const o={};for(const d of ["A","B"]){o[d]={};standings(G,d).forEach((r,i)=>o[d][r.id]=i+1);}return o;}
-function weekFinish(G){
+function weekFinish(G){if(G.rep>40)G.rep=40+(G.rep-40)*.96; // v1.22.1: fame above 40 needs upkeep
+
   const before=rankSnapshot(G);
   simNPCWeek(G);
   const after=rankSnapshot(G);G.rankMove={A:{},B:{}};

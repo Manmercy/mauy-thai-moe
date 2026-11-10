@@ -1058,3 +1058,5 @@ body:has(.montage) .newspop,body:has(.fight) .newspop{display:none}
  .ctip span,.road{font-size:13.5px}.road b{font-size:14px}
  .modal .meta{font-size:13px}
 }
+.toast{font-size:13px;padding:7px 12px;max-width:min(320px,calc(100vw - 32px));line-height:1.35}
+.skhint{display:block;align-self:center;font-size:12px}

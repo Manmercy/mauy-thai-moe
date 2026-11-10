@@ -169,7 +169,7 @@ const CHATTER=[
 
 // ---------- WEEKLY HAPPENINGS ----------
 const HAPPENINGS=[
- {id:"h_roof",bg:"camp",steps:[{n:"coach",t:"เมื่อคืนฝนตกหนัก หลังคาโรงยิมรั่วเป็นทาง พื้นเวทีเปียกหมด"},
+ {id:"h_roof",need:G=>!(G.seen&&G.seen.d_roof),bg:"camp",steps:[{n:"coach",t:"เมื่อคืนฝนตกหนัก หลังคาโรงยิมรั่วเป็นทาง พื้นเวทีเปียกหมด"},
   {choice:[{t:"จ้างช่างซ่อมทันที (฿4,000)",fx:G=>{G.cash-=4000;G.camp.beauty=Math.min(10,G.camp.beauty+1);},then:[{n:"coach",t:"เรียบร้อย หลังคาใหม่เงาเลย ค่ายดูดีขึ้นด้วย"}]},
    {t:"เอาถังมารองไปก่อน",fx:G=>{for(const f of roster(G))add(G,f.id,"morale",-3);},then:[{n:"coach",t:"…ก็ได้ แต่เด็ก ๆ ซ้อมไปลื่นไปนะ"}]}]}]},
  {id:"h_kid",bg:"camp",steps:[{n:"coach",t:"มีเด็กผู้หญิงคนหนึ่งมายืนเกาะรั้วทุกเย็น อยากเรียนมวยแต่ไม่มีเงินค่าคอร์ส"},

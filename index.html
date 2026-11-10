@@ -1062,6 +1062,8 @@ body:has(.montage) .newspop,body:has(.fight) .newspop{display:none}
  .ctip span,.road{font-size:13.5px}.road b{font-size:14px}
  .modal .meta{font-size:13px}
 }
+.toast{font-size:13px;padding:7px 12px;max-width:min(320px,calc(100vw - 32px));line-height:1.35}
+.skhint{display:block;align-self:center;font-size:12px}
 </style></head><body>
 <div id="app"></div>
 <script>
@@ -1523,7 +1525,7 @@ function isBooked(G,id,week){return G.bookings.some(b=>(b.a===id||b.b===id)&&(we
 const CROSS_OF={kati:"fah",mali:"ploy",rin:"fah"},SPECIAL_WEEKS=[8,13,18,23,28,33,38,42];
 // v1.21: promoters keep calling even when a fight is booked (further out), more calls with fame,
 // and each batch mixes an easier bout, an even one and (with fame) a step up — a real challenge curve
-const OFFER_BANDS=[-1.3,0,1.0,.3];
+const OFFER_BANDS=[-.7,.45,1.4,.9];
 function genOffers(G){
   const rng=mulberry32(G.seed+G.week*7919+11);G.offers=[];const st=stageOf(G.week);
   const stageEnd=st==="local"?20:st==="district"?40:0;const nOff=2+(G.rep>=12?1:0)+(G.rep>=25?1:0);
@@ -1571,7 +1573,7 @@ function applyResult(G,F,booking){
     if(booking.tier!=="exhibition"&&booking.tier!=="special"&&booking.tier!=="final"){const rk=G.rank[me.div][me.id];if(rk){rk.pts+=res==="W"?3+(upset?1:0):res==="D"?1:0;rk[res==="W"?"w":res==="L"?"l":"d"]++;}}
     if(me.camp==="player"){
       const W=booking.win||tier.win,Lo=booking.lose||tier.lose;const pay=res==="W"?W:res==="D"?(W+Lo)/2:Lo;G.cash+=pay;
-      G.rep=Math.max(0,G.rep+(res==="W"?tier.rep*(upset?1.5:1):res==="L"?0:.5));
+      G.rep=Math.max(0,G.rep+(res==="W"?tier.rep*(upset?1.5:1):res==="L"?0:.5)/(1+Math.max(0,G.rep-25)/25));
       if(res==="W"&&!G.flags.firstWin)G.flags.firstWin=me.id;
       if(res==="L"&&!G.flags.firstLoss)G.flags.firstLoss=me.id;
       if(op.id==="fah"||op.id==="ploy")G.flags[`vs_${op.id}`]=res;
@@ -1639,7 +1641,8 @@ function weekTrain(G){
 }
 // week phase 3: npc sim, economy, transitions, advance
 function rankSnapshot(G){const o={};for(const d of ["A","B"]){o[d]={};standings(G,d).forEach((r,i)=>o[d][r.id]=i+1);}return o;}
-function weekFinish(G){
+function weekFinish(G){if(G.rep>40)G.rep=40+(G.rep-40)*.96; // v1.22.1: fame above 40 needs upkeep
+
   const before=rankSnapshot(G);
   simNPCWeek(G);
   const after=rankSnapshot(G);G.rankMove={A:{},B:{}};
@@ -2013,7 +2016,7 @@ const CHATTER=[
 
 // ---------- WEEKLY HAPPENINGS ----------
 const HAPPENINGS=[
- {id:"h_roof",bg:"camp",steps:[{n:"coach",t:"เมื่อคืนฝนตกหนัก หลังคาโรงยิมรั่วเป็นทาง พื้นเวทีเปียกหมด"},
+ {id:"h_roof",need:G=>!(G.seen&&G.seen.d_roof),bg:"camp",steps:[{n:"coach",t:"เมื่อคืนฝนตกหนัก หลังคาโรงยิมรั่วเป็นทาง พื้นเวทีเปียกหมด"},
   {choice:[{t:"จ้างช่างซ่อมทันที (฿4,000)",fx:G=>{G.cash-=4000;G.camp.beauty=Math.min(10,G.camp.beauty+1);},then:[{n:"coach",t:"เรียบร้อย หลังคาใหม่เงาเลย ค่ายดูดีขึ้นด้วย"}]},
    {t:"เอาถังมารองไปก่อน",fx:G=>{for(const f of roster(G))add(G,f.id,"morale",-3);},then:[{n:"coach",t:"…ก็ได้ แต่เด็ก ๆ ซ้อมไปลื่นไปนะ"}]}]}]},
  {id:"h_kid",bg:"camp",steps:[{n:"coach",t:"มีเด็กผู้หญิงคนหนึ่งมายืนเกาะรั้วทุกเย็น อยากเรียนมวยแต่ไม่มีเงินค่าคอร์ส"},
@@ -2670,7 +2673,7 @@ const DILEMMAS=[
   {n:"coach",t:"เขาจะสปอนเซอร์ ฿15,000 แลกกับให้นักมวยเราไปชกโชว์งานเปิดร้านสาขาใหม่ เหนื่อยแน่ แต่เงินก้อนนี้ไม่น้อยนะ"},
   {choice:[{t:"รับ เงินสำคัญ (+฿15,000 · ทุกคนล้า +15)",fx:G=>{G.cash+=15000;roster(G).forEach(f=>f.fatigue=Math.min(100,f.fatigue+15));add(G,"kati","morale",-4);},then:[{n:"kati",f:"pout",l:"train",t:"ชกโชว์หน้าร้านทอง… ก็ได้ค่ะ เพื่อค่าย"}]},
    {t:"ปฏิเสธ ไม่อยากให้นักมวยล้า (ชื่อเสียง +0.5)",fx:G=>{G.rep+=.5;add(G,"kati","trust",4);},then:[{n:"kati",f:"happy",l:"train",t:"ขอบคุณที่คิดถึงพวกเราก่อนนะคะ"}]}]}]},
- {id:"d_roof",from:12,to:44,need:G=>true,bg:"gym",look:"train",steps:[
+ {id:"d_roof",from:12,to:44,need:G=>!(G.seen&&G.seen.h_roof),bg:"gym",look:"train",steps:[
   {n:"nar",t:"พายุเข้าเมื่อคืน หลังคาลานซ้อมฝั่งตะวันออกรั่วเป็นทาง น้ำหยดลงกลางเวที"},
   {n:"coach",t:"ซ่อมทันทีต้องใช้ ฿6,000 ถ้าปล่อยไว้ พื้นลื่น ซ้อมไม่เต็มที่ ค่ายก็ดูโทรมลง"},
   {choice:[{t:"ซ่อมเลย (-฿6,000)",fx:G=>{G.cash-=6000;},then:[{n:"coach",t:"ดี ของแบบนี้ปล่อยไว้มีแต่จะแพงขึ้น"}]},
@@ -2908,13 +2911,21 @@ EVENTS.push(
    {t:"เลี้ยงไส้กรอกทั้งสองคนเลย",fx:G=>{G.cash-=120;add(G,"mali","bond",4);add(G,"fah","bond",5);},then:[{n:"fah",f:"flustered",l:"casual",t:"…นายนี่แปลกคนนะ เลี้ยงคู่แข่งด้วย ขอบใจ"}]}]}]});
 // v1.15: the camp talks about last week's big fight
 const LOSS_SELF={kati:"…หนูขอโทษนะคะ ซ้อมมาขนาดนั้นแล้วยัง…",mali:"ฮือ… มะลิเตะไม่ถึงเลยสักลูก",rin:"ข้อมูลฉันผิดตรงไหน… ฉันต้องรู้ให้ได้"};
-const WIN_TEASE={kati:a=>`เห็นไหม! ${a}เมื่อคืนสุดยอดไปเลย ค่ายเราไม่ธรรมดา!`,mali:a=>`${a}เมื่อคืนเท่มาก~ มะลิตะโกนจนเสียงแหบเลย!`,rin:a=>`ฉันจดไว้แล้วค่ะ ความแม่นของ${a}เมื่อคืนสูงที่สุดของปี`};
+// v1.22.1: rotate so the morning-after talk doesn't repeat word for word
+const WIN_TEASE={kati:[a=>`เห็นไหม! ${a}เมื่อคืนสุดยอดไปเลย ค่ายเราไม่ธรรมดา!`,a=>`${a}! หนูดูจากมุมเวทีแล้วขนลุกเลย ซ้อมด้วยกันอีกนะ`,a=>`ค่ายเราชนะติดกันแล้วนะ ${a} คุณปู่ต้องยิ้มอยู่แน่ ๆ`],
+  mali:[a=>`${a}เมื่อคืนเท่มาก~ มะลิตะโกนจนเสียงแหบเลย!`,a=>`ฉลองด้วยขนมครกถาดใหญ่เลย! ${a}จ่ายนะ ฮิ ๆ`,a=>`${a}~ ป้าแต๋วบอกจะตั้งชื่อเมนูตามเธอแล้วนะ!`],
+  rin:[a=>`ฉันจดไว้แล้วค่ะ ความแม่นของ${a}เมื่อคืนสูงที่สุดของปี`,a=>`${a} ยกสองเธอคุมระยะได้ดีกว่าค่าเฉลี่ยมากค่ะ ฉันมีกราฟ`,a=>`ชนะครั้งนี้เพิ่มโอกาสเข้าท็อปสี่ของ${a}ไปอีกนิดค่ะ`]};
+const pickR=(L,G,k=0)=>{if(!Array.isArray(L))return L;G.rot=G.rot||{};const n=G.rot[k]=(G.rot[k]||0)+1;return L[n%L.length];};
+const WIN_SELF={kati:["แต่ยังไม่พอหรอกค่ะ! เป้าหมายของหนูยังอยู่ข้างหน้าอีกไกล","ขอบคุณค่ะ… แต่หนูยังเห็นจุดพลาดตัวเองอีกเยอะเลย","ชนะแล้ว! คืนนี้ขอนอนเร็วหน่อย พรุ่งนี้ตีห้าเหมือนเดิมค่ะ"],
+  mali:["เย้~ แต่มะลิยังไม่อิ่มนะ! ขอไฟต์ต่อไปเลย","ขาบวมนิดหน่อย แต่คุ้ม~ ใครทำขนมครกให้มะลิหน่อย!","เมื่อคืนมะลิเห็นแม่ยิ้มในแชตด้วยนะ~"],
+  rin:["ชนะตามที่คำนวณไว้ค่ะ …แต่ส่วนต่างคะแนนยังแคบเกินไป ต้องดีกว่านี้","ผลออกมาตามโมเดลค่ะ ฉันจะปรับโมเดลให้แม่นกว่านี้อีก","…ดีใจค่ะ ฉันแค่แสดงออกไม่เป็น"]};
+const COACH_WIN=["ชนะแล้วอย่าเหลิง พรุ่งนี้ตีห้าเหมือนเดิม","ดี แต่ยกสองการ์ดตก ครูเห็นนะ","ปู่ชัยดูอยู่ ชนะแบบนี้ท่านคงพอใจ","กินให้อิ่ม นอนให้พอ แล้วกลับมาซ้อม","ชนะได้ก็แพ้ได้ อย่าลืมว่าวันนี้ได้มาเพราะอะไร"];
 function aftermathSteps(G,L){const me=G.F[L.a],op=G.F[L.b];const mates=roster(G).filter(f=>f.id!==me.id);const m=mates[0];const steps=[];
   if(L.win==="A"){steps.push({n:"nar",t:`เช้าวันต่อมา ข่าว${me.name}ชนะ${op.name}ไปทั่วหมู่บ้าน`});
-    if(m)steps.push({n:m.id,f:"happy",l:"train",t:WIN_TEASE[m.id]?WIN_TEASE[m.id](me.name):`ยินดีด้วยนะ ${me.name}!`});
+    if(m)steps.push({n:m.id,f:"happy",l:"train",t:WIN_TEASE[m.id]?pickR(WIN_TEASE[m.id],G,"t_"+m.id)(me.name):`ยินดีด้วยนะ ${me.name}!`});
     if(op.id==="ploy")steps.push({n:me.id,f:"flustered",l:"train",t:"หนู… ชนะพี่พลอยได้จริง ๆ เหรอ ตีห้าทุกวันมันไม่เสียเปล่าเลย"});
-    else steps.push({n:me.id,f:"happy",l:"train",t:{kati:"แต่ยังไม่พอหรอกค่ะ! เป้าหมายของหนูยังอยู่ข้างหน้าอีกไกล",mali:"เย้~ แต่มะลิยังไม่อิ่มนะ! ขอไฟต์ต่อไปเลย",rin:"ชนะตามที่คำนวณไว้ค่ะ …แต่ส่วนต่างคะแนนยังแคบเกินไป ต้องดีกว่านี้"}[me.id]||"แต่ยังไม่พอหรอก!"});
-    if(coachOn())steps.push({n:"coach",t:"ชนะแล้วอย่าเหลิง พรุ่งนี้ตีห้าเหมือนเดิม"});}
+    else steps.push({n:me.id,f:"happy",l:"train",t:WIN_SELF[me.id]?pickR(WIN_SELF[me.id],G,"s_"+me.id):"แต่ยังไม่พอหรอก!"});
+    if(coachOn())steps.push({n:"coach",t:pickR(COACH_WIN,G,"c")});}
   else{if(op.id==="ploy")steps.push({n:"nar",t:"คืนนั้น พลอยเดินลงจากเวทีไปโดยไม่หันกลับมามองเลยสักครั้ง",show:[{id:"ploy",back:true}]});
     steps.push({n:"nar",t:`หลังแพ้${op.name} ${me.name}นั่งเงียบอยู่มุมห้องซ้อมทั้งเช้า`});
     steps.push({n:me.id,f:"sad",l:"train",t:op.id==="ploy"&&me.id==="kati"?"พี่พลอยยังไกลเกินไป… หรือหนูไม่มีทางไปถึงจริง ๆ":LOSS_SELF[me.id]||"…ขอโทษนะ"});
@@ -3616,7 +3627,7 @@ const SETTINGS={music:true,sfx:true,coach:true,quick:false};
 try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"));}catch(e){}
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.22.0";
+const VERSION="1.22.1";
 const SAVE_KEY="mtm-save-v13";
 const CANON_IDS=["kati","mali","rin","ploy","fah"];
 let G=null;
@@ -3828,13 +3839,13 @@ const FUNNY_NEWS=["ลุงหวังวินมอไซค์ประก�
  "เสี่ยสวนลำไยประกาศ 'ใครชนะน็อก แถมลำไยตันนึง' ค่ายมวยทั่วจังหวัดสั่นสะเทือน","สนามมวยอำเภอติดแอร์ใหม่ แต่ลืมติดตั้งในห้องพักนักมวย","กรรมการมวยท่านหนึ่งยืนยัน 'ผมไม่ได้หลับ ผมแค่หลับตาฟังเสียงหมัด'",
  "วินมอไซค์หน้าค่ายเปิดบริการ 'ส่งนักมวยถึงเวทีใน 5 นาที' ค่าโดยสารเป็นลายเซ็น","ไลฟ์ขายนวมของค่ายพยัคฆ์ทองล่ม เพราะคนเข้าไปถามแต่ว่า 'พลอยกินอะไร'","ป้าขายหมูปิ้งหน้าสนามยืนยัน 'นักมวยที่ซื้อหมูปิ้งป้าชนะทุกคน' (ยกเว้นคนที่แพ้)"];
 function funnyNews(n){const o=[];for(let i=0;i<n;i++)o.push(FUNNY_NEWS[(G.week*7+i*5+(G.seed%11))%FUNNY_NEWS.length]);return o;}
-function newsItems(){const N=[...(G.lvNews||[])],st=standings(G,"A").slice(0,3),R=roster(G);
+function newsItems(){const N=[...(G.lvNews||[]).slice(0,1)],st=standings(G,"A").slice(0,3),R=roster(G);
   if(st[0])N.push(`ตารางรุ่น A: ${G.F[st[0].id].name} นำเป็นอันดับ 1`);
   const rv=Object.values(G.F).filter(f=>f.camp==="rival");if(rv.length)N.push(`ค่ายพยัคฆ์ทองส่งนักมวยลงแข่ง ${rv.length} คน เถ้าแก่ประกาศ "ปีนี้แชมป์ต้องเป็นของเรา"`);
   for(const f of R){const h=f.rec||{w:0,l:0};if(h.w>=3)N.push(`${f.name} ค่ายศิริชัย ฟอร์มแรง ชนะแล้ว ${h.w} ไฟต์`);}
   if(G.rep>=10)N.push(`ค่ายมวยศิริชัยกลับมาเป็นที่พูดถึงอีกครั้ง หลังเงียบไปหลายปี`);
   const nb=G.bookings.filter(b=>G.F[b.a].camp==="player").sort((a,b)=>a.week-b.week)[0];if(nb)N.push(`โปรแกรมสัปดาห์ ${nb.week}: ${G.F[nb.a].name} ปะทะ ${G.F[nb.b].name}`);
-  N.splice(1,0,...funnyNews(2));
+  N.unshift(...funnyNews(2));
   N.push(["ราคาน้ำมันมวยปรับขึ้น 5 บาท แม่ค้าบอก 'ช่วงนี้ขายดี'","สนามมวยอำเภอติดแอร์ใหม่ คนดูไม่ต้องพัดวีแล้ว","ครูมวยโคราชวัย 80 ยังสอนหมัดเหวี่ยงควายทุกเช้า","มวยหญิงได้รับความนิยมขึ้น ผู้ชมเพิ่มเกือบเท่าตัว","ชาวต่างชาติแห่เรียนมวยไทยช่วงไฮซีซัน"][G.week%5]);
   return N;}
 function weekTodo(){const R=roster(G),todo=[];if(R.some(f=>!f.injury&&!trLocked(f)))todo.push("ยังไม่ได้ยืนยันโปรแกรมฝึกบางคน");if(!G.campUsed)todo.push("ยังไม่ได้เลือกกิจกรรมค่าย");
@@ -4334,12 +4345,15 @@ function coachBackScene(done){if(!G.coachAway||G.week<G.coachAway||(G.flags&&G.f
 // v1.15: Rin drops by every 3 weeks with a plain-language briefing: next fight, training, money
 function rinScene(done){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0||G.rinSeen===G.week){done();return;}G.rinSeen=G.week;const R=roster(G);const W={punch:"หมัด",kick:"เตะ",knee:"เข่า",elbow:"ศอก"};const L=[];
   const nb=G.bookings.filter(b=>G.F[b.a].camp==="player").sort((a,b)=>a.week-b.week)[0];
-  if(nb){const op=G.F[nb.b],me=G.F[nb.a];L.push(`ไฟต์ถัดไป: ${me.name} เจอ${op.name} สัปดาห์ ${nb.week} เขา${COUNTER_WHY[counterPreset(op)]}`);L.push(`ง่าย ๆ เลยค่ะ ก่อนวันชกให้ฝึก "${PRESETS[counterPreset(op)].name}" แล้วสัปดาห์ที่ชกเปลี่ยนเป็น "เตรียมไฟต์"`);}
+  if(nb){const op=G.F[nb.b],me=G.F[nb.a];L.push(`ไฟต์ถัดไป: ${me.name} เจอ${op.name} สัปดาห์ ${nb.week} เขา${COUNTER_WHY[counterPreset(op)]}`);L.push([`ง่าย ๆ เลยค่ะ ก่อนวันชกให้ฝึก "${PRESETS[counterPreset(op)].name}" แล้วสัปดาห์ที่ชกเปลี่ยนเป็น "เตรียมไฟต์"`,`ถ้าดูเทปแล้ว ฝึก "${PRESETS[counterPreset(op)].name}" จะได้โบนัสแก้ทางค่ะ อย่าลืมเตรียมไฟต์สัปดาห์ที่ชก`,`สูตรของฉันคือ "${PRESETS[counterPreset(op)].name}" ก่อน แล้ว "เตรียมไฟต์" ตอนใกล้ชกค่ะ`][Math.floor(G.week/3)%3]);}
   const tired=R.filter(f=>f.fatigue>=50);const w=R.map(f=>[f,RADAR_AX.map(([n,fn])=>[n,fn(f.a)]).sort((a,b)=>a[1]-b[1])[0]]).sort((a,b)=>a[1][1]-b[1][1])[0];
-  L.push(tired.length?`${tired.map(f=>f.name).join(", ")}ล้าเกินครึ่งแล้ว ให้พักฟื้นสักสัปดาห์ จะกลับมาแรงกว่าเดิม`:`ตอนนี้จุดที่อ่อนสุดในทีมคือ${w[1][0]}ของ${w[0].name} ฝึกตรงนี้จะคุ้มที่สุดค่ะ`);
+  // v1.22.1: rotate whose weakness Rin talks about, and how she says it
+  const rf=R[Math.floor(G.week/3)%R.length],rw=RADAR_AX.map(([n,fn])=>[n,fn(rf.a)]).sort((a,b)=>a[1]-b[1]);const rpick=rw[Math.floor(G.week/6)%2]||rw[0];
+  const RW=[`รอบนี้ขอพูดถึง${rf.name}ค่ะ ${rpick[0]}ยังต่ำสุดในตัวเธอ ฝึกเพิ่มนิดเดียวก็เห็นผล`,`${rf.name}ยังเปิดช่องที่${rpick[0]}อยู่ค่ะ คู่ชกที่อ่านเกมเป็นจะเล็งตรงนั้น`,`ถ้าให้เลือกจุดเดียวที่ควรแก้ตอนนี้ ฉันเลือก${rpick[0]}ของ${rf.name}ค่ะ`];
+  L.push(tired.length?`${tired.map(f=>f.name).join(", ")}ล้าเกินครึ่งแล้ว ให้พักฟื้นสักสัปดาห์ จะกลับมาแรงกว่าเดิม`:RW[Math.floor(G.week/3)%RW.length]);
   const net=weeklyNet(G),wl=weeksLeft();
   L.push(net<0?`เรื่องเงิน: ตอนนี้ขาดทุนสัปดาห์ละ ${fmt(-net)} อีกราว ${wl} สัปดาห์เงินจะหมด รับไฟต์เพิ่ม หรือเลือกกิจกรรมสอนคลาสพิเศษช่วยได้ค่ะ`:G.cash>40000?`เรื่องเงิน: มีเงินเหลือ ${fmt(G.cash)} ลองอัปเกรดค่ายหรือส่งครูแดงไปอบรม ระยะยาวคุ้มกว่าเก็บไว้ค่ะ`:`เรื่องเงิน: ได้กำไรสัปดาห์ละ ${fmt(net)} ยังไหวค่ะ แต่อย่าเพิ่งใช้จ่ายเยอะ`);
-  playScene([{n:"rin",f:"happy",l:"casual",t:"ผู้จัดการคะ ฉันสรุปข้อมูลสามสัปดาห์มาให้แล้วค่ะ"},...L.map(t=>({n:"rin",f:"happy",l:"casual",t})),{n:"rin",f:"flustered",l:"casual",t:"…แค่นี้แหละค่ะ ใช้ได้ก็ใช้นะ"}],()=>{AU.startMusic("hub");save();done();},{bg:"gym",look:"casual"});}
+  playScene([{n:"rin",f:"happy",l:"casual",t:"ผู้จัดการคะ ฉันสรุปข้อมูลสามสัปดาห์มาให้แล้วค่ะ"},...L.map(t=>({n:"rin",f:"happy",l:"casual",t})),{n:"rin",f:"flustered",l:"casual",t:["…แค่นี้แหละค่ะ ใช้ได้ก็ใช้นะ","จบรายงานค่ะ คำถามเชิญได้ …ไม่มีก็ดีค่ะ","ฉันพิมพ์สรุปไว้บนบอร์ดหน้าห้องซ้อมแล้วนะคะ","ถ้าทำตามนี้ ฉันประเมินว่าเราจะดีขึ้นแน่นอนค่ะ"][Math.floor(G.week/3)%4]}],()=>{AU.startMusic("hub");save();done();},{bg:"gym",look:"casual"});}
 
 // ---------- week flow ----------
 function endWeek(){if(UI.scene||UI.fight||UI.montage)return;AU.resume();UI.tipIdx=0;
@@ -4550,7 +4564,7 @@ function feedRound(){const U=UI.fight,F=U.F;
     if(!U.tiredShown&&F.ex>=8){for(const s of [F.A,F.B])if(s.sta<30){U.pending.push({tired:true,cap:{text:COM.tired[Math.floor(U.rng()*2)].replace("{x}",s.name),side:""}});U.tiredShown=true;}}}
   return U.pending.length>0;}
 function fskill(id){const U=UI.fight;if(!U||U.stage!=="playing")return;const e=useSkill(U.F,U.F.A,id);if(!e)return;U.pending.unshift(e);clearTimeout(U.timer);tick();}
-function skillBarHTML(){const U=UI.fight,F=U.F;const L=fightSkills(F.A);const used=F.A.skUsed||{};const slots=[0,1,2].map(i=>L[i]);
+function skillBarHTML(){const U=UI.fight,F=U.F;const L=fightSkills(F.A);const used=F.A.skUsed||{};if(!L.length)return `<span class="meta skhint">ยังไม่มีสกิล · เลเวลอัปแล้วไปอัปสกิลที่ข้อมูลนักมวย</span>`;const slots=[0,1,2].map(i=>L[i]);
   return `<div class="skbar2" role="group" aria-label="สกิล${F.A.skRound?" (ยกนี้ใช้แล้ว)":""}">${slots.map(k=>k?`<button class="skbtn2 ${k.k}" data-act="fskill" data-v="${k.id}" ${used[k.id]||F.A.skRound||F.over?"disabled":""} title="${esc(k.name)} · ${esc(SKILL_KIND_NAME[k.k])}">${PIX["sk_"+k.k]}<b>${esc(k.name)}</b></button>`:`<span class="skbtn2 empty">ว่าง</span>`).join("")}</div>`;}function sideOf(e,F){if(e.s==="A"||e.s==="B")return e.s;if(e.mside)return e.mside;return e.an===F.A.name?"A":"B";}
 function tick(){const U=UI.fight;if(!U||U.stage!=="playing")return;
   if(!U.pending.length&&!feedRound()){roundFinish(U.F);roundEnd();return;}
