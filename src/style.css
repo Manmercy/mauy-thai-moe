@@ -1143,3 +1143,25 @@ details.skhelp summary{color:var(--muted);font-size:13px}
 .tc-anim canvas{object-fit:contain}
 .tc-body{gap:5px}
 @media (max-width:420px){.tcard{grid-template-columns:132px minmax(0,1fr)}}
+/* ===== v1.24 pixel chat ===== */
+.chatb{position:relative}.chatb .pxi{width:18px;height:18px}.chatb .dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;background:var(--red);box-shadow:0 0 0 2px #000}
+.m-chat{padding:10px}
+.chatw{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:min(640px,calc(100dvh - 120px));background:#0f0c1c;box-shadow:inset 0 0 0 3px var(--line);margin-top:24px}
+.chead{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--raise);box-shadow:inset 0 -3px 0 var(--line)}
+.chead img{width:40px;height:40px;object-fit:cover;object-position:top;image-rendering:auto;box-shadow:0 0 0 2px var(--gold)}
+.chead span{display:grid;flex:1;min-width:0}.chead small{color:var(--green);font-size:11px}.chead .cbond{flex:none}
+.cbody{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 2px,transparent 2px 4px)}
+.cmsg{display:flex;gap:6px;align-items:flex-end;max-width:88%;animation:cpop .25s steps(3)}
+.cmsg p{margin:0;padding:7px 10px;line-height:1.5;font-size:14px;position:relative}
+.cmsg.them{align-self:flex-start}.cmsg.them p{background:#f4ead8;color:#2a1a10;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.cmsg.me{align-self:flex-end}.cmsg.me p{background:var(--gold);color:#1b1230;box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.cav{width:28px;height:28px;object-fit:cover;object-position:top;flex:none;box-shadow:0 0 0 2px var(--line)}
+.chrt{position:absolute;right:-8px;top:-8px}.chrt .pxi{width:16px;height:16px}
+.typing p{display:flex;gap:4px;padding:10px 12px}.typing p i{width:6px;height:6px;background:#7a6a50;animation:tdot 1s steps(2) infinite}.typing p i:nth-child(2){animation-delay:.2s}.typing p i:nth-child(3){animation-delay:.4s}
+@keyframes tdot{50%{opacity:.25}}@keyframes cpop{from{transform:translateY(6px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.cmsg,.typing p i{animation:none}}
+.cfoot2{display:grid;gap:6px;padding:8px;background:var(--surface);box-shadow:inset 0 3px 0 var(--line)}
+.copt{border:0;background:var(--raise);color:var(--fg);text-align:left;padding:9px 10px;font:inherit;font-size:14px;cursor:pointer;box-shadow:inset 0 0 0 2px var(--line);min-height:44px}
+.copt:hover,.copt:focus-visible{box-shadow:inset 0 0 0 2px var(--gold)}
+.cend{margin:0;text-align:center;color:var(--gold)}
+.chead .cbond{display:flex;align-items:center;gap:4px;flex:none}.chead .cbond .pxi{width:16px;height:16px}.chead .cbond b{font-size:14px}
