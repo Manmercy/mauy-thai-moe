@@ -262,9 +262,25 @@ const GIFTS={
   shorts:{name:"กางเกงมวยปักชื่อ",price:900,bond:15},prajiad:{name:"ผ้าประเจียดลายมงคล",price:650,bond:15},
   photo:{name:"กรอบรูปทีมค่ายศิริชัย",price:500,bond:25},spa:{name:"บัตรนวดสปาไทยเต็มวัน",price:1200,bond:25},
   bracelet:{name:"กำไลเงินลายกนก",price:1800,bond:35},mongkhon:{name:"มงคลที่คุณถักเอง",price:400,bond:45},
+  // v1.21: personal gifts — each girl has her own, unlocked at different closeness so it can't be guessed
+  k_album:{name:"แฟ้มสะสมสติกเกอร์มวยไทย",price:450,bond:18,only:"kati",cat:"keep"},k_glove:{name:"นวมเก่าของปู่ชัยที่ส่งซ่อมใหม่",price:1500,bond:38,only:"kati",cat:"wear"},
+  m_pan:{name:"เตาขนมครกจิ๋วตั้งโต๊ะ",price:700,bond:14,only:"mali",cat:"keep"},m_ticket:{name:"ตั๋วรถทัวร์กลับบ้านไชยา",price:1100,bond:33,only:"mali",cat:"exp"},
+  r_drip:{name:"ดริปเปอร์กาแฟเซรามิก",price:850,bond:20,only:"rin",cat:"keep"},r_watch:{name:"นาฬิกาจับเวลาแบบโค้ชมืออาชีพ",price:1600,bond:42,only:"rin",cat:"wear"},
+  p_teaset:{name:"ชุดชงชาดินเผาด่านเกวียน",price:950,bond:16,only:"ploy",cat:"keep"},p_silk:{name:"ผ้าไหมปักธงชัยผืนเล็ก",price:1700,bond:36,only:"ploy",cat:"wear"},
+  f_buds:{name:"หูฟังไร้สายลายสายฟ้า",price:1200,bond:22,only:"fah",cat:"keep"},f_jacket:{name:"แจ็กเก็ตบอมเบอร์ปักชื่อ FAH",price:1900,bond:40,only:"fah",cat:"wear"},
 };
-const GIFT_PREF={kati:{love:["stickers","mongkhon"],like:["wrap","khanom","shorts","photo"],dislike:["coffee"]},mali:{love:["khanom","spa"],like:["malai","doll","bracelet","photo"],dislike:["book"]},
-  rin:{love:["coffee","bracelet"],like:["book","tea","spa"],dislike:["sausage"]},ploy:{love:["tea","prajiad"],like:["wrap","malai","mongkhon"],dislike:["doll","photo"]},fah:{love:["sausage","shorts"],like:["sketch","doll","bracelet"],dislike:["tea","spa"]}};
+const GIFT_CAT={khanom:"food",sausage:"food",coffee:"food",tea:"food",wrap:"wear",shorts:"wear",prajiad:"wear",bracelet:"wear",mongkhon:"wear",stickers:"keep",photo:"keep",doll:"keep",sketch:"keep",book:"keep",malai:"keep",spa:"exp"};
+const giftCat=g=>GIFTS[g].cat||GIFT_CAT[g]||"keep";
+// shared bond gifts open at a different closeness for each girl
+const GIFT_UNLOCK={kati:{shorts:12,prajiad:20,photo:26,spa:34,bracelet:40,mongkhon:46},mali:{spa:12,photo:18,bracelet:24,shorts:30,prajiad:38,mongkhon:44},
+  rin:{bracelet:14,spa:20,prajiad:28,photo:34,shorts:40,mongkhon:48},ploy:{prajiad:12,mongkhon:22,spa:28,bracelet:34,shorts:40,photo:46},fah:{shorts:10,bracelet:18,photo:26,prajiad:32,spa:38,mongkhon:44}};
+const giftBond=(id,g)=>(GIFT_UNLOCK[id]&&GIFT_UNLOCK[id][g])||GIFTS[g].bond||0;
+const giftsFor=id=>Object.keys(GIFTS).filter(g=>!GIFTS[g].only||GIFTS[g].only===id);
+const GIFT_PREF={kati:{love:["stickers","mongkhon","k_album","k_glove","prajiad"],like:["wrap","khanom","shorts","photo","sausage","malai","doll"],dislike:["coffee"]},
+  mali:{love:["khanom","spa","m_pan","m_ticket","photo"],like:["malai","doll","bracelet","stickers","shorts","sausage","tea"],dislike:["book"]},
+  rin:{love:["coffee","bracelet","r_drip","r_watch","book"],like:["tea","spa","sketch","shorts","mongkhon"],dislike:["sausage"]},
+  ploy:{love:["tea","prajiad","p_teaset","p_silk"],like:["wrap","malai","mongkhon","khanom","sausage","sketch","spa"],dislike:["doll","photo"]},
+  fah:{love:["sausage","shorts","f_buds","f_jacket"],like:["sketch","doll","bracelet","stickers","coffee","khanom"],dislike:["tea","spa"]}};
 const GIFT_LINES={
  kati:{love:"ว้าว! สติกเกอร์รุ่นนี้หาไม่ได้แล้วนะคะ! จะแปะไว้บนกล่องนวมตรงกลางเลย!",like:"ขอบคุณค่ะ! หนูจะใช้อย่างดีเลย",ok:"ขอบคุณนะคะ น่ารักจัง",dislike:"อ๊ะ… กาแฟเหรอคะ หนูดื่มแล้วใจสั่นน่ะค่ะ แต่ขอบคุณที่คิดถึงนะคะ"},
  mali:{love:"ขนมครก!! คุณรู้ได้ไงคะ หนูขอกินตอนนี้เลยนะ~",like:"น่ารักมากเลยค่ะ! หนูจะเก็บไว้ดี ๆ",ok:"ขอบคุณค่ะ~",dislike:"หนังสือ… ตัวเลขเยอะจัง หนูอ่านแล้วง่วงค่ะ แฮะ ๆ"},
@@ -276,22 +292,32 @@ function giftTier(id,g){const P=GIFT_PREF[id];return P.love.includes(g)?"love":P
 function giveGift(G,id,g){const f=G.F[id],it=GIFTS[g];if(G.cash<it.price||f.giftWeek===G.week)return null;G.cash-=it.price;f.giftWeek=G.week;
   // v1.16: the same gift again means less (and she says so)
   f.giftN=f.giftN||{};const n=f.giftN[g]||0;f.giftN[g]=n+1;
-  const t=giftTier(id,g),base=Math.round({love:6,like:4,ok:2,dislike:-2}[t]*(it.bond&&t!=="dislike"?1.5:1)),gain=base>0?Math.max(1,Math.round(base*(n===0?1:t==="love"?(n===1?.6:.4):(n===1?.5:.25)))):base;
+  const t=giftTier(id,g),base=Math.round({love:6,like:4,ok:2,dislike:0}[t]*(it.bond&&t!=="dislike"?1.5:1)),gain=base>0?Math.max(1,Math.round(base*(n===0?1:t==="love"?(n===1?.6:.4):(n===1?.5:.25)))):base;
   const before=f.bond;add(G,id,"bond",gain);if(t==="love")add(G,id,"morale",n<2?6:4);
   f.know["gift_"+g]=t;return {t,gain:Math.round((f.bond-before)*10)/10,g,n};}
-// v1.20.1: repeat gifts stay warm — a favourite is still a favourite; lines just rotate so it doesn't feel canned
+// v1.21: repeat-gift lines follow what the gift is (food / something to wear / a keepsake / an outing) so they always fit
 const GIFT_AGAIN={
- kati:{love:["อันนี้อีกแล้ว! คุณจำได้ว่าหนูชอบใช่ไหมคะ ดีใจจัง","ได้อีกแล้ว~ หนูเก็บไว้เรียงกันบนชั้นเลยนะคะ ไม่เคยเบื่อเลย","ทุกครั้งที่ได้อันนี้ หนูมีแรงซ้อมเพิ่มอีกสิบยกเลยค่ะ!"],
-   like:["ขอบคุณค่ะ อันนี้ใช้ดีจริง ๆ หนูใช้ทุกวันเลย","ได้มาเพิ่มพอดีเลยค่ะ อันเก่าเริ่มใช้จนเก่าแล้ว","หนูชอบอันนี้นะคะ ขอบคุณที่ยังจำได้"]},
- mali:{love:["อีกแล้ว~! มะลิชอบที่สุดเลย คุณนี่รู้ใจจริง ๆ","ฮิ ๆ ได้อีกแล้ว! ยิ่งได้ยิ่งชอบ ไม่มีวันเบื่อหรอกค่ะ","มะลิจะแบ่งให้เพื่อน ๆ ในค่ายด้วย ทุกคนจะได้รู้ว่าคุณใจดีแค่ไหน~"],
-   like:["ขอบคุณค่ะ~ อันนี้มะลิใช้ทุกวันเลยนะ","ได้อีกแล้ว เย้~ มะลิจะเก็บไว้ใช้ตอนไปตลาดนัด","น่ารักเหมือนเดิมเลยค่ะ ขอบคุณนะคะ"]},
- rin:{love:["ข้อมูลซ้ำ… แต่ผลลัพธ์ความดีใจของฉันก็ยังเท่าเดิมค่ะ","คุณสังเกตเก่งนะคะ จำได้ว่าฉันชอบอันนี้ ขอบคุณค่ะ","สถิติบอกว่าฉันไม่เคยเบื่ออันนี้เลยค่ะ …ขอบคุณ"],
-   like:["ขอบคุณค่ะ ของใช้ดีมีไว้หลายชิ้นไม่เสียหาย","ฉันจะเก็บไว้ใช้อย่างดีค่ะ","ยังใช้ประโยชน์ได้เต็มที่ค่ะ ขอบคุณนะคะ"]},
- ploy:{love:["อันนี้อีกแล้ว… คุณจำได้จริง ๆ ด้วย ขอบใจนะ","พี่ไม่เคยเบื่อของแบบนี้หรอก ขอบใจ","ได้อีกแล้ว พี่จะเก็บไว้ใกล้ ๆ ตัว"],
-   like:["ขอบใจ พี่ใช้อันเก่าจนหมดพอดี","ใช้ได้ดีเหมือนเดิม ขอบใจนะ","พี่ชอบความสม่ำเสมอของคุณนะ"]},
- fah:{love:["อันนี้อีกแล้ว!! นายรู้ใจฟ้าที่สุดเลย!","ฮ่า ๆ ให้อีกเลยเหรอ ฟ้าไม่เบื่อหรอก เอามาอีกได้เรื่อย ๆ!","ได้อีกแล้ว เยส! …อย่าบอกใครนะว่าฟ้าดีใจขนาดนี้"],
-   like:["อือ ขอบใจ ใช้ได้ดีอยู่","ได้อีกแล้วเหรอ ก็ดีนะ ฟ้าเอาไว้ใช้","ไม่เลวนี่ ขอบใจนะนาย"]}};
-const giftAgainLine=(id,t,n)=>{const L=GIFT_AGAIN[id]&&GIFT_AGAIN[id][t==="love"?"love":"like"];return L?L[(n-1)%L.length]:null;};
+ kati:{food:["{g}อีกแล้ว! หนูกินหมดไปตั้งแต่ครั้งก่อนเลยค่ะ ดีใจจัง","ได้{g}อีกแล้ว~ คราวนี้หนูแบ่งครูแดงด้วยนะคะ"],
+   wear:["{g}อีกชิ้น! หนูจะมีไว้ใช้สลับกันเลยค่ะ ขอบคุณนะคะ","อันเก่าหนูใช้จนเริ่มเก่าพอดีเลย ได้{g}ใหม่มาทันเวลาค่ะ"],
+   keep:["{g}อีกแล้ว! หนูเก็บไว้เรียงกันบนชั้นเลยค่ะ ไม่เคยเบื่อเลย","คุณจำได้ว่าหนูชอบ{g}ใช่ไหมคะ ดีใจจัง"],
+   exp:["ได้ไปอีกแล้วเหรอคะ! คราวก่อนหนูยังเล่าให้ทุกคนฟังไม่จบเลย","อีกรอบเหรอคะ… คุณใจดีเกินไปแล้วค่ะ"]},
+ mali:{food:["{g}อีกแล้ว~! มะลิกินได้ทุกวันเลยนะ ไม่มีวันเบื่อ","ฮิ ๆ {g}อีกแล้ว! คราวนี้แบ่งน้อง ๆ ในค่ายด้วยนะคะ"],
+   wear:["{g}อีกอัน~ มะลิจะใส่สลับวันเลยค่ะ","ได้{g}อีกแล้ว! ส่งรูปให้แม่ดูอีกรอบดีกว่า~"],
+   keep:["{g}อีกแล้ว~ มะลิมีเป็นคอลเลกชันแล้วนะคะ","คุณนี่รู้ใจมะลิจริง ๆ {g}ยิ่งได้ยิ่งชอบ"],
+   exp:["ได้ไปอีกแล้ว!! มะลิจะชวนคุณไปด้วยนะคราวนี้~","อีกแล้วเหรอคะ~ ขามะลิขอบคุณคุณแทนเลยค่ะ"]},
+ rin:{food:["{g}อีกแล้ว… ปริมาณที่ฉันบริโภคเพิ่มขึ้นสองเท่าแล้วค่ะ แต่ก็ยังดีใจ","ข้อมูลซ้ำค่ะ {g}อีกแล้ว… แต่ผลลัพธ์ความดีใจยังเท่าเดิม"],
+   wear:["{g}อีกชิ้น มีสำรองไว้ไม่เสียหายค่ะ ขอบคุณ","ฉันจะใช้{g}อันนี้ตอนวันแข่ง อันเก่าเก็บไว้ซ้อมค่ะ"],
+   keep:["คุณสังเกตเก่งนะคะ จำได้ว่าฉันชอบ{g}","{g}อีกแล้ว… สถิติบอกว่าฉันไม่เคยเบื่อมันเลยค่ะ"],
+   exp:["อีกรอบเหรอคะ ร่างกายฉันจะขอบคุณคุณค่ะ","ฉันจะจดไว้ว่าคุณให้มาสองครั้งแล้ว …เพื่อจะได้ขอบคุณให้ครบค่ะ"]},
+ ploy:{food:["{g}อีกแล้ว… คุณจำได้จริง ๆ ด้วย ขอบใจนะ","ได้{g}อีกแล้ว เดี๋ยวพี่ชงแบ่งรุ่นน้องด้วย"],
+   wear:["{g}อีกชิ้น พี่ใช้อันเก่าจนหมดพอดี ขอบใจ","พี่ชอบความสม่ำเสมอของคุณนะ"],
+   keep:["{g}อีกแล้ว พี่จะเก็บไว้ใกล้ ๆ ตัว","พี่ไม่เคยเบื่อของแบบนี้หรอก ขอบใจ"],
+   exp:["อีกรอบเหรอ… พี่คงต้องหาเวลาพักบ้างแล้วล่ะ ขอบใจนะ","คุณนี่ห่วงพี่จริง ๆ นะ"]},
+ fah:{food:["{g}อีกแล้ว!! นายรู้ใจฟ้าที่สุดเลย!","ฮ่า ๆ {g}อีกแล้ว ฟ้าไม่เบื่อหรอก เอามาอีกได้เรื่อย ๆ!"],
+   wear:["{g}อีกอัน! ฟ้าจะใส่ทุกวันเลย …อย่าบอกใครนะว่าดีใจ","ได้อีกแล้ว เยส! ใส่ไปค่ายพยัคฆ์ทองให้พวกนั้นอิจฉาเล่น"],
+   keep:["{g}อีกแล้ว ก็ดีนะ ฟ้าเก็บไว้ในล็อกเกอร์","ไม่เลวนี่ ได้อีกแล้ว ขอบใจนะนาย"],
+   exp:["อีกรอบ? …ก็ได้ ๆ ไปก็ได้","นายนี่ชอบตามใจฟ้าจริง ๆ นะ"]}};
+const giftAgainLine=(id,t,n,g)=>{const C=GIFT_AGAIN[id];if(!C)return null;const L=C[g?giftCat(g):"keep"]||C.keep;return L[(n-1)%L.length].replace("{g}",g?GIFTS[g].name:"อันนี้");};
 
 // ---------- v1.3: more talk topics (no repeats) — only a fitting answer reveals the fact ----------
 const TALK_MORE={
@@ -337,6 +363,12 @@ const MOMENTS={
 };
 
 // v1.5: a reaction line for every gift, so food is eaten, drinks are brewed and items are kept
+const GIFT_TALK_PERSONAL={
+ kati:{k_album:"แฟ้มสะสมสติกเกอร์! ตอนนี้สติกเกอร์หนูกระจายเต็มกล่องนวม… ต่อไปจะเรียงให้สวยเลยค่ะ!",k_glove:"นวมของคุณปู่… คุณเอาไปซ่อมมาเหรอคะ… (กอดนวมไว้แน่น) หนูได้กลิ่นคุณปู่เลยค่ะ ขอบคุณ… ขอบคุณจริง ๆ"},
+ mali:{m_pan:"เตาขนมครกจิ๋ว!!! มะลิจะฝึกทำทุกเย็นเลย คนแรกที่ได้ชิมคือคุณนะคะ สัญญา~",m_ticket:"ตั๋วกลับไชยา… มะลิไม่ได้กลับบ้านมาเกือบปีแล้ว… แม่ต้องดีใจมากแน่ ๆ ขอบคุณนะคะ"},
+ rin:{r_drip:"ดริปเปอร์เซรามิกรุ่นนี้ให้อัตราการไหลสม่ำเสมอที่สุด… คุณศึกษามาเหรอคะ ฉัน… ประทับใจค่ะ",r_watch:"นาฬิกาจับเวลาแบบโค้ช… คุณเห็นฉันเป็นมากกว่านักมวย… ฉันจะใช้มันทั้งตอนชกและตอนวิเคราะห์ค่ะ"},
+ ploy:{p_teaset:"ดินเผาด่านเกวียน… บ้านเกิดพี่… พี่ไม่ได้เห็นของแบบนี้นานแล้ว คืนนี้ชงชาด้วยกันนะ",p_silk:"ไหมปักธงชัย แม่พี่ทอแบบนี้เป็นอาชีพ… คุณรู้ได้ยังไง พี่จะเก็บไว้ทั้งชีวิต"},
+ fah:{f_buds:"หูฟังลายสายฟ้า!! เท่ชะมัด! ฟ้าจะใส่ฟังเพลงตอนวิ่งเช้า ไม่ต้องฟังโค้ชบ่นอีกแล้ว ฮ่า ๆ",f_jacket:"แจ็กเก็ตปักชื่อ FAH… ตัวใหญ่ ๆ หลังเสื้อเลย… ฟ้า… ฟ้าจะใส่มันวันขึ้นชกนัดชิง นายดูให้ดีล่ะ"}};
 const GIFT_TALK={
  kati:{stickers:"ว้าว! สติกเกอร์รุ่นนี้หาไม่ได้แล้วนะคะ! จะแปะไว้บนกล่องนวมตรงกลางเลย!",
   wrap:"ผ้าพันมือลายกนก… สวยจนไม่กล้าพันซ้อมเลยค่ะ เก็บไว้ใช้วันขึ้นชกจริงดีกว่า!",

@@ -18,7 +18,7 @@ await adv();await tap('[data-act=tab][data-v=camp]');await p.waitForTimeout(300)
 await tap('[data-act=tab][data-v=fights]');await p.waitForTimeout(300);await shot('09a_offers',true);if(await tap('[data-act=consider]')){await p.waitForTimeout(300);await shot('09_consider');await tap('.mfoot [data-act=closeModal]');await tap('.obtns3 [data-act=accept]');}await tap('[data-act=fsub][data-v=rank]');await p.waitForTimeout(200);await shot('09b_rank',true);await tap('[data-act=fsub][data-v=offers]');
 await tap('[data-act=tab][data-v=home]');await tap('[data-act=campacts]');await tap('[data-act=campick][data-v=repair]');await shot('09c_confirm');await tap('[data-act=campok]');
 let fights=0,watched=false;
-for(let w=0;w<120;w++){if(w%5===0)console.log("w",w,await p.evaluate(()=>[G.week,UI.modal&&UI.modal.type,!!UI.scene,UI.fight&&UI.fight.stage].join(",")));
+for(let w=0;w<120;w++){if(w<3||w%5===0)console.log("w",w,await p.evaluate(()=>[G.week,UI.modal&&UI.modal.type,!!UI.scene,UI.fight&&UI.fight.stage].join(",")));
   if(await has('.endpage'))break;
   await tap('[data-act=tab][data-v=fights]');if(await tap('[data-act=consider]')){await tap('.mfoot [data-act=closeModal]');await tap('.obtns3 [data-act=accept]');}
   if(w%3===0){await tap('[data-act=tab][data-v=home]');await tap('[data-act=campacts]');await tap('[data-act=campick]:not([disabled])');await tap('[data-act=campok]');await tap('.modal .xbtn');}

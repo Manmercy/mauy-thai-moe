@@ -266,6 +266,14 @@ const CFX={
   ladies:{bg:"gym",cap:"คลาสมวยฟิตเนสสำหรับผู้หญิง",students:4,row:"guard",fx:"hearts"},
   massage:{bg:"gym",tint:"rgba(80,40,20,.25)",cap:"หมอนวดแผนไทยมาคลายเส้นให้ทุกคน",masseuse:true,row:"idle",fx:"steam"},
   media:{bg:"gym",cap:"สื่อมาถ่ายทำสกู๊ปค่ายศิริชัย",camera:true,crew:true,row:"win",fx:"flash"},
+  kids:{bg:"gym",cap:"คลาสมวยเด็กเล็ก ไหว้ครูกันพร้อมเพรียง",students:4,row:"guard",fx:"hearts"},
+  stall:{bg:"bg_camp.webp",tint:"rgba(255,160,60,.15)",cap:"บูธขนมครกที่ตลาดนัด หอมไปทั้งซอย",students:3,row:"idle",fx:"steam"},
+  tourist:{bg:"gym",cap:"นักท่องเที่ยวมาลองเตะเป้าครั้งแรก",students:3,row:"knee",fx:"flash",camera:true},
+  trail:{bg:"bg_river.webp",tint:"rgba(40,90,40,.2)",cap:"วิ่งเทรลขึ้นดอยตอนเช้ามืด",walk:true,fx:"sparks"},
+  tape:{bg:"gym",tint:"rgba(10,10,40,.55)",cap:"คืนดูเทปไฟต์เก่า จดจุดอ่อนคู่ชก",camera:true,row:"idle",fx:"flash"},
+  fightnight:{bg:"bg_camp.webp",tint:"rgba(80,20,60,.25)",cap:"ไฟต์ไนท์ในค่าย คนดูแน่นเวที",spar:true,fx:"hearts"},
+  clinicday:{bg:"gym",tint:"rgba(40,120,120,.18)",cap:"วันฟื้นฟูที่คลินิกกายภาพ",masseuse:true,row:"idle",fx:"steam"},
+  waikhru:{bg:"bg_temple.webp",tint:"rgba(255,180,80,.2)",cap:"พิธีไหว้ครูที่ศาลพ่อแก่",kneel:true,fx:"rice"},
 };
 function cfxRoster(){return (G?Object.values(G.F).filter(f=>f.camp==="player"):[]).slice(0,3);}
 const MONK_PX=["......kkkkk.......", ".....ksssssk......", "....kssssssdk.....", "....ksesssesk.....", "....kssssssdk.....", "....kdssmssdk.....", ".....kddssdk......", "......kkddk.......", ".....kOoookkk.....", "....kOoohoosdk....", "...kOoohoooossk...", "...kOohooooosdk...", "...kOohoookkkkk...", "...kOhoookBBBBBk..", "...kOhooksbbbbbk..", "...kOooooksbbbk...", "...kOooooookkkk...", "...kOoooohoooOk...", "...kOoooohoooOk...", "...kOooohooooOk...", "...kOooohooooOk...", "...kOoohoooooOk...", "...kOoohoooooOk...", "...kOohooooooOk...", "...kOOooooooOOk...", "....kOOOOOOOOk....", "....kdsk..kdsk....", "....kssk..kssk....", "...kkkkk..kkkkk..."];
