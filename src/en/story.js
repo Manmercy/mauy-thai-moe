@@ -1,0 +1,883 @@
+// ================= MUAY THAI MOE — STORY & DATING CONTENT =================
+// Scene step: {n:speaker, f:face, t:text|fn} | {choice:[{t,fx,then:[...]}]} | {fx:fn} | {bg:key}
+const ME=G=>G.player.name, PR=G=>G.player.gender==="m"?"":"", PA=G=>G.player.gender==="m"?"":"";
+const SPK={kati:{name:"Kati",color:"#e23b4e"},mali:{name:"Mali",color:"#4a7fe0"},rin:{name:"Rin",color:"#3fae6a"},
+  ploy:{name:"Ploy",color:"#9b62e0"},fah:{name:"Fah",color:"#e7b443"},coach:{name:"Coach Daeng",color:"#c98a5a"},nar:{name:""},me:{name:"(You)"}};
+// v1.7: bonds deepen by chapter — the ceiling rises as the season's story moves on
+const bondCap=G=>100;
+const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*.42*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
+
+const EVENTS=[
+ {id:"prologue",look:"fight",bg:"night",steps:[
+  {n:"nar",t:"That rainy season, a letter reached your hands. The handwriting was shaky but still neat"},
+  {n:"nar",t:"\"To my dear grandchild. If this letter reaches you, it means Grandpa has gone to rest. Sirichai Muay Thai Camp, which I spent my whole life building, I leave in your hands.\""},
+  {n:"nar",t:"\"The camp has just one fighter left, Kati. She has a fighter's heart. Please look after her. — Grandpa Chai\""},
+  {n:"nar",bg:"camp",t:G=>`After Grandpa's funeral, ${ME(G)} arrives at Sirichai Camp. The tin roof is rusted, the heavy bags torn, the sign so faded it's barely legible`},
+  {n:"nar",t:"But inside, footsteps still slap the floor and fists still thud into pads. Someone is still training"},
+  {n:"kati",f:"surprised",t:"…Who's there! Oh, sorry, I thought the bank people came to collect again"},
+  {n:"kati",f:"happy",t:"Could it be… you're Grandpa Chai's grandchild?"},
+  {choice:[
+   {t:G=>`Yes. Grandpa left this camp to me ${PR(G)}`,fx:G=>add(G,"kati","bond",4),then:[{n:"kati",f:"happy",t:"Grandpa talked about you so often! He said someday you'd come back"}]},
+   {t:G=>`${PR(G)} I came to see whether this camp can keep going`,fx:G=>add(G,"kati","trust",4),then:[{n:"kati",f:"flustered",t:"Of course it can! If just one more person believes in it, I'll prove it myself"}]}]},
+  {n:"kati",t:"I'm Kati, the last fighter of Sirichai Camp. Coach Daeng is still here teaching, but everyone else moved to Golden Tiger Camp"},
+  {n:"nar",t:"A gray-haired older man walks out from the back, a towel over his shoulder, arms still as firm as someone who never stopped training"},
+  {n:"coach",t:G=>`Name's Daeng. The kids call me Coach Daeng. I was one of Grandpa Chai's first students, been at this camp thirty years`},
+  {n:"coach",t:"In my youth I fought on the provincial stage, lost only the title fight because my knee gave out. Been teaching ever since. I'm in your hands now, boss"},
+  {n:"coach",t:"Let's talk money straight. The camp owes ฿120,000, paid off at ฿5,000 a month"},
+  {n:"coach",t:"Our main income right now is 'students': tourists and local kids taking Muay Thai classes, paying weekly. Only a few are left. The more famous the camp, the more people come"},
+  {n:"coach",t:"If we want the camp's name back, we have to send fighters up from the subdistrict ring, to the district, and win the provincial title this year"},
+  {n:"kati",f:"happy",t:"I'll give it everything. I'm in your hands, Manager!"},
+  {n:"nar",t:"Year one goals: save the camp from debt, and take a fighter to the provincial final in week 49"}]},
+
+ {id:"kati_why",look:"train",when:G=>G.week>=2,bg:"night",steps:[
+  {n:"nar",t:"Nine at night. One light is still on in camp; Kati is kicking a heavy bag patched with duct tape"},
+  {n:"me",t:G=>`It's late. Why haven't you gone home?`},
+  {n:"kati",f:"happy",t:"Just a little more… Manager, did you know Golden Tiger tried to recruit me three times? Way better pay than here"},
+  {n:"kati",f:"sad",t:"But Grandpa Chai was the first to say I could fight, when nobody else believed in me"},
+  {choice:[
+   {t:"Thank you for staying. I won't let you down",fx:G=>add(G,"kati","trust",6),then:[{n:"kati",f:"happy",t:"Then I'll remember that. No taking it back!"}]},
+   {t:"And you? What do you fight for?",fx:G=>add(G,"kati","bond",6),then:[
+     {n:"kati",f:"flustered",t:"…Nobody's ever asked me that"},
+     {n:"kati",f:"happy",t:"I want people to see that a girl from an old camp can be champion. No money, no fame, just heart"}]}]}]},
+
+ {id:"rival_meet",look:"casual",when:G=>G.week>=4,bg:"fair",steps:[
+  {n:"nar",t:"Saturday night market. You and Kati came out to buy hand-wrap tape, but run into people you'd rather not see"},
+  {n:"fah",f:"happy",t:"Oh, Kati, your camp's not closed yet? Heard you got a rookie manager"},
+  {n:"fah",f:"happy",t:G=>`So this is Uncle Chai's grandkid… hope you know fights aren't fought in Excel sheets`},
+  {n:"kati",f:"angry",t:"Fah! Be nice"},
+  {choice:[
+   {t:"Then let's settle it in the ring",fx:G=>{add(G,"kati","morale",5);add(G,"kati","trust",3);add(G,"fah","bond",5);},then:[{n:"fah",f:"happy",t:"Hmph, I like that. Straight up. Don't run away"}]},
+   {t:"Your camp poached all our fighters and you still come mock us",fx:G=>{add(G,"kati","bond",4);add(G,"ploy","bond",3);},then:[{n:"ploy",f:"happy",t:"They chose for themselves. Our camp forced no one"}]}]},
+  {n:"ploy",f:"happy",t:"I'm Ploy, captain of Golden Tiger. I apologize for Fah, she speaks without thinking"},
+  {n:"ploy",f:"happy",t:"But the provincial standard isn't low. I hope Grandpa Chai's camp won't tarnish his name"},
+  {n:"nar",t:"The two walk away. Kati can't take her eyes off Ploy's back"},
+  {n:"kati",f:"sad",t:"…Ploy is in Division A with me, unbeaten for three years. I've faced her twice and lost both times"},
+  {n:"kati",f:"angry",t:"She's been gifted since birth, I have to train three times as hard to keep up… but this year I'll catch up!"},
+  {fx:G=>{G.F.ploy.met=true;G.F.fah.met=true;}}]},
+
+ {id:"mali_meet",look:"fight",when:G=>G.week>=6,bg:"fair",steps:[
+  {n:"nar",t:"The annual temple fair. A temporary ring stands beside the Ferris wheel, pipes and drums echoing everywhere"},
+  {n:"nar",t:"A small fighter with a topknot and a frangipani flower kicks a bigger opponent all the way back"},
+  {n:"mali",f:"happy",t:"Yay! I won~ Thank you everyone!"},
+  {n:"mali",f:"happy",t:G=>`Oh, you're from Sirichai Camp? I'm Mali, from up-country. I tour temple fairs fighting to send money home`},
+  {n:"mali",f:"sad",t:"No camp will take me. They say I'm too small for the big stage"},
+  {choice:[
+   {t:"Our camp is small, but I'll give you real fights",fx:G=>{add(G,"mali","trust",8);add(G,"mali","bond",4);},then:[{n:"mali",f:"flustered",t:"Really? Then I'll come see the camp! (Sign Mali in the Camp & Finance tab)"}]},
+   {t:"Beautiful kick. See you around",fx:G=>add(G,"mali","bond",3),then:[{n:"mali",f:"happy",t:"See you! If you change your mind and want a tiny fighter, find me at the temple fair!"}]}]},
+  {fx:G=>{G.F.mali.met=true;G.flags.maliRecruit=true;}}]},
+
+ {id:"rin_meet",look:"casual",when:G=>G.week>=14,bg:"camp",steps:[
+  {n:"nar",t:"A woman in glasses stands at the camp entrance, holding a tablet playing your camp's latest fight"},
+  {n:"rin",f:"happy",t:"Hello. I'm Rin, formerly of Golden Tiger. I quit because they never listened to data"},
+  {n:"rin",f:"flustered",t:"In your camp's latest fight I counted 14 missed counter opportunities in three rounds. Fix that and the result changes"},
+  {n:"rin",f:"happy",t:"I still want to fight, and I'd like to help with analysis too, if your camp can afford it"},
+  {choice:[
+   {t:"Our camp welcomes people who think like that",fx:G=>{add(G,"rin","trust",8);},then:[{n:"rin",f:"happy",t:"Good. Let's talk contract (Sign Rin in the Camp & Finance tab)"}]},
+   {t:"Let me check the budget first",fx:G=>add(G,"rin","bond",2),then:[{n:"rin",f:"happy",t:"Reasonable. I like people who don't decide on emotion"}]}]},
+  {fx:G=>{G.F.rin.met=true;G.flags.rinRecruit=true;}}]},
+
+ {id:"first_win",look:"casual",when:G=>!!G.flags.firstWin,bg:"food",steps:[
+  {n:"nar",t:"That night the whole camp celebrates at Auntie Daeng's khao soi shop. She gives everyone two free boiled eggs"},
+  {n:G=>G.flags.firstWin,f:"happy",t:"We won! We really won! Thank you for the game plan, Manager"},
+  {n:"coach",t:"The camp's first win in two years. Grandpa Chai must be smiling up there"},
+  {fx:G=>{add(G,G.flags.firstWin,"bond",5);add(G,G.flags.firstWin,"trust",3);}}]},
+
+ {id:"first_loss",look:"fight",when:G=>!!G.flags.firstLoss,bg:"night",steps:[
+  {n:"nar",t:"After the fight, the locker room is so quiet you can hear the fan"},
+  {n:G=>G.flags.firstLoss,f:"sad",t:"…I'm sorry. I didn't do well. Can I train harder tomorrow?"},
+  {choice:[
+   {t:"Rest first, then tell me how you feel",fx:G=>{const id=G.flags.firstLoss;add(G,id,"bond",4);add(G,id,"morale",6);G.F[id].plan={preset:"rest",intensity:"normal"};},
+    then:[{n:G=>G.flags.firstLoss,f:"flustered",t:"…Thank you. Just having someone listen makes it so much lighter (recovery program set)"}]},
+   {t:"Okay, let's push training",fx:G=>{const id=G.flags.firstLoss;G.F[id].fatigue=Math.min(100,G.F[id].fatigue+10);add(G,id,"trust",-3);add(G,id,"morale",3);G.F[id].plan={preset:"balanced",intensity:"heavy"};},
+    then:[{n:G=>G.flags.firstLoss,f:"happy",t:"Yes! …(smiling despite the exhaustion)"}]},
+   {t:"Let's watch the tape with Coach Daeng and find what went wrong",fx:G=>{const id=G.flags.firstLoss;add(G,id,"trust",4);G.F[id].prepBonus=true;},
+    then:[{n:"coach",t:"See? The guard drops every time you throw the right. Fix that and you'll be fine next fight (readiness bonus for the next fight)"}]}]}]},
+
+ {id:"fatigue_warn",look:"train",when:G=>Object.values(G.F).some(f=>f.camp==="player"&&f.fatigue>=72),bg:"camp",steps:[
+  {n:"coach",t:G=>{const f=Object.values(G.F).find(f=>f.camp==="player"&&f.fatigue>=72);G.flags.tiredId=f.id;return `${f.name} has built up a lot of fatigue. Training hard now risks injury`;}},
+  {n:G=>G.flags.tiredId,f:"happy",t:"It's fine, I can still go! Just a bit more and I'll get better"},
+  {choice:[
+   {t:"Order a week of rest",fx:G=>{const f=G.F[G.flags.tiredId];f.plan={preset:"rest",intensity:"normal"};add(G,f.id,"trust",6);},then:[{n:G=>G.flags.tiredId,f:"flustered",t:"…Okay. Thanks for worrying about me"}]},
+   {t:"Trust her, keep training",fx:G=>{add(G,G.flags.tiredId,"morale",4);add(G,G.flags.tiredId,"trust",-2);},then:[{n:"coach",t:"…Fine, but if you get hurt, don't blame anyone"}]}]}]},
+
+ {id:"qual_result",look:"fight",when:G=>G.week>=21,bg:"ring",steps:[
+  {n:"coach",t:G=>{const q=[...G.qual.A,...G.qual.B].filter(id=>G.F[id].camp==="player");
+    return q.length?`Subdistrict results! ${q.map(id=>G.F[id].name).join(" and ")} made the top 4 and advance to the district round`:"Subdistrict results… this year our camp didn't make the top 4"}},
+  {n:"kati",f:G=>G.qual.A.includes("kati")?"happy":"sad",t:G=>G.qual.A.includes("kati")?"District round! I'll take it all the way to the province!":
+    "It's not over. Temple-fair fights still bring in money, and I can still get better. We'll be back next year"}]},
+
+ {id:"ploy_river",look:"train",when:G=>G.week>=24&&G.F.ploy.met,bg:"river",steps:[
+  {n:"nar",t:"One evening by the river, you see Ploy sitting alone, re-wrapping her hands"},
+  {n:"ploy",f:"sad",t:"…Sirichai's manager. What brings you here?"},
+  {n:"ploy",f:"sad",t:"Our owner wants the provincial title this year no matter what. If we don't get it, he'll disband the whole women's junior squad. I'm captain. I can't lose"},
+  {choice:[
+   {t:"Carrying everyone alone isn't your job alone",fx:G=>{add(G,"ploy","bond",9);},then:[{n:"ploy",f:"flustered",t:"…You're strange. A rival, but you talk like you care. Thank you"}]},
+   {t:"Then in the ring, our camp won't hold back",fx:G=>{add(G,"ploy","bond",5);add(G,"ploy","trust",4);},then:[{n:"ploy",f:"happy",t:"Good. I like that. Don't disappoint me"}]}]}]},
+
+ {id:"loykrathong",look:"casual",when:G=>G.week>=26,bg:"fair",steps:[
+  {n:"nar",t:"Full moon of the twelfth month. The river is full of krathongs and candlelight; the whole camp skips training for one night"},
+  {n:"coach",t:"Go on, go float krathongs. Let the bad luck float away; this camp's had plenty this year"},
+  {n:"nar",t:"Who will you invite to float a krathong?"},
+  {choiceFn:G=>Object.values(G.F).filter(f=>f.canon&&f.met).map(f=>({t:`Invite ${f.name}`,fx:G2=>{add(G2,f.id,"bond",10);G2.flags.lkWith=f.id;},then:LK_LINES[f.id]}))},
+  {fx:G=>{for(const f of Object.values(G.F))if(f.camp==="player")add(G,f.id,"morale",6);}}]},
+
+ {id:"fah_night",look:"casual",when:G=>G.week>=30&&G.F.fah.met,bg:"night",steps:[
+  {n:"nar",t:"Midnight, at the convenience store outside the stadium, Fah sits alone eating cup noodles, eyes a little red"},
+  {n:"fah",f:"sad",t:"What, here to laugh at me?… Who said Fah was crying, just dust in my eye"},
+  {n:"fah",f:"sad",t:"Everyone loves Fah when she's attacking and winning, but the day she loses, nobody asks how Fah is. Fah only gets to be the camp's 'reckless one'"},
+  {choice:[
+   {t:"Then I'll ask. How are you doing right now?",fx:G=>add(G,"fah","bond",10),then:[{n:"fah",f:"flustered",t:"…Are you crazy? Who can answer when you ask that straight… not really okay. Thanks"}]},
+   {t:"Your recklessness is the scariest in the division",fx:G=>{add(G,"fah","bond",6);add(G,"fah","morale",8);},then:[{n:"fah",f:"happy",t:"Ha! You noticed? Then watch out. Next fight Fah'll show you"}]}]}]},
+
+ {id:"mali_family",look:"train",when:G=>G.week>=34&&G.F.mali.camp==="player",bg:"camp",steps:[
+  {n:"nar",t:"Mali is on the phone behind the camp, her voice barely audible"},
+  {n:"mali",f:"sad",t:"…It's okay, Mom. I'll send money soon. I fought lots of fights this month, really"},
+  {n:"mali",f:"happy",t:"Oh, Manager! It's nothing, haha, just some family stuff"},
+  {choice:[
+   {t:"The camp advances you ฿5,000 of your pay",fx:G=>{G.cash-=5000;add(G,"mali","trust",10);add(G,"mali","bond",6);},then:[{n:"mali",f:"flustered",t:"…I'll pay it back with winning fights. I promise"}]},
+   {t:"You don't have to smile all the time. Tell me when you're tired",fx:G=>add(G,"mali","bond",8),then:[{n:"mali",f:"sad",t:"…Waah, why would you say that, now I'm really going to cry"}]}]}]},
+
+ {id:"rin_plan",look:"train",when:G=>G.week>=38&&G.F.rin.camp==="player",bg:"camp",steps:[
+  {n:"rin",f:"sad",t:"My plan failed again. The data said the opponent would retreat, but she came forward"},
+  {n:"rin",f:"sad",t:"If I can't calculate it, I don't know what to believe"},
+  {choice:[
+   {t:"Sometimes you have to trust your instincts",fx:G=>{add(G,"rin","bond",8);G.F.rin.a.comp=Math.min(20,G.F.rin.a.comp+1);},then:[{n:"rin",f:"flustered",t:"Instincts… I'll try. If it goes wrong, you're responsible too (composure +1)"}]},
+   {t:"Then build a backup plan, two layers deep",fx:G=>{add(G,"rin","trust",6);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+1);},then:[{n:"rin",f:"happy",t:"Plan B… of course. I like the way you think (fight IQ +1)"}]}]}]},
+
+ {id:"final_result",look:"fight",when:G=>G.week>=41,bg:"hall",steps:[
+  {n:"nar",t:"The provincial hall is decked in flags; the list of each division's final four hangs in front of the stage"},
+  {n:"coach",t:G=>{const f=[...(G.semis.A||[]),...(G.semis.B||[])].filter(id=>G.F[id].camp==="player");
+    return f.length?`District results! ${f.map(id=>G.F[id].name).join(" and ")} made the final four and fight in the semifinal in week 44. One more win and it's the provincial final!`:"We didn't reach the final four this year… but a camp that was abandoned now has its name on the board. We'll be back next year";}},
+  {n:"coach",t:G=>{const s=d=>{const t=G.semis[d]||[];return t.length===4?`${G.F[t[0]].name} vs ${G.F[t[3]].name} · ${G.F[t[1]].name} vs ${G.F[t[2]].name}`:"—";};return `Semifinal Div A: ${s("A")} · Div B: ${s("B")}`;}},
+  {n:"kati",f:G=>(G.semis.A||[]).includes("kati")?"happy":"sad",t:G=>(G.semis.A||[]).includes("kati")?"Two more fights… just two more, and I'll stand in the ring where Grandpa once stood":"I'm not good enough yet… but I'll watch every remaining fight and remember it all"}]},
+ {id:"semi_result",look:"fight",when:G=>G.week>=45,bg:"hall",steps:[
+  {n:"coach",t:G=>{const f=[...G.finalists.A,...G.finalists.B].filter(id=>G.F[id].camp==="player");
+    return f.length?`Semifinals over! ${f.map(id=>G.F[id].name).join(" and ")} advance to the provincial final, week 49, five rounds!`:"The semifinals are over. Our camp didn't reach the final… but we still have work to do";}},
+  {n:"coach",t:G=>{const s=d=>G.finalists[d].map(id=>G.F[id].name).join(" vs ")||"—";return `Final Div A: ${s("A")} · Final Div B: ${s("B")}`;}}]},
+
+ {id:"kati_ourcamp",look:"train",when:G=>G.week>=46,bg:"night",steps:[
+  {n:"nar",t:"Kati stands looking at the freshly painted camp sign, the letters 'Sirichai' bright red again"},
+  {n:"kati",f:"happy",t:G=>G.finalists.A.includes("kati")?"The provincial final is just days away… this time last year I was training alone in a camp with nobody left":"We didn't reach the province this year, but this time last year I was training alone in a camp with nobody left"},
+  {n:"kati",f:"flustered",t:"Now there are voices, laughter, a manager… this is our camp now"},
+  {choice:[
+   {t:"Yes, our camp",fx:G=>{add(G,"kati","bond",6);add(G,"kati","morale",8);},then:[{n:"kati",f:"happy",t:"Mm! Our camp!"}]},
+   {t:"And you're the heart of this camp",fx:G=>{add(G,"kati","bond",9);},then:[{n:"kati",f:"flustered",t:"Eh… s-saying that, I don't know how to act"}]}]}]},
+
+ {id:"fah_visit",look:"train",when:G=>G.week>=12&&G.F.fah.met,bg:"camp",steps:[
+  {n:"nar",t:"Monday morning, an old motorbike pulls up at the gate. Fah walks in carrying a glove bag"},
+  {n:"fah",f:"happy",t:"Heard Sirichai has new heavy bags. Lend me your ring for training… and Kati too"},
+  {n:"kati",f:"flustered",t:"Huh! Training at a rival camp?!",with:"fah"},
+  {choice:[
+   {t:"Sure. Light sparring, three rounds, nothing serious",fx:G=>{G.F.kati.a.guard=Math.min(20,G.F.kati.a.guard+.5);G.F.kati.a.counter=Math.min(20,G.F.kati.a.counter+.3);add(G,"fah","bond",5);G.F.kati.fatigue=Math.min(100,G.F.kati.fatigue+6);},
+    then:[{n:"nar",t:"Three rounds become six. Both collapse in the middle of the ring, gasping"},{n:"fah",f:"happy",t:"…Not bad, Kati. You've improved (Kati's guard and counter improve)"}]},
+   {t:"No. Save it for the real ring",fx:G=>{add(G,"kati","morale",5);add(G,"fah","bond",2);},then:[{n:"fah",f:"happy",t:"Ha! Possessive. Fine, see you in the ring"}]}]}]},
+ {id:"pre_qual",look:"train",when:G=>G.week>=17,bg:"night",steps:[
+  {n:"coach",t:G=>{const s=["A","B"].flatMap(d=>standings(G,d).map((r,i)=>({...r,pos:i+1}))).filter(r=>r.f.camp==="player");
+    return s.length?`Three weeks until the subdistrict cut. Right now ${s.map(r=>`${r.f.name} is ranked #${r.pos}`).join(", ")} must stay top 4`:"Three weeks until the subdistrict cut. Time to find fights";}},
+  {n:"kati",f:"happy",t:"I won't let it slip! Manager, plan it for me!"},
+  {n:"coach",t:"Coach's tip: if you have a fight coming, use 'Fight prep' the week before, and scout tapes from the camp screen"}]},
+ {id:"new_sign",look:"train",when:G=>G.camp&&G.camp.beauty>=4,bg:"camp",steps:[
+  {n:"nar",t:"The camp sign has been repainted, 'Sirichai' bright red again. People stop to take photos in front of the camp"},
+  {n:"kati",f:"happy",t:"Manager! Look! Our sign is beautiful again! Just like when I first came here"},
+  {n:"coach",t:"A camp that looks alive makes people want to train (class income rises with camp looks)"},{fx:G=>{G.rep+=.5;}}]},
+ {id:"night_final",look:"casual",when:G=>G.week>=48&&[...G.finalists.A,...G.finalists.B].some(id=>G.F[id].camp==="player"),bg:"night",steps:[
+  {n:"nar",t:"The night before the provincial final, the whole camp sits on the ring apron. No one speaks for a long time"},
+  {n:"coach",t:"Whatever happens tomorrow, Sirichai is back this year. Thank you, all of you"},
+  {n:"kati",f:"flustered",t:"Manager… thank you for not selling the camp on day one"},
+  {choice:[{t:"Thank you for waiting here for me, training",fx:G=>{for(const f of roster(G)){add(G,f.id,"morale",10);add(G,f.id,"bond",3);}},then:[{n:"kati",f:"happy",t:"Tomorrow we go get that belt!"}]}]}]},
+ {id:"ploy_prefinal",look:"fight",when:G=>G.week>=48&&G.bookings.some(b=>b.tier==="final"&&b.a==="kati"&&b.b==="ploy"),bg:"ring",steps:[
+  {n:"nar",t:"In the fighters' room behind the provincial ring, Kati and Ploy meet at the same mirror"},
+  {n:"ploy",f:"happy",l:"fight",t:"Kati, you've changed a lot this year… I watched the tape of every one of your fights, you know"},
+  {n:"kati",f:"surprised",l:"fight",t:"You watched my tapes, Ploy?"},
+  {n:"ploy",f:"sad",l:"fight",t:"I never had to watch anyone's tapes before. Everything always came easy… until I saw you training at five every morning"},
+  {n:"kati",f:"angry",l:"fight",t:"I don't have your talent. All I have is twenty hours a day of refusing to quit. Tonight I'll pour out every bit of it!"},
+  {n:"ploy",f:"happy",l:"fight",t:"Good… I'll fight with everything too. You're the first person who's made me afraid to lose"},
+  {n:"nar",t:"Ploy turns and walks toward the ring without another word. Kati watches her back… the back she has chased all year",show:[{id:"kati",f:"angry",l:"fight"},{id:"ploy",back:true}]},
+  {n:"kati",f:"angry",l:"fight",t:"Tonight… I won't be looking at your back anymore"}]},
+ {id:"fah_prefinal",look:"fight",when:G=>G.week>=48&&G.bookings.some(b=>b.tier==="final"&&b.a==="mali"&&b.b==="fah"),bg:"ring",steps:[
+  {n:"fah",f:"happy",t:"The Chaiya kid is still standing at the last fight… I'm starting to like you"},
+  {n:"mali",f:"happy",t:"Mali's gonna kick so hard you'll remember it your whole life, Fah!"}]},
+ {id:"first_class",look:"train",when:G=>G.week>=9,bg:"camp",steps:[
+  {n:"nar",t:"Saturday evening, five or six village kids cling to the fence, watching Kati kick the bag without blinking"},
+  {n:"kati",f:"flustered",l:"train",t:"Boss… those kids come every day. If we started real classes, would the camp earn more?"},
+  {n:"coach",with:"kati",t:"In Grandpa Chai's day this camp had thirty students. Their fees fed every fighter here. The better the reputation, the more people want to train"},
+  {choice:[
+   {t:"Then start with these kids",fx:G=>{G.rep+=.5;add(G,"kati","morale",5);},then:[{n:"kati",f:"happy",l:"train",t:"Yay! I'll teach them the wai khru first!"}]},
+   {t:"We need to upgrade the class yard before we can take more",fx:G=>{add(G,"kati","trust",3);},then:[{n:"coach",t:"Thinking like a camp owner now. Go check the Camp Management screen"}]}]},
+  {n:"nar",t:"(The camp's main income is students · grows with fame, the class yard, promotion signs and assistant coaches)"}]},
+ {id:"debt_visit",look:"casual",when:G=>G.week>=28,bg:"camp",steps:[
+  {n:"nar",t:"A black sedan stops at the gate. A man in a pressed shirt steps out with a folder. He's from the cooperative Grandpa Chai borrowed from"},
+  {n:"coach",t:G=>`He's here to collect the remaining ${fmt(G.debt)} …Grandpa never told anyone what he used that money for`},
+  {n:"kati",f:"sad",l:"casual",with:"coach",t:"I know… Grandpa paid for my knee surgery, when I was badly hurt three years ago"},
+  {choice:[
+   {t:"This debt belongs to the camp. We'll pay it together",fx:G=>{add(G,"kati","bond",6);add(G,"kati","trust",5);},then:[{n:"kati",f:"flustered",l:"casual",t:"…Thank you. I'll win even more and clear Grandpa's debt"}]},
+   {t:"Why didn't you ever tell anyone?",fx:G=>{add(G,"kati","trust",2);},then:[{n:"kati",f:"sad",l:"casual",t:"Because I was scared everyone would see me as the reason the camp collapsed"},{n:"coach",t:"No one thinks that. Grandpa chose what mattered more"}]}]}]},
+ {id:"tiger_news",look:"fight",when:G=>G.week>=32&&G.F.fah.met,bg:"fair",steps:[
+  {n:"nar",t:"Local headline: 'Golden Tiger Camp Splurges, Poaches Bangkok Trainer in Bid to Sweep Provincial Titles'"},
+  {n:"fah",f:"sad",t:"You saw the news, right… the boss hired someone to watch my every move. What I eat, when I sleep, I have to report it all"},
+  {n:"fah",f:"happy",with:"kati",t:"But it's fine. The more pressure, the harder I fight. Tell Kati: if we meet in the late rounds, I won't hold back"},
+  {n:"kati",f:"happy",l:"train",with:"fah",t:"Who's asking you to hold back! See you in the provincial ring!"}]},
+ {id:"district_mid",look:"train",when:G=>G.week>=36,bg:"night",steps:[
+  {n:"nar",t:"Four weeks left in the district round. The camp lights are off except one lamp where Coach Daeng sits writing in his log"},
+  {n:"coach",t:G=>{const rows=standings(G,"A");const i=rows.findIndex(r=>r.f.camp==="player");return i<0?"We're not on the district board this year, but I still log every fight. Next year we'll know what to fix":i<4?`Right now ${rows[i].f.name} is ranked #${i+1}. Stay in the top four and you go to the provincial semis. Don't risk injury now`:`Right now ${rows[i].f.name} is ranked #${i+1}. Needs at least two more wins to make the final four`;}},
+  {n:"coach",t:"Grandpa Chai once told me 'a camp isn't measured by championships, but by the people who stay together when they lose' …I only understand it now"}]},
+];
+
+const LK_LINES={
+ kati:[{n:"kati",f:"flustered",t:"Inviting me?… Not just because I'm your first fighter, right? Kidding, let's go!"},{n:"kati",f:"happy",t:"I wish our camp has lots of laughter every day next year, just like tonight"}],
+ mali:[{n:"mali",f:"happy",t:"Yay! I made my own banana-leaf krathong, pretty right~"},{n:"mali",f:"flustered",t:"I wish my family is well… and that I get to stay at this camp a long time"}],
+ rin:[{n:"rin",f:"happy",t:"Bread krathongs decompose forty times faster than foam… sorry, habit"},{n:"rin",f:"flustered",t:"This year I wished for something that can't be calculated… don't ask what"}],
+ ploy:[{n:"ploy",f:"flustered",t:"…Inviting someone from a rival camp to float krathongs. Not afraid of being seen?"},{n:"ploy",f:"happy",t:"Thank you. I haven't been to a festival like this since becoming captain"}],
+ fah:[{n:"fah",f:"happy",t:"Huh, inviting Fah? Bold! …Fine, but you're buying the Isan sausage"},{n:"fah",f:"flustered",t:"What did Fah wish for? Secret! …But it might be a little bit about you"}],
+};
+
+const BOND_EVENTS={
+ kati:{lv1:[{n:"kati",f:"sad",t:"Manager… sometimes I'm scared that if I lose, you'll be disappointed and leave like everyone else"},
+   {choice:[{t:"I'm not here because you win",fx:G=>add(G,"kati","trust",6),then:[{n:"kati",f:"flustered",t:"…Remember that. I'll hold you to it every time I lose"}]},
+            {t:"If we lose, we lose together",fx:G=>add(G,"kati","bond",4),then:[{n:"kati",f:"happy",t:"Together… what a nice word"}]}]}]},
+ mali:{lv1:[{n:"mali",f:"sad",t:"You know, I smile all the time because I'm scared that if I stop, people will see how afraid I am"},{n:"mali",f:"flustered",t:"But with you I don't have to try to smile. Funny, isn't it"}]},
+ rin:{lv1:[{n:"rin",f:"flustered",t:"I made a spreadsheet of everyone's stats in camp… including you"},{n:"rin",f:"happy",t:"Your 'trust' cell, I've already set to the maximum. Don't make me change it"}]},
+ ploy:{lv1:[{n:"ploy",f:"sad",t:"Sometimes I wonder what my life would be like if I'd chosen Sirichai instead of Golden Tiger back then"},{n:"ploy",f:"happy",t:"…Forget I said that. But thank you for listening"}]},
+ fah:{lv1:[{n:"fah",f:"flustered",t:"Hey, you're the first one who isn't scared of Fah's tattoo. It's a leaping-tiger yant. Grandma gave it to me before she passed"},{n:"fah",f:"happy",t:"Grandma said a tiger doesn't mean fierce, it means protecting… Fah's still not very good at that"}]},
+};
+const LOVE_EVENTS={
+ kati:[{n:"nar",t:"After evening training, Kati calls you to sit on the ring apron. The gym lights have just gone half off"},
+  {n:"kati",f:"flustered",t:"Manager… I know we should keep work and personal things apart, but I want to say it straight, just once"},
+  {n:"kati",f:"flustered",t:"I like you. Not as my manager"}],
+ mali:[{n:"mali",f:"flustered",t:"I made you a silk wallet, sewed it all night… it's not a thank-you gift. It's… I like you"}],
+ rin:[{n:"rin",f:"flustered",t:"I've been calculating for three weeks. Every model gives the same result"},{n:"rin",f:"flustered",t:"I like you. …This is the conclusion I'm most certain of in my life"}],
+ ploy:[{n:"ploy",f:"flustered",t:"We're in different camps, and I will never hold back in the ring"},{n:"ploy",f:"flustered",t:"But outside the ring… I want you to be the one I come back to after a fight. Can you?"}],
+ fah:[{n:"fah",f:"flustered",t:"Listen, Fah says this once. Laugh and Fah will actually punch you"},{n:"fah",f:"flustered",t:"…Fah likes you. Done! Answer quick!"}],
+};
+const LOVE_YES={kati:"…Really? Then from now on I have one more reason to win",mali:"Yay… wait, why am I crying! I'm too happy",
+  rin:"The result matches what I hoped for… thank you",ploy:"…Then after my next fight, I'll come find you, win or lose",fah:"…Yeah, good! Don't you dare change your mind, Fah remembers everything"};
+const LOVE_NO={kati:"…Mm, I understand. Thank you for answering honestly. Tomorrow I'm still your fighter, same as always",mali:"It's okay! I'm still at this camp, still the same team as always",
+  rin:"Understood. New data, new model. It's completely fine",ploy:"Understood. See you in the ring",fah:"Huh! …Fine, fine, but Fah won't hold back in the ring!"};
+
+function pickTalk(f,rng){const pool=TALK[f.id];f.talked=f.talked||[];
+  const c=pool.map((_,i)=>i).filter(i=>!f.talked.includes(i));if(!c.length)return null;
+  const i=c[Math.floor(rng()*c.length)];f.talked.push(i);return pool[i];}
+function freshLine(f,key,arr,rng){f.used=f.used||{};const u=f.used[key]=f.used[key]||[];let c=arr.map((_,i)=>i).filter(i=>!u.includes(i));
+  if(!c.length){f.used[key]=[];c=arr.map((_,i)=>i).filter(i=>i!==u[u.length-1]);if(!c.length)c=[0];}
+  const i=c[Math.floor(rng()*c.length)];f.used[key].push(i);return arr[i];}
+function freshOnce(f,key,arr,rng){f.used=f.used||{};const u=f.used[key]=f.used[key]||[];const c=arr.map((_,i)=>i).filter(i=>!u.includes(i));if(!c.length)return null;const i=c[Math.floor(rng()*c.length)];u.push(i);return arr[i];}
+function revealFact(G,f,key){if(!key||f.know[key])return null;f.know[key]=true;const P=PROFILES[f.id];
+  if(key==="hobby")return `Hobby: ${P.hobby}`;if(key==="bday")return `Birthday: ${P.bday}`;if(key==="blood")return `Blood type: ${P.blood}`;
+  const m=key.match(/^(like|dislike)(\d)$/);if(!m)return null;
+  return `${m[1]==="like"?"Likes":"Dislikes"}: ${P[m[1]+"s"][+m[2]]}`;}
+function dateScene(G,id,act){
+  const f=G.F[id],A=ACTIVITIES[act],P=ACT_PREF[id];const rng=Math.random;
+  const pref=P.like.includes(act)?"like":P.dislike.includes(act)?"dislike":"ok";
+  G.cash-=A.cost;G.freeUsed=true;const D={score:pref==="like"?3:pref==="dislike"?-2:0,facts:[]};G._date=D;
+  if(pref!=="ok"){const key="act_"+act;if(!f.know[key]){f.know[key]=pref;}}
+  const look=act==="spar"?"train":"casual";
+  const shuffle=a=>{const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;};
+  const talkStep=(T)=>[{n:id,f:"happy",l:look,t:T.q},{choice:shuffle(T.o).map(([t,sc,rep])=>({t,fx:G2=>{D.score+=sc;
+       if(sc>=2){const fact=revealFact(G2,f,T.know);if(fact)D.facts.push(fact);}else if(T.know&&!f.know[T.know])D.missed=true;},
+     then:[{n:id,f:sc>=2?"happy":sc<0?"sad":"flustered",l:look,t:rep}]}))}];
+  const T1=pickTalk(f,rng);
+  let mid;
+  if(T1)mid=talkStep(T1);
+  else{f.momentIdx=f.momentIdx||0;const M=MOMENTS[id];
+    const quiet=[`You and ${f.name} spend time together without needing to say much. That's enough`,`${f.name} tells you about today's training at great length; you listen to the end`,`On the way back, ${f.name} slows down a little, as if she doesn't want today to end`,`${f.name} laughs at the little things you say, then says today was nice`];
+    mid=f.momentIdx<M.length?[{n:"nar",t:M[f.momentIdx++]}]:[{n:"nar",t:freshLine(f,"quiet",quiet,rng)}];D.score+=1;}
+  const intro=freshOnce(f,"in_"+act,A.intro,rng),opener=freshOnce(f,"op_"+pref,OPENERS[id][pref],rng);
+  const steps=[{n:"nar",bg:A.bg,t:intro||`${A.name}`},...(opener?[{n:id,f:pref==="dislike"?"sad":"happy",l:look,t:opener}]:[]),
+    ...mid,...dateTwist(G,f,D,look),
+    {inject:G2=>{const gain=Math.max(0,1+Math.round(D.score*.7));const capped=false,b0=f.bond;add(G2,id,"bond",gain);const real=Math.round(f.bond-b0);if(gain>=4)add(G2,id,"morale",4);
+      if(act==="spar"){f.a.iq=Math.min(20,f.a.iq+.3);f.a.guard=Math.min(20,f.a.guard+.3);f.fatigue=Math.min(100,f.fatigue+4);}
+      const tier=gain>=5?"great":gain>=2?"ok":"meh";
+      f.closed=f.closed||{};const firstClose=!f.closed[tier];f.closed[tier]=true;
+      const out=[...(firstClose?[{n:id,f:tier==="meh"?"sad":"happy",l:look,t:DATE_CLOSE[tier][id]}]:[]),
+        {n:"nar",t:`Bond with ${f.name} ${(real>=0?"+":"")+real}${pref==="like"?" · it's an activity she likes!":pref==="dislike"?" · she doesn't seem to like it here":""}${D.facts.length?" · new profile info: "+D.facts.join(" / "):D.missed?" · she seems to have more she wants to share, if you say the right thing":""}`}];
+      if(typeof hasSignature!=="undefined"&&hasSignature(f)&&!G2.seen["sig_"+id]){G2.seen["sig_"+id]=true;out.push({n:"nar",t:`✦ The bond unlocked the signature move of ${f.name}: "${SIGNATURE[id].name}" — ${SIGNATURE[id].desc}`});}
+      if(f.bond>=40&&!G2.seen["b1_"+id]){G2.seen["b1_"+id]=true;out.push(...BOND_EVENTS[id].lv1.map(x=>({l:look,...x})));}
+      if(f.bond>=75&&f.trust>=40&&!G2.romance&&!G2.seen["love_"+id]){G2.seen["love_"+id]=true;
+        out.push(...LOVE_EVENTS[id].map(x=>({l:"casual",...x})),{choice:[
+          {t:"I feel the same way",fx:G3=>{G3.romance=id;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
+          {t:"Thank you, but I want to keep being the one beside you like this",fx:G3=>add(G3,id,"trust",5),then:[{n:id,f:"sad",l:"casual",t:LOVE_NO[id]}]}]});}
+      return out;}}];
+  return steps;
+}
+
+// ---------- ENDINGS ----------
+function endingScene(G){
+  const pChamp=Object.entries(G.champ).filter(([d,id])=>G.F[id]&&G.F[id].camp==="player").map(([d,id])=>G.F[id]);
+  const pFinal=[...G.finalists.A,...G.finalists.B].some(id=>G.F[id].camp==="player");
+  const pQual=[...G.qual.A,...G.qual.B].some(id=>G.F[id].camp==="player");
+  let key,title,steps=[];
+  if(G.ended==="bankrupt"){key="bankrupt";title="Camp closed for now";
+    steps=[{n:"nar",bg:"camp",t:"The account stayed in the red for weeks. The bank sent a notice to seize the camp land"},
+      {n:"kati",f:"sad",t:"…It's okay. I'll fight at temple fairs to earn money first, and someday we'll reopen this camp"},
+      {n:"nar",t:"The 'Sirichai' sign comes down, but Kati keeps it under her bed. Every night she still wraps her hands and trains"}];}
+  else if(pChamp.length){key="champion";title="Provincial champion!";
+    steps=[{n:"nar",bg:"ring",t:`Drums thunder across the ring. ${pChamp.map(f=>f.name).join(" and ")} raises the provincial championship belt. Sirichai Camp is back on the map`},
+      {n:"coach",t:"Grandpa Chai… can you see? Your grandchild did it"},
+      {n:pChamp[0].id,f:"happy",t:"We did it! Our camp!"}];}
+  else if(pFinal||pQual){key="growth";title="Missed the title, but the camp grew";
+    steps=[{n:"nar",bg:"camp",t:"No belt this year, but the Sirichai name is once again talked about in the provincial scene"},
+      {n:"kati",f:"happy",t:"Next year we'll go further. I promise"}];}
+  else {key="survive";title="Barely held the camp together";
+    steps=[{n:"nar",bg:"camp",t:"The camp is still open, the debt isn't gone, results aren't great, but the light in the camp hasn't gone out"},
+      {n:"kati",f:"happy",t:"The first year is the hardest. Next year has to be better"}];}
+  if(key!=="bankrupt"&&typeof personalEnding==="function")steps.push(...personalEnding(G));
+  if(G.romance&&key!=="bankrupt")steps.push({n:G.romance,f:"flustered",t:{kati:"Next year… let's stay together like this, in camp and outside it",mali:"This New Year, I'm taking you to my home, Mom wants to meet you~",
+    rin:"I've already planned next year. Your name is on every page",ploy:"Next year we're still rivals… and the most important people to each other",fah:"Next year you're still buying Fah sausage. Forever!"}[G.romance]});
+  steps.push(...season2Hooks(G,key));
+  steps.push({n:"nar",t:"— End of the year-one demo · Thank you for playing Muay Thai Moe —"});
+  return {key,title,steps};
+}
+
+// v1.5: face-off before a canon vs canon fight (angry portraits), once per opponent per stage
+const TAUNTS={
+ kati_fah:[["fah","You finally made it, kid from the abandoned camp. Tonight I'll make you remember the Golden Tiger name till you die"],["kati","Our camp isn't abandoned anymore! And the one who'll remember a name… is you. Sirichai!"]],
+ kati_ploy:[["ploy","Kati, your punches are good, but you're too hot-headed. Tonight I'll teach you how Korat fights"],["kati","Teach me if you can, Ploy! I'm not the kid who stands there and takes it anymore!"]],
+ mali_fah:[["fah","Crybaby Chaiya kid, you dare to step in here again? Watch that flower on your head doesn't fall off"],["mali","Don't look down on me! Block, parry, close, open… I'll open your eyes to the stars!"]],
+ mali_ploy:[["ploy","Mali, your Chaiya form is pretty, but pretty alone doesn't win"],["mali","Then today I'll win pretty for you to see!"]],
+ rin_fah:[["fah","Glasses girl, fighting yourself now? Does your spreadsheet say which round you get knocked out?"],["rin","It does. Round three… yours. Seventy-two percent probability"]],
+ rin_ploy:[["ploy","Rin, who used to be on my camp's staff… I never thought we'd stand in opposite corners"],["rin","I thought about it a long time ago. And I've already planned how to win"]],
+};
+function tauntScene(G,me,op){const T=TAUNTS[`${me}_${op}`];if(!T)return null;
+  return [{n:"nar",t:"In the center of the ring, the two fighters stand face to face before the pi chawa begins"},
+    {n:T[0][0],f:"angry",l:"fight",t:T[0][1]},{n:T[1][0],f:"angry",l:"fight",with:T[0][0],t:T[1][1]},
+    {n:"nar",t:"The cheers explode; the referee sends both back to their corners"}];}
+
+// ---------- v1.7: mid-season dilemmas (one decision, real trade-offs, each once) ----------
+const DILEMMAS=[
+ {id:"d_sponsor",from:10,to:40,need:G=>true,bg:"camp",look:"train",steps:[
+  {n:"nar",t:"The gold shop owner from the market walks into camp and hands over a red envelope"},
+  {n:"coach",t:"He'll sponsor ฿15,000 in exchange for our fighters doing an exhibition at his new branch opening. Exhausting, but that's no small sum"},
+  {choice:[{t:"Take it, money matters (+฿15,000 · everyone fatigue +15)",fx:G=>{G.cash+=15000;roster(G).forEach(f=>f.fatigue=Math.min(100,f.fatigue+15));add(G,"kati","morale",-4);},then:[{n:"kati",f:"pout",l:"train",t:"An exhibition outside a gold shop… okay. For the camp"}]},
+   {t:"Decline, I don't want the fighters worn out (fame +0.5)",fx:G=>{G.rep+=.5;add(G,"kati","trust",4);},then:[{n:"kati",f:"happy",l:"train",t:"Thank you for thinking of us first"}]}]}]},
+ {id:"d_roof",from:12,to:44,need:G=>!(G.seen&&G.seen.h_roof),bg:"gym",look:"train",steps:[
+  {n:"nar",t:"A storm hit last night. The east training-yard roof leaks in streams, dripping into the middle of the ring"},
+  {n:"coach",t:"Fixing it now costs ฿6,000. Leave it and the floor stays slippery, training suffers, and the camp looks worse"},
+  {choice:[{t:"Fix it now (−฿6,000)",fx:G=>{G.cash-=6000;},then:[{n:"coach",t:"Good. Things like this only get more expensive if you wait"}]},
+   {t:"Wait for now (camp looks worse · morale −5)",fx:G=>{G.camp.beauty=Math.max(0,G.camp.beauty-2);roster(G).forEach(f=>f.morale=Math.max(0,f.morale-5));},then:[{n:"kati",f:"pout",l:"train",t:"Slipping around while training… it's fine, I can take it"}]}]}]},
+ {id:"d_bet",from:16,to:46,need:G=>G.bookings.some(b=>G.F[b.a].camp==="player"),bg:"night",look:"fight",steps:[
+  {n:"nar",t:"A man in dark glasses waits at the gate at nine at night. He says quietly he's from a gambling table in town"},
+  {n:"nar",t:"\"Have your fighter lose in round three next fight. I'll pay twenty thousand. Nobody will know\""},
+  {choice:[{t:"Throw him out of the camp (fame +1)",fx:G=>{G.rep+=1;roster(G).forEach(f=>add(G,f.id,"trust",5));},then:[{n:"coach",t:"Grandpa Chai threw out three men like that. I'm glad we're like him"}]},
+   {t:"Take the money (+฿20,000 · fame −4 · trust drops hard)",fx:G=>{G.cash+=20000;G.rep=Math.max(0,G.rep-4);roster(G).forEach(f=>{add(G,f.id,"trust",-15);add(G,f.id,"morale",-10);});G.flags.tookBribe=true;},then:[{n:"kati",f:"sad",l:"fight",t:"…I heard everything. I never thought Grandpa's camp would…"}]}]}]},
+ {id:"d_tv",from:14,to:42,need:G=>G.rep>=8,bg:"camp",look:"train",steps:[
+  {n:"nar",t:"A local documentary crew calls, asking to film three days of life in a women's Muay Thai camp"},
+  {choice:[{t:"Let them film (fame +1.5 · everyone fatigue +6)",fx:G=>{G.rep+=1.5;roster(G).forEach(f=>f.fatigue=Math.min(100,f.fatigue+6));},then:[{n:"kati",f:"flustered",l:"train",t:"D-do I have to smile at the camera? I don't know how to smile!"}]},
+   {t:"Decline, let us train in peace",fx:G=>{roster(G).forEach(f=>f.morale=Math.min(100,f.morale+2));},then:[{n:"coach",t:"Fine. Let them film when we're champions"}]}]}]},
+ {id:"d_mali_leave",from:12,to:40,need:G=>G.F.mali.camp==="player",bg:"camp",look:"casual",steps:[
+  {n:"mali",f:"sad",l:"casual",t:"Boss… Mom called. The rice is ready and there's no one to help harvest. Can I go home for a week?"},
+  {choice:[{t:"Go. Family matters (Mali rests all week)",fx:G=>{const f=G.F.mali;f.plan.preset="rest";f.fatigue=0;add(G,"mali","bond",5);add(G,"mali","trust",8);},then:[{n:"mali",f:"flustered",l:"casual",t:"Thank you! I'll bring new rice for the whole camp~"}]},
+   {t:"This is an important stretch, please stay and train",fx:G=>{add(G,"mali","morale",-12);add(G,"mali","bond",-3);},then:[{n:"mali",f:"pout",l:"casual",t:"…Okay. I understand"}]}]}]},
+ {id:"d_rin_poach",from:20,to:44,need:G=>G.F.rin.camp==="player",bg:"camp",look:"casual",steps:[
+  {n:"nar",t:"Rin places a letter on the table. Golden Tiger is offering her a job back as their analyst, at triple the salary"},
+  {n:"rin",f:"happy",l:"casual",t:"I just wanted you to know. I'm not asking for a raise"},
+  {choice:[{t:"Ask her directly where she wants to be",fx:G=>{add(G,"rin","bond",5);add(G,"rin","trust",6);},then:[{n:"rin",f:"flustered",l:"casual",t:"…Here. The numbers say this place is growing faster. …And it's not just the numbers"}]},
+   {t:"Raise her pay to compete (+฿1,000/wk)",fx:G=>{G.F.rin.wage+=1000;add(G,"rin","trust",3);},then:[{n:"rin",f:"pout",l:"casual",t:"I said I wasn't here for money… but thank you"}]}]}]},
+ {id:"d_poor_kid",from:9,to:46,need:G=>true,bg:"camp",look:"train",steps:[
+  {n:"nar",t:"A skinny girl clings to the fence every evening. Today she's brave enough to walk in and ask if she can learn for free"},
+  {choice:[{t:"Let her learn for free (fame +0.8 · Kati grows closer)",fx:G=>{G.rep+=.8;add(G,"kati","bond",3);},then:[{n:"kati",f:"happy",l:"train",t:"I'll teach her myself! Just like when Grandpa took me in"}]},
+   {t:"The camp can't take free students yet",fx:G=>{},then:[{n:"kati",f:"pout",l:"train",t:"…Okay. I'll secretly teach her during lunch break"}]}]}]},
+ {id:"d_fah_night",from:24,to:46,need:G=>G.F.fah.met,bg:"night",look:"casual",steps:[
+  {n:"nar",t:"Eleven at night, a knock at the camp gate. Fah stands there shivering, lips pale"},
+  {n:"fah",f:"sad",l:"casual",t:"The boss ordered me to cut three kilos in five days… let me borrow your training yard tonight. At my camp, people are watching"},
+  {choice:[{t:"Let her in and make her some rice porridge",fx:G=>{add(G,"fah","bond",6);add(G,"kati","bond",-2);},then:[{n:"fah",f:"flustered",l:"casual",t:"…You're crazy. Why help a rival… thanks"},{n:"kati",f:"pout",l:"casual",with:"fah",t:"That's my rice porridge!"}]},
+   {t:"Stay out of other camps' business",fx:G=>{add(G,"fah","bond",-4);},then:[{n:"fah",f:"pout",l:"casual",t:"Hmph, fine. Wasn't expecting anything anyway"}]}]}]},
+ {id:"d_ankle",from:8,to:46,need:G=>G.bookings.some(b=>G.F[b.a].camp==="player"&&b.week-G.week<=2),bg:"gym",look:"train",steps:[
+  {n:"nar",t:G=>{const b=G.bookings.find(b=>G.F[b.a].camp==="player"&&b.week-G.week<=2);G.tmpAnkle=b.a;return `${G.F[b.a].name} is limping after morning training, left ankle a little swollen. The fight is less than two weeks away`;}},
+  {choice:[{t:"Fight as scheduled (fatigue +15)",fx:G=>{const f=G.F[G.tmpAnkle];f.fatigue=Math.min(100,f.fatigue+15);add(G,f.id,"morale",4);},then:[{n:"coach",t:"Tape it tight, and don't kick much with the left"}]},
+   {t:"Rest her, withdraw from the fight (fame −1)",fx:G=>{const id=G.tmpAnkle;G.bookings=G.bookings.filter(b=>b.a!==id);G.rep=Math.max(0,G.rep-1);add(G,id,"trust",8);G.F[id].plan.preset="rest";},then:[{n:"coach",t:"The right call. A fighter's body only has one life"}]}]}]},
+];
+// v1.7: recurring NPC rivals — a line of personality before the bell
+const PERSONA={
+ "Chanpen T.Prasert":{tag:"Former subdistrict champ, trash talker",line:"An abandoned camp reopened? I'll shut it down again for you"},
+ "Praewa Sit Khru Nong":{tag:"Technician, polite",line:"May it be a good fight. Khru Nong sends her regards to Coach Daeng"},
+ "Thapthim Kiatsiam":{tag:"Showboat, plays to the crowd",line:"Where's the camera! Today's knockout has to be pretty"},
+ "Petchdao Luk Mae Ping":{tag:"Chiang Mai girl, big heart",line:"The Ping River never stops flowing, and I never retreat!"},
+ "Namphueng S.Wilaiporn":{tag:"Newcomer, nervous",line:"P-pleased to fight you! Don't go easy on me!"},
+ "Saifa W.Wanthawi":{tag:"Fastest in the district",line:"Keep up with me first, then think about winning"},
+ "Mukda Petchyindee":{tag:"Cold, never smiles",line:"…"},
+ "Butsaba Saengthong Gym":{tag:"Last year's Division B champion",line:"That belt is still at my camp, and it's staying there"},
+ "Baitoei S.Mueang Nuea":{tag:"Knee fighter, tall",line:"My range… you'll never get inside it"},
+ "Khwankhao Ch.Chaiwat":{tag:"Farmer's daughter, tough",line:"I've harvested rice all year. This isn't tiring"},
+};
+const DEBT_CLEAR_SCENE=[
+ {n:"nar",bg:"camp",t:"The final receipt from the cooperative sits on the shelf beside an old photo of Grandpa Chai"},
+ {n:"coach",t:"The debt Grandpa Chai carried for three years… it's gone. He must be laughing up there"},
+ {n:"kati",f:"sad",l:"casual",with:"coach",t:"Grandpa… I'm not a burden to the camp anymore"},
+ {n:"kati",f:"flustered",l:"casual",t:"Thank you, boss… truly, thank you"}];
+
+// ================= v1.12 mid-season events (weeks 20–43) =================
+const R_ALL=(G,fn)=>roster(G).forEach(fn);
+EVENTS.push(
+ {id:"open_day",look:"fight",when:G=>G.week>=22,bg:"gym",steps:[
+  {n:"nar",t:"Sunday morning, the kids from the street pack the camp fence. Some parents are filming on their phones"},
+  {n:"kati",f:"surprised",t:"Boss! More people are watching us train than ever, ever since we won the subdistrict round"},
+  {n:"coach",t:"We could open the camp for a free try-out day. It'll be tiring, but it wins the neighborhood's hearts"},
+  {choice:[{t:"Open a kids' Muay Thai day (fame +1 · fighters fatigue +8)",fx:G=>{G.rep+=1;R_ALL(G,f=>f.fatigue=Math.min(100,f.fatigue+8));add(G,"kati","morale",5);},
+      then:[{n:"kati",f:"happy",t:"Everyone, guard up like this! Hands up~ Great job!"},{n:"nar",t:"By evening, three parents come asking about regular classes"}]},
+    {t:"Sorry everyone, we need to focus on training (morale +3)",fx:G=>R_ALL(G,f=>f.morale=Math.min(100,f.morale+3)),then:[{n:"kati",f:"happy",t:"When we're champions, let's open the camp big time"}]}]}]},
+
+ {id:"storm",look:"fight",when:G=>G.week>=25,bg:"night",steps:[
+  {n:"nar",t:"A storm hits in the middle of the night. The wind is so strong the tin roof roars like it'll blow away; water starts flowing into the training yard"},
+  {n:"kati",f:"surprised",t:"Huh! The heavy bags are all soaked! Help me lift them up high!"},
+  {n:"coach",t:"In past years the water never reached this far. If we don't fix the gutters, it'll happen again"},
+  {choice:[{t:"Hire someone to fix the gutters right away (−฿6,000 · camp looks better)",fx:G=>{G.cash-=6000;G.camp.beauty=Math.min(10,G.camp.beauty+1);},then:[{n:"nar",t:"The repairman arrives at dawn; the camp is dry within a day"}]},
+    {t:"Rally the neighbors to help (free · fame +0.5 · everyone fatigue +6)",fx:G=>{G.rep+=.5;R_ALL(G,f=>f.fatigue=Math.min(100,f.fatigue+6));add(G,"kati","bond",3);},
+      then:[{n:"nar",t:"The chicken-rice uncle, the som tam auntie and the street's kids help bail water until dawn"},{n:"kati",f:"happy",t:"Grandpa's camp… more people love it than I thought"}]}]}]},
+
+ {id:"temple_fair_fight",look:"fight",when:G=>G.week>=29,bg:"fair",steps:[
+  {n:"nar",t:"The temple near camp holds its annual fair. The abbot sends someone to invite Sirichai to fight an exhibition on the fair stage"},
+  {n:"coach",t:"In Grandpa Chai's day we fought this fair every year. Not much money, but the whole subdistrict remembered our name"},
+  {choice:[{t:"Accept the exhibition (fame +1.2 · +฿2,000 · fatigue +10)",fx:G=>{G.rep+=1.2;G.cash+=2000;R_ALL(G,f=>f.fatigue=Math.min(100,f.fatigue+10));},
+      then:[{n:"nar",t:"Pipes and drums fill the temple grounds; the crowd roars every time a Sirichai fighter strikes"},{n:"kati",f:"happy",t:"This temple-fair stage is where I fought for the very first time!"}]},
+    {t:"Send only Coach Daeng to perform the wai khru (fame +0.5)",fx:G=>{G.rep+=.5;},then:[{n:"coach",t:"Old, but my dance hasn't slipped. Anyone who says Coach can't dance, come watch"}]}]}]},
+
+ {id:"kati_knee",look:"fight",when:G=>G.week>=31&&G.F.kati.camp==="player",bg:"night",steps:[
+  {n:"nar",t:"After training, you see Kati alone in a corner of the camp, wrapping the same knee"},
+  {n:"kati",f:"surprised",t:"Oh! Boss… it's nothing, just a bit tight"},
+  {n:"coach",t:"That's the knee she had surgery on. If she pushes now, she might miss the whole season"},
+  {choice:[{t:"Rest for two weeks, no arguing (trust +6 · fatigue −20)",fx:G=>{const f=G.F.kati;f.fatigue=Math.max(0,f.fatigue-20);add(G,"kati","trust",6);f.plan.preset="rest";},
+      then:[{n:"kati",f:"sad",t:"…Okay, but I'll sit and watch everyone train. Don't send me home"}]},
+    {t:"Trust her, keep training but lighter (morale +6)",fx:G=>{add(G,"kati","morale",6);G.F.kati.plan.intensity="light";},
+      then:[{n:"kati",f:"happy",t:"Thank you for trusting me. I won't push past my limits, promise!"}]}]}]},
+
+ {id:"ploy_doubt",look:"casual",when:G=>G.week>=33&&G.F.ploy.met&&G.F.ploy.camp!=="player",bg:"river",steps:[
+  {n:"nar",t:"At dusk by the river, you find Ploy sitting alone, her gloves beside her"},
+  {n:"ploy",f:"sad",t:"The boss says if we don't win the title this year, he'll change captains… ten years I've given that camp, and it's worth just one fight?"},
+  {choice:[{t:"Your worth isn't in a championship belt",fx:G=>{add(G,"ploy","bond",5);add(G,"ploy","trust",4);},then:[{n:"ploy",f:"flustered",t:"…Saying that to a rival, aren't you afraid I'll win?"}]},
+    {t:"Then win and show him. But not for him, for yourself",fx:G=>{add(G,"ploy","bond",3);add(G,"ploy","morale",8);},then:[{n:"ploy",f:"happy",t:"For myself… nobody's ever told me that. Thank you"}]}]}]},
+
+ {id:"daeng_past",look:"fight",when:G=>G.week>=35,bg:"night",steps:[
+  {n:"nar",t:"That night Coach Daeng sits polishing an old, faded mongkhon under the camp's single light"},
+  {n:"coach",t:"Grandpa Chai put this mongkhon on me the day of the provincial final thirty years ago. My knee broke that night, but I never regretted stepping in that ring"},
+  {n:"coach",t:"Wai khru isn't just a pretty dance. It's telling yourself you don't fight alone"},
+  {choice:[{t:"Ask Coach to teach everyone the wai khru dance (everyone's morale +6)",fx:G=>R_ALL(G,f=>f.morale=Math.min(100,f.morale+6)),then:[{n:"nar",t:"That week everyone practices the 'Four-Faced Brahma' dance every morning before running"}]},
+    {t:"Ask Coach to keep the mongkhon for whoever fights for the title (everyone's trust +4)",fx:G=>R_ALL(G,f=>f.trust=Math.min(100,f.trust+4)),then:[{n:"coach",t:"…All right. If one of ours makes the final this year, I'll put it on them with these hands"}]}]}]},
+
+ {id:"buyout",look:"fight",when:G=>G.week>=37,bg:"gym",steps:[
+  {n:"nar",t:"A gold sedan stops at the gate. The Golden Tiger boss walks in with a thick brown envelope"},
+  {n:"nar",t:"\"Five hundred thousand. I buy this camp's name, the fighters move to my camp at double pay, you clear your debt, everyone's happy\""},
+  {n:"kati",f:"angry",t:"…"},
+  {choice:[{t:"This camp isn't for sale (everyone's morale +10 · trust +5)",fx:G=>R_ALL(G,f=>{f.morale=Math.min(100,f.morale+10);f.trust=Math.min(100,f.trust+5);}),
+      then:[{n:"kati",f:"happy",t:"Did you hear that, boss! Sirichai is not for sale! You can leave now!"}]},
+    {t:"Let me think about it (everyone's trust −6)",fx:G=>{G.cash+=10000;R_ALL(G,f=>f.trust=Math.max(0,f.trust-6));},
+      then:[{n:"kati",f:"sad",t:"…Boss, are you really going to sell Grandpa's camp?"},{n:"nar",t:"You return the envelope the next day, but the silence in camp lingers for days"}]}]}]},
+
+ {id:"songkran",look:"casual",when:G=>G.week>=43,bg:"gym",steps:[
+  {n:"nar",t:"Songkran arrives. The camp stops training for half a day; everyone pours fragrant Thai scented water over Coach Daeng's hands"},
+  {n:"coach",t:"May everyone be strong, free of injury and illness, and fight with the honor of Sirichai…"},
+  {n:"kati",f:"happy",t:"The ceremony's over! Now— water fight!!!"},
+  {choice:[{t:"Splash back with a full bowl (everyone's morale +8 · fatigue −10)",fx:G=>R_ALL(G,f=>{f.morale=Math.min(100,f.morale+8);f.fatigue=Math.max(0,f.fatigue-10);}),
+      then:[{n:"kati",f:"flustered",t:"So cold I'm freezing! But… the most fun all year"}]},
+    {t:"Hide behind Coach Daeng (he gets soaked instead)",fx:G=>{add(G,"kati","bond",3);},then:[{n:"coach",t:"Hey! …Boss! Just you wait!"},{n:"kati",f:"happy",t:"Hahaha, Coach Daeng is soaked head to toe!"}]}]}]}
+);
+
+// ================= v1.12 date twists — something unexpected on some outings =================
+const DATE_TWISTS=[
+ {id:"rain",t:f=>`Suddenly rain pours down. You and ${f.name} run under the same shop awning, shoulders touching without meaning to`,
+  choice:[{t:"Take off your jacket and cover her head",sc:3,rep:"…Thank you. Now you're the one getting wet"},{t:"Suggest running through the rain together",sc:2,rep:"Totally crazy! But… it's kind of fun"}]},
+ {id:"fan",t:f=>`A little girl runs up asking for an autograph from ${f.name}"I watch every one of your fights!"`,
+  choice:[{t:"Take a photo of the two of them",sc:3,rep:"I have fans… so nervous my hands are shaking"},{t:"Tell the kid she's resting right now",sc:-1,rep:"…It's fine. Signing takes a second"}]},
+ {id:"vendor",t:f=>`A roadside vendor teases: "Are you two a couple? So cute. How about a garland for each other?"`,
+  choice:[{t:"Buy her a garland",sc:3,rep:"N-no, we're not a couple, auntie! …But the garland smells nice"},{t:"Decline with a laugh",sc:1,rep:"Auntie's just teasing… right?"}]},
+ {id:"cat",t:f=>`A fat orange cat comes and rubs against the legs of ${f.name} then flops onto its back in front of you both`,
+  choice:[{t:"Sit down and pet the cat together",sc:2,rep:"Look, it likes you too. Weird, cats don't take to people easily"},{t:"Joke that the cat looks like her",sc:-1,rep:"Looks like me where! …The chubby part?!"}]},
+ {id:"rival",t:f=>`On the way you run into two Golden Tiger fighters who laugh: "Manager taking his fighter sightseeing, no training?"`,
+  choice:[{t:"Stand beside her quietly, don't respond",sc:2,rep:"Thank you for not leaving me standing alone. See you in the ring"},{t:"Fire back hard",sc:0,rep:"Easy… but that was satisfying"}]},
+];
+function dateTwist(G,f,D,look){const r=Math.random();if(r>.4)return [];f.twists=f.twists||[];
+  const pool=DATE_TWISTS.filter(x=>!f.twists.includes(x.id));if(!pool.length)return [];const T=pool[Math.floor(Math.random()*pool.length)];f.twists.push(T.id);
+  return [{n:"nar",t:T.t(f)},{choice:T.choice.map(c=>({t:c.t,fx:()=>{D.score+=c.sc;},then:[{n:f.id,f:c.sc>=2?"flustered":c.sc<0?"pout":"happy",l:look,t:c.rep}]}))}];}
+
+// ================= v1.13 temptations — someone else wants your time =================
+const topBond=G=>Math.max(...CANON_IDS.map(id=>G.F[id].met?G.F[id].bond:0));
+const tempt=(id,wk,steps)=>({id:"tempt_"+id,look:"casual",when:G=>G.week>=wk&&G.F[id].met&&!G.freeUsed&&topBond(G)-G.F[id].bond>=12,bg:"food",steps:[
+  ...steps,{choice:[{t:"Go together (uses this week's free time)",fx:G=>{G.freeUsed=true;add(G,id,"bond",6);add(G,id,"trust",2);},then:[{n:id,f:"flustered",t:{kati:"Yay! Let's go!",mali:"Really! Mali will hold your hand so you don't get lost!",rin:"…Good. I've prepared three outing plans",ploy:"Thank you… I'm glad",fah:"Hmph, should've invited you ages ago!"}[id]}]},
+    {t:"Sorry, I already have plans this week",fx:G=>add(G,id,"morale",-2),then:[{n:id,f:"pout",t:{kati:"…Mm, it's okay. Next time",mali:"Waah… you'd better be free next time!",rin:"Understood. I'll note this data",ploy:"It's fine. I'm used to it",fah:"Who wanted to go with you anyway! …Not that Fah's upset"}[id]}]}]}]});
+EVENTS.push(
+ tempt("kati",16,[{n:"nar",t:"Kati stands outside your room twisting the hem of her shirt, two movie tickets in hand"},{n:"kati",f:"flustered",t:"Um… a friend gave me two tickets. I don't have anyone to go with… if you're free, boss…"}]),
+ tempt("mali",18,[{n:"nar",t:"The smell of green curry drifts from the camp kitchen. Mali pops her head out holding a ladle"},{n:"mali",f:"happy",t:"Manager! Mali made Mom's recipe, a bit too much… want to eat by the river together?"}]),
+ tempt("rin",20,[{n:"nar",t:"Rin hands you a tablet full of charts"},{n:"rin",f:"happy",t:"I've finished analyzing the district-round opponents, but I'd like your opinion… at the cafe, this evening, if you're free"}]),
+ tempt("ploy",24,[{n:"nar",t:"A LINE message from Ploy pops up late at night"},{n:"ploy",f:"flustered",t:"\"There's a temple fair near my camp tomorrow… if you'd like to walk around together, that's fine. No pressure\""}]),
+ tempt("fah",22,[{n:"nar",t:"Fah shows up at the gate on a small motorbike"},{n:"fah",f:"angry",t:"Hey! Free? Let's go eat moo kratha, Fah's paying! …Don't get the wrong idea, just don't wanna eat alone!"}]));
+
+// v1.13: Kru Daeng goes home for a short break — no coach hints while he is away
+EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29,bg:"camp",steps:[
+  {n:"coach",t:"Boss, I'm taking two weeks' leave to go home to Surin. My niece is getting married"},
+  {n:"coach",t:"I've written the training schedule on the wall. For now you make all the calls. I trust you"},
+  {n:"kati",f:"surprised",t:"Huh! Two whole weeks! …It's fine, I'll keep everyone training myself!"},{inject:G=>{G.coachAway=G.week+2;return [];}},
+  {n:"nar",t:"Coach Daeng on leave for 2 weeks · his advice disappears until he returns"}]});
+
+// ================= v1.13.1 longer outings: a small shared moment at each place =================
+const DATE_BEATS={
+ eat:[{n:"Two bowls of khao soi land in front of you, steam rising with the smell of curry paste",q:"This shop's khao soi is no joke… Manager, can you handle spicy?",o:[["Sure, add another spoon of chili",2,"Haha, so brave. Don't blame me if you cry"],["Could I get another glass of ice…",1,"Haha, your face is all red. Kind of cute"]]},
+      {n:"Auntie Daeng comes to top up the soup and whispers, \"Here with your sweetheart, dear?\"",q:"…What did auntie say? I didn't hear anything!",o:[["She said we look good together",2,"Wh— what is she saying…"],["She asked if we want boiled eggs",1,"Oh… I thought it was something else"]]}],
+ market:[{n:"The night market is buzzing; vendors' calls echo down the whole street",q:"Look at that, a dart stall with plushie prizes! Want to try?",o:[["I'll throw, gotta win the biggest one",2,"You really did it! I'll put it by my bed"],["You throw. A fighter's aim has to be sharp",1,"Watch this! …Missed, haha"]]},
+      {n:"The smell of grilled meatballs and khanom khrok drifts by",q:"What should we eat, meatballs or khanom khrok?",o:[["Buy both and share",2,"Sharing like this makes it twice as tasty"],["You choose",1,"Then khanom khrok! Best when it's hot"]]}],
+ temple:[{n:"The temple bell rings out; bodhi leaves sway gently in the breeze",q:"What did you wish for, Manager?",o:[["That everyone in camp stays safe",2,"…Same as me. That's what I wished too"],["It's a secret",1,"Stingy! You have to tell me someday"]]},
+         {n:"The two of you release fish into the pond behind the temple",q:"This fish is wriggling so hard, like me when Coach Daeng scolds me",o:[["You have to let it go gently, like this",2,"Your hand is so warm… I-I mean the fish's!"],["Let it go now, before it runs out of air",1,"Bye-bye, little fish~"]]}],
+ cafe:[{n:"The cafe screen shows last year's provincial champion's old fight",q:"Look at this moment. If it were me, would I counter here?",o:[["Counter with an elbow when she lowers her guard",2,"Exactly! Manager, your eye's getting sharp"],["Wait until she's tired",1,"Safety first, huh… fair"]]},
+      {n:"A big bowl of Thai-tea bingsu sits in the middle of the table, with two spoons",q:"One bowl for two… who takes the first bite?",o:[["You go first",2,"Then… ahm! So good. Manager, try it"],["Race to finish it first",1,"Spoken like a fight camp! Brain freeze!!"]]}],
+ river:[{n:"A cool breeze blows off the river; orange sunlight stretches across the water",q:"Race to the bridge? Loser buys drinks!",o:[["Okay, I'll give you a three-length head start",2,"Being so nice, don't blame me if you lose!"],["No holding back",1,"Huff… huff… my legs are shaking"]]},
+       {n:"You both park your bikes and rest on the pier, feet dangling above the water",q:"…It's quiet here, right? I often come here alone",o:[["Then from now on we can come together",2,"…Mm. That's a promise"],["Thank you for bringing me to your secret spot",1,"My secret spot… now it's yours too, Manager"]]}],
+ spar:[{n:"The two of you stand in the training ring: a pair of focus mitts and a pair of gloves",q:"Manager, hold the pads for me! Mind your hands!",o:[["Hold them steady so she can go full power",2,"Great sound! Another set!"],["Please go easy on me…",1,"Haha, don't worry, I can control my power"]]}]};
+const _dateScene=dateScene;
+dateScene=function(G,id,act){const steps=_dateScene(G,id,act);const L=DATE_BEATS[act];if(!L)return steps;const f=G.F[id];f.beats=f.beats||{};const k=(f.beats[act]||0)%L.length;f.beats[act]=k+1;const B=L[k];
+  const look=act==="spar"?"train":"casual";const D=G._date;
+  const beat=[{n:"nar",t:B.n},{n:id,f:"happy",l:look,t:B.q},{choice:B.o.map(([t,sc,rep])=>({t,fx:()=>{if(D)D.score+=sc;},then:[{n:id,f:sc>=2?"flustered":"happy",l:look,t:rep}]}))}];
+  const at=steps.findIndex(s=>s&&s.inject);steps.splice(at<0?steps.length:at,0,...beat);return steps;};
+// v1.15: camp-mates squabble over something silly and ask to settle it in the ring; the manager decides
+function sparBout(G,a,b){const A=G.F[a],B=G.F[b];const s=x=>Object.values(x.a).reduce((p,v)=>p+v,0)/14+(x.morale-60)/30;const r=mulberry32(G.seed+G.week*71)();
+  const w=s(A)+(r-.5)*3>=s(B)?A:B,l=w===A?B:A;[A,B].forEach(f=>{gainXP(G,f,22);f.fatigue=Math.min(100,f.fatigue+8);});add(G,w.id,"morale",4);add(G,l.id,"morale",-1);return {w,l};}
+const SPAR_FEUD=[
+ {id:"feud_kati_mali",a:"kati",b:"mali",from:14,lines:[
+  {n:"nar",t:"Wednesday evening, a commotion comes from behind the camp"},
+  {n:"mali",f:"pout",l:"train",t:"Kati! Mali reserved the last mango sticky rice! Who ate it!"},
+  {n:"kati",f:"surprised",l:"train",t:"Well, your name wasn't on it… if you're hungry you eat!"},
+  {n:"mali",f:"angry",l:"train",t:"Then let's settle it in the ring! Loser buys two back!"}],
+  win:{kati:"Thanks in advance for the two packs, Mali~",mali:"Hmph! Two packs tomorrow, don't forget!"},
+  stop:[{n:"kati",f:"sad",l:"train",t:"…Sorry, Mali. I'll buy you some tomorrow"},{n:"mali",f:"happy",l:"train",t:"Two packs! …Kidding, one's fine"}]},
+ {id:"feud_mali_rin",a:"mali",b:"rin",from:20,lines:[
+  {n:"nar",t:"Eleven at night, luk thung music blares from the fighters' dorm"},
+  {n:"rin",f:"angry",l:"casual",t:"Mali, the schedule says bed at ten. Your morning heart rate will be ruined"},
+  {n:"mali",f:"pout",l:"casual",t:"Schedule, schedule, schedule! Rin, do you ever have fun?"},
+  {n:"rin",f:"angry",l:"casual",t:"…Fine. Ring, tomorrow morning. If I win, you sleep on schedule"}],
+  win:{rin:"Data never lies… ten o'clock, Mali",mali:"Yay! Music continues tonight~ (quietly, okay)"},
+  stop:[{n:"rin",f:"sad",l:"casual",t:"…I said that too harshly. Sorry. Could you use headphones instead?"},{n:"mali",f:"happy",l:"casual",t:"Sure, sure, but Rin has to listen to one of Mali's songs"}]},
+ {id:"feud_kati_rin",a:"kati",b:"rin",from:24,lines:[
+  {n:"rin",f:"happy",l:"train",t:"Kati, I counted. Your guard dropped seventeen times in training today"},
+  {n:"kati",f:"angry",l:"train",t:"Why are you counting! I didn't ask you to!"},
+  {n:"rin",f:"happy",l:"train",t:"If you don't believe me, one round in the ring. I'll go for the head every time your guard drops"},
+  {n:"kati",f:"angry",l:"train",t:"Fine! Manager, can we use the ring?"}],
+  win:{kati:"See! Guard dropped, but my punch landed first!",rin:"That's eighteen times, Kati"},
+  stop:[{n:"rin",f:"sad",l:"train",t:"…I just don't want you to get hurt in a real fight"},{n:"kati",f:"happy",l:"train",t:"I know, I know… then keep counting, but say it quietly"}]}];
+EVENTS.push(...SPAR_FEUD.map(E=>({id:E.id,look:"train",bg:"gym",when:G=>G.week>=E.from&&G.F[E.a].camp==="player"&&G.F[E.b].camp==="player"&&!G.F[E.a].injury&&!G.F[E.b].injury,steps:[...E.lines,
+  {choice:[{t:"Allow it, one sparring round (both EXP +22 · fatigue +8)",then:[{n:"nar",t:"Both glove up and climb into the back ring; the students crowd around to watch"},{inject:G=>{const r=sparBout(G,E.a,E.b);
+      return [{n:"nar",t:`End of round one, ${r.w.name} clearly has the upper hand`},{n:r.w.id,f:"happy",l:"train",t:E.win[r.w.id]},{n:r.l.id,f:"pout",l:"train",t:"…Rematch!"}];}}]},
+   {t:"Stop them, have them talk it out (trust +3)",fx:G=>{add(G,E.a,"trust",3);add(G,E.b,"trust",3);},then:E.stop}]}]})));
+// v1.15: Kati (effort) vs Ploy (talent) — the season's spine
+EVENTS.push(
+ {id:"ploy_dawn",look:"train",when:G=>G.week>=10&&G.F.ploy.met,bg:"camp",steps:[
+  {n:"nar",t:"Five a.m., still dark. Kati is on her sixth lap of the village when someone in a purple tracksuit runs the other way"},
+  {n:"ploy",f:"surprised",l:"casual",t:"…Kati? You train this early every day?"},
+  {n:"kati",f:"happy",l:"train",t:"Every day! I'm not gifted like you, so I have to wake up before you"},
+  {n:"ploy",f:"sad",l:"casual",t:"…I've never had to wake up at five. Sometimes I envy people who have something to chase"},
+  {choice:[{t:"Ploy, someone's chasing you from behind too. Watch out",fx:G=>{add(G,"kati","morale",5);add(G,"ploy","bond",3);},then:[{n:"ploy",f:"happy",l:"casual",t:"Hmph… good. I'll wait and see when she catches up"}]},
+   {t:"Want to run together? The three of us",fx:G=>{add(G,"ploy","bond",6);add(G,"kati","bond",2);},then:[{n:"nar",t:"Three laps later, Ploy is the first to stop, gasping. Kati turns back with a huge grin"},{n:"ploy",f:"flustered",l:"casual",t:"…Don't tell anyone I lost at running"}]}]}]},
+ {id:"ploy_ko40",look:"casual",when:G=>G.week>=17&&G.F.ploy.met,bg:"night",steps:[
+  {n:"nar",t:"Community radio reports tonight's results: \"Ploy Golden Tiger wins by first-round knockout in just 40 seconds\""},
+  {n:"kati",f:"sad",l:"casual",t:"Forty seconds… I've trained my whole life, and she needed forty seconds"},
+  {choice:[{t:"Talent got her to the top, but effort can take you further than that",fx:G=>{add(G,"kati","morale",8);add(G,"kati","bond",3);},then:[{n:"kati",f:"flustered",l:"casual",t:"…Further than that. Mm, I'll remember that"}]},
+   {t:"Then an extra hour of training tomorrow",fx:G=>{gainXP(G,G.F.kati,15);G.F.kati.fatigue=Math.min(100,G.F.kati.fatigue+6);},then:[{n:"kati",f:"angry",l:"train",t:"Two hours!"}]}]}]},
+ {id:"kati_overwork",look:"train",when:G=>G.week>=28&&G.F.kati.camp==="player",bg:"night",steps:[
+  {n:"nar",t:"Midnight, the gym light is still on. Kati sits leaning against the heavy bag, hands still wrapped, fallen asleep at some point"},
+  {n:"kati",f:"sad",l:"train",t:"…Oh, Manager, I just… wanted to kick a bit more. Ploy doesn't need to train this much and she's still better than me"},
+  {choice:[{t:"Rest is part of training. Go to bed",fx:G=>{G.F.kati.fatigue=Math.max(0,G.F.kati.fatigue-10);add(G,"kati","trust",5);add(G,"kati","bond",4);},then:[{n:"kati",f:"flustered",l:"train",t:"…Okay, but five a.m. tomorrow!"}]},
+   {t:"Then I'll hold pads for you. Twenty more minutes, then bed",fx:G=>{gainXP(G,G.F.kati,18);add(G,"kati","bond",6);G.F.kati.fatigue=Math.min(100,G.F.kati.fatigue+5);},then:[{n:"nar",t:"Twenty minutes turns into an hour; the pad sounds echo down the whole street"},{n:"kati",f:"happy",l:"train",t:"Today was my best kicking ever, because someone held the pads"}]}]}]},
+ {id:"ploy_fear",look:"casual",when:G=>G.week>=38&&G.F.ploy.met,bg:"river",steps:[
+  {n:"nar",t:"After the district fight, Ploy wins a narrow decision for the first time. You find her sitting by the river"},
+  {n:"ploy",f:"sad",l:"casual",t:"In round three last night, I was so tired my hands shook. That's never happened before"},
+  {n:"ploy",f:"sad",l:"casual",t:"Everyone calls me gifted, but if one day I lose… what will I have left?"},
+  {choice:[{t:"You'll have yourself, finally starting to truly try for the first time",fx:G=>{add(G,"ploy","bond",7);add(G,"ploy","trust",4);},then:[{n:"ploy",f:"flustered",l:"casual",t:"…Trying for the first time. Sounds scary, but worth it"}]},
+   {t:"Don't worry, Kati doesn't want to take anything from you except the belt",fx:G=>{add(G,"ploy","bond",4);add(G,"kati","morale",4);},then:[{n:"ploy",f:"happy",l:"casual",t:"Ha… tell her I'll be waiting in the final"}]}]}]},
+ {id:"fah_mali",look:"casual",when:G=>G.week>=16&&G.F.mali.camp==="player"&&G.F.fah.met,bg:"fair",steps:[
+  {n:"nar",t:"Evening market. Mali reaches for the last sausage skewer, and a tattooed hand snatches it first"},
+  {n:"fah",f:"happy",l:"casual",t:"One beat too slow, Chaiya kid. You'll be this slow in the ring too"},
+  {n:"mali",f:"pout",l:"casual",t:"Fah! We're in the same Division B now and you're still stealing my sausage!"},
+  {choice:[{t:"Save it for revenge in the ring, Mali",fx:G=>{add(G,"mali","morale",6);add(G,"fah","bond",3);},then:[{n:"fah",f:"happy",l:"casual",t:"I like that look in your eye. See you in the ring"}]},
+   {t:"Buy sausages for both",fx:G=>{G.cash-=120;add(G,"mali","bond",4);add(G,"fah","bond",5);},then:[{n:"fah",f:"flustered",l:"casual",t:"…You're a weird one. Treating a rival too. Thanks"}]}]}]});
+// v1.15: the camp talks about last week's big fight
+const LOSS_SELF={kati:"…I'm sorry. After all that training and still…",mali:"Waah… Mali didn't land a single kick",rin:"Where was my data wrong… I need to find out"};
+// v1.22.1: rotate so the morning-after talk doesn't repeat word for word
+const WIN_TEASE={kati:[a=>`See! ${a} was amazing last night, our camp is no joke!`,a=>`${a}! Watching from the corner gave me goosebumps. Let's train together again`,a=>`Our camp is on a winning streak now, ${a}! Grandpa must be smiling`],
+  mali:[a=>`${a} You were so cool last night~ Mali shouted until her voice cracked!`,a=>`Let's celebrate with a huge tray of khanom khrok! ${a} is paying, hehe`,a=>`${a}~ Auntie Taew says she's naming a menu item after you!`],
+  rin:[a=>`Noted: ${a}'s accuracy last night was the highest of the year`,a=>`${a}, in round two you controlled range far better than average. I have a chart`,a=>`This win raises ${a}'s top-four chances a little more`]};
+const pickR=(L,G,k=0)=>{if(!Array.isArray(L))return L;G.rot=G.rot||{};const n=G.rot[k]=(G.rot[k]||0)+1;return L[n%L.length];};
+const WIN_SELF={kati:["But it's not enough yet! My goal is still far ahead","Thank you… but I still see so many of my own mistakes","We won! I'll sleep early tonight, five a.m. tomorrow as usual"],
+  mali:["Yay~ but Mali's not full yet! Give me the next fight","Legs a bit swollen, but worth it~ Somebody make Mali khanom khrok!","Last night Mali saw Mom smiling in the chat~"],
+  rin:["Won as calculated… but the margin is still too narrow. Must be better","The result matched the model. I'll make the model even more accurate","…I'm happy. I just don't know how to show it"]};
+const COACH_WIN=["Don't get cocky after a win. Five a.m. tomorrow as usual","Good, but your guard dropped in round two. I saw","Grandpa Chai is watching. A win like this would satisfy him","Eat well, sleep enough, then back to training","You can win, you can lose. Don't forget why you won today"];
+function aftermathSteps(G,L){const me=G.F[L.a],op=G.F[L.b];const mates=roster(G).filter(f=>f.id!==me.id);const m=mates[0];const steps=[];
+  if(L.win==="A"){steps.push({n:"nar",t:`The next morning, the news that ${me.name} beat ${op.name} spreads through the village`});
+    if(m)steps.push({n:m.id,f:"happy",l:"train",t:WIN_TEASE[m.id]?pickR(WIN_TEASE[m.id],G,"t_"+m.id)(me.name):`Congratulations, ${me.name}!`});
+    if(op.id==="ploy")steps.push({n:me.id,f:"flustered",l:"train",t:"I… really beat Ploy? All those five a.m.s weren't wasted"});
+    else steps.push({n:me.id,f:"happy",l:"train",t:WIN_SELF[me.id]?pickR(WIN_SELF[me.id],G,"s_"+me.id):"But it's not enough yet!"});
+    if(coachOn())steps.push({n:"coach",t:pickR(COACH_WIN,G,"c")});}
+  else{if(op.id==="ploy")steps.push({n:"nar",t:"That night, Ploy walks out of the ring without looking back once",show:[{id:"ploy",back:true}]});
+    steps.push({n:"nar",t:`After losing to ${op.name} ${me.name} sits silently in a corner of the gym all morning`});
+    steps.push({n:me.id,f:"sad",l:"train",t:op.id==="ploy"&&me.id==="kati"?"Ploy is still too far… or maybe I'll never really get there":LOSS_SELF[me.id]||"…I'm sorry"});
+    if(m)steps.push({n:m.id,f:"sad",l:"train",t:m.id==="rin"?`${me.name}, you were ahead in round two. I have numbers to prove it. It wasn't as bad as you think`:m.id==="mali"?`${me.name}~ Mali made khanom khrok for you. Eat first, then be sad`:`${me.name}, five a.m. tomorrow, I'll be waiting to train with you`});
+    steps.push({choice:[{t:"This loss tells us what to fix. Let's fix it together",fx:G=>{add(G,me.id,"morale",6);add(G,me.id,"trust",3);},then:[{n:me.id,f:"happy",l:"train",t:{kati:"…Yes! Next time I won't lose the same way",mali:"Mm! Next time Mali will land every kick!",rin:"I'll finish a weakness-fixing schedule tonight"}[me.id]||"…Yes!"}]},
+      {t:"Rest today. Let's go eat something good",fx:G=>{add(G,me.id,"bond",4);add(G,me.id,"morale",3);me.fatigue=Math.max(0,me.fatigue-5);},then:[{n:me.id,f:"flustered",l:"casual",t:{kati:"…Thank you. Today this is all I need",mali:"Moo kratha? Mali stops being sad instantly",rin:"…There's no statistical reason good food would help, but I'll come"}[me.id]||"…Thank you"}]}]});}
+  return steps;}
+// v1.16: year-end hooks — beating them is what makes Ploy and Fah look at Sirichai
+function season2Hooks(G,key){if(key==="bankrupt")return [];const S=[];
+  const beatPloy=G.champ.A==="kati"&&G.finalists.A.includes("ploy"),beatFah=G.champ.B==="mali"&&G.finalists.B.includes("fah");
+  if(beatPloy||G.F.ploy.bond>=50){S.push({n:"nar",bg:"camp",t:"Three days after the final, someone stands at the camp gate from five a.m., in the purple shorts everyone recognizes, as if ready to train on the spot",show:[{id:"ploy",back:true}]},
+    ...(beatPloy?[{n:"ploy",f:"sad",l:"casual",t:"I lost for the first time in three years… and only then realized I'd never truly tried all this time"},
+      {n:"ploy",f:"flustered",l:"casual",t:"The boss stripped me of the captaincy. Sirichai… do you still take someone who wants to start again from one?"}]:
+     [{n:"ploy",f:"flustered",l:"casual",t:"I heard Sirichai is recruiting fighters for next year… may I talk about a contract?"}]),
+    {choice:[{t:"This camp's gate has been open for you all along",fx:G=>{add(G,"ploy","bond",6);G.s2=Object.assign(G.s2||{},{ploy:"yes"});},then:[{n:"ploy",f:"happy",l:"casual",t:"…Thank you. Then five a.m. tomorrow, I'll come run with Kati"}]},
+     {t:"Think it over. Let's talk again next year",fx:G=>{G.s2=Object.assign(G.s2||{},{ploy:"later"});},then:[{n:"ploy",f:"happy",l:"casual",t:"Fair… I'll come back"}]}]});}
+  if(beatFah||G.F.fah.bond>=50)S.push({n:"fah",f:beatFah?"angry":"happy",l:"casual",t:beatFah?"That Chaiya kid kicked Fah till her ears rang! …Next year Fah's training here, or she'll never get her rematch":"Hey, can Fah move to your camp next year! Golden Tiger is boring now"});
+  if(S.length)S.push({n:"nar",t:"Next year, Sirichai may have more fighters than anyone expects…"});
+  return S;}
+// v1.16: Rin's own arc — the analyst who left Payak Thong and has to decide whether she is a fighter
+EVENTS.push(
+ {id:"rin_notebook",look:"casual",when:G=>G.week>=30&&G.F.rin.camp==="player"&&G.F.ploy.met,bg:"night",steps:[
+  {n:"nar",t:"Rin sets a thick black notebook on the table. The first page reads \"Ploy · 2 years · 41 fights\""},
+  {n:"rin",f:"sad",l:"casual",t:"At Golden Tiger I logged every one of Ploy's fights… they had me analyze her opponents, but I secretly analyzed her too"},
+  {n:"rin",f:"angry",l:"casual",t:"Ploy's only weakness is the late rounds. She's never been truly tired, so she doesn't know what to do when she is"},
+  {choice:[{t:"Show Kati the notebook",fx:G=>{G.F.kati.ployNotes=true;add(G,"kati","morale",5);add(G,"rin","trust",3);},then:[{n:"kati",f:"surprised",l:"train",t:"Rin… this is a treasure trove! I'll drag Ploy all the way to round five!"},{n:"nar",t:"(Kati is more accurate against Ploy)"}]},
+   {t:"Keep it. Let Kati win on her own skill",fx:G=>{add(G,"rin","bond",5);add(G,"kati","trust",3);},then:[{n:"rin",f:"flustered",l:"casual",t:"…Understood. Some things data can't help with. It takes heart"}]}]}]},
+ {id:"rin_fighter",look:"fight",when:G=>G.week>=36&&G.F.rin.camp==="player",bg:"gym",steps:[
+  {n:"nar",t:"After training, Rin stares at her wrapped hands for a long time"},
+  {n:"rin",f:"sad",l:"fight",t:"Manager… everyone calls me 'the glasses analyst'. Am I really a fighter, or just someone who likes numbers?"},
+  {choice:[{t:"You're the best game-reader I've ever seen in a ring",fx:G=>{add(G,"rin","morale",8);add(G,"rin","bond",4);},then:[{n:"rin",f:"flustered",l:"fight",t:"…I'm writing that sentence on the first page"}]},
+   {t:"Next fight, try fighting without looking at your notes",fx:G=>{const f=G.F.rin;f.a.comp=Math.min(20,f.a.comp+.5);f.a.iq=Math.min(20,f.a.iq+.3);add(G,"rin","trust",4);},then:[{n:"rin",f:"angry",l:"fight",t:"Without notes… scary, but worth trying. Okay!"},{n:"nar",t:"(Rin's composure and fight IQ improve)"}]}]}]});
+
+// ---------- v1.21: opponent's parting words, shown in a bubble over her head after the bell ----------
+const POST_BUBBLE={
+ ploy:{win:["It's not your time yet, Kati… but it's close","You've trained well. Next time I won't be careless"],lose:["…Very good. Next time I'll take it back with everything I have","You've really grown. Congratulations"]},
+ fah:{win:["See that!? That's Fah! Remember the name!","Too weak, go train again!"],lose:["Doesn't count! Doesn't count! Fah's foot slipped!","…Tch, you got better. Remember this, next time you won't survive!"]}};
+const POST_GENERIC={
+ win:["An abandoned camp is still an abandoned camp!","Is that all your training?","Thanks for the points, sweetie~","Go tell Coach Daeng who beat you","Good fight, but today was my day"],
+ lose:["Unfair! Are the judges blind!","I didn't sleep enough last night…","Rematch! I want a rematch!","Ow… my leg… see you next time!","You're the real deal, I admit it. Let me bow to you"],
+ draw:["A draw?… This isn't over","Next time we settle it for good!"]};
+const QBUB={gang:{win:["Ha! Tell the vendors to get the interest ready!","Some fight camp! Go train again!"],lose:["Remember this! The helmet gang isn't done!","Ow… my helmet's dented, who's paying for it!","Tell the boss… this camp is the real deal!"],draw:["We'll let it go today!"]},
+ rooster:{win:["Cock-a-doodle-doo!! (stands on the ropes crowing for three minutes)","(pecks the canvas three times as if counting its own points)"],lose:["…Bawk (walks out of the ring, head hanging)","Bok… (loses two feathers but keeps its beak high)"],draw:["Bawk?"]},
+ bull:{win:["Moooooo!! (swishes its tail around the ring)","(pushes the corner post with its horns until it tilts)"],lose:["Moo… (lies down in the middle of the ring, won't get up until it gets grass)","(walks back to the pen, the cowbell silent now)"],draw:["Moo?"]}};
+function postBubble(op,res,seed){const R=a=>a[Math.abs(seed)%a.length];
+  if(op.grp&&QBUB[op.grp])return R(QBUB[op.grp][res]||QBUB[op.grp].draw);
+  if(POST_BUBBLE[op.id]&&res!=="draw")return R(POST_BUBBLE[op.id][res]);
+  const P=typeof PERSONA!=="undefined"&&PERSONA[op.name];if(P&&res==="win"&&seed%3===0)return P.line;
+  return R(POST_GENERIC[res]);}
+
+// =====================================================================================
+// v1.21 CONTENT PACK — decisions with real trade-offs, two-girls-one-evening choices,
+// closeness milestones, heartfelt and sportsmanship moments, and a lot more silly neighbours
+// =====================================================================================
+const inCamp=(G,id)=>G.F[id]&&G.F[id].camp==="player";
+const metR=(G,id)=>G.F[id]&&G.F[id].met;
+const tire=(G,v)=>roster(G).forEach(f=>f.fatigue=Math.max(0,Math.min(100,f.fatigue+v)));
+const cheer=(G,v)=>roster(G).forEach(f=>f.morale=Math.max(0,Math.min(100,f.morale+v)));
+
+DILEMMAS.push(
+ {id:"d_tourists",from:6,to:46,need:G=>true,bg:"gym",look:"train",steps:[
+  {n:"nar",t:"A white van stops at the gate. Twelve tourists pile out with cameras and elephant-print shirts"},
+  {n:"npc",who:"Mark (tour guide)",t:"Sawadee krap! My tour group wants to learn authentic Muay Thai, five hundred baht a head, all day, can do?"},
+  {n:"coach",t:"Good money, but teaching twelve tourists all day, our kids will be worn out instead of training"},
+  {choice:[{t:"Teach all day (+฿6,000 · everyone fatigue +12)",fx:G=>{G.cash+=6000;tire(G,12);},then:[{n:"npc",who:"Mark (tour guide)",t:"I can't feel my legs… but five stars! Review for sure!"},{n:"nar",t:"A five-star review goes up on a travel site that very night"}]},
+   {t:"Coach Daeng teaches half a day, fighters help a little (+฿2,500 · fatigue +4)",fx:G=>{G.cash+=2500;tire(G,4);},then:[{n:"coach",t:"Wai khru first! Not a high five! …Okay, a high five is fine"}]},
+   {t:"Have the fighters perform only the wai khru dance (+฿1,500 · fame +0.3)",fx:G=>{G.cash+=1500;G.rep+=.3;cheer(G,2);},then:[{n:"nar",t:"The tourists watch the wai khru in silence to the end, then applaud for a full minute"}]},
+   {t:"Sorry, we're training hard right now (morale +2)",fx:G=>cheer(G,2),then:[{n:"npc",who:"Mark (tour guide)",t:"Okay! Then a selfie in front of the camp sign instead~"}]}]}]},
+ {id:"d_tiktok",from:10,to:46,need:G=>G.rep>=8&&inCamp(G,"mali")&&inCamp(G,"rin"),bg:"gym",look:"train",steps:[
+  {n:"nar",t:"'Split a coconut with one kick' clips are trending nationwide, millions of views each"},
+  ...[{n:"mali",f:"happy",t:"Mali can do it! In Chaiya we kick coconuts for fun as kids~ Let me film it, let me film it!"}],
+  {n:"rin",f:"pout",t:"A mature coconut is as hard as a human knee. High chance of bruised shins"},
+  {choice:[{t:"Let Mali kick! (fame +1.5 · Mali fatigue +6)",fx:G=>{G.rep+=1.5;if(inCamp(G,"mali"))G.F.mali.fatigue=Math.min(100,G.F.mali.fatigue+6);add(G,"mali","bond",3);},then:[{n:"nar",t:"Thwack! The coconut splits in two, juice splashes the camera, two million views in one night"},{n:"mali",f:"happy",t:"But Mali's shin… waah… ice please~"}]},
+   {t:"Have Rin calculate the safe striking point first (fame +0.8)",fx:G=>{G.rep+=.8;add(G,"rin","bond",3);},then:[{n:"rin",f:"happy",t:"Hit the seam of the husk at forty-five degrees… okay, it's safe now"},{n:"nar",t:"The clip gets fewer views, but people share it as 'science-based Muay Thai'"}]},
+   {t:"Skip the trend, she'll get hurt (trust +2)",fx:G=>roster(G).forEach(f=>add(G,f.id,"trust",2)),then:[{n:"mali",f:"pout",t:"Waah… fine. Then Mali will just eat the coconut"}]}]}]},
+ {id:"d_drink",from:14,to:46,need:G=>G.rep>=12,bg:"gym",look:"train",steps:[
+  {n:"npc",who:"Golden Gaur energy drink sales rep",t:"Hello! We'd like your fighters in a commercial, saying 'Golden Gaur: the power of the gaur, not the power of a kid!'"},
+  {n:"kati",f:"surprised",t:"…Do I really have to say that?"},
+  {choice:[{t:"Take the full contract (+฿8,000 · Kati a little embarrassed)",fx:G=>{G.cash+=8000;add(G,"kati","morale",-3);},then:[{n:"kati",f:"flustered",t:"Golden Gaur… power of the gaur… not the power of a kid…! (wants to dig a hole and hide)"}]},
+   {t:"Negotiate a new slogan (+฿5,000 · fame +0.3)",fx:G=>{G.cash+=5000;G.rep+=.3;},then:[{n:"npc",who:"Golden Gaur energy drink sales rep",t:"'Drink it and keep training' works too… the market will probably like it"}]},
+   {t:"Decline, the camp's image matters more",fx:G=>add(G,"kati","trust",3),then:[{n:"kati",f:"happy",t:"Phew… thank you for saving my life"}]}]}]},
+ {id:"d_poach",from:18,to:44,need:G=>inCamp(G,"mali")&&inCamp(G,"rin"),bg:"night",look:"casual",steps:[
+  {n:"nar",t:"A manager from a famous Bangkok camp messages Mali and Rin, offering double pay"},
+  {n:"coach",t:"Word has reached me. The kids haven't answered him yet, they're waiting to hear from us"},
+  {choice:[{t:"Raise everyone's pay first (−฿5,000 · trust +6)",fx:G=>{G.cash-=5000;roster(G).forEach(f=>add(G,f.id,"trust",6));},then:[{n:"rin",f:"flustered",t:"I wasn't going to leave anyway… but thank you for valuing us"}]},
+   {t:"Talk it out openly with the whole camp tonight (everyone's bond +2)",fx:G=>roster(G).forEach(f=>add(G,f.id,"bond",4)),then:[{n:"mali",f:"happy",t:"Mali's not going anywhere~ This place has khanom khrok and everyone"},{n:"kati",f:"happy",t:"This camp isn't big, but it's home"}]},
+   {t:"Let each decide for herself, we respect it (morale +3)",fx:G=>cheer(G,3),then:[{n:"rin",f:"happy",t:"…I've thought about it. All the data says stay here"}]}]}]},
+ {id:"d_rival_hurt",from:12,to:46,need:G=>Object.keys(G.h2h||{}).length>=2,bg:"night",look:"casual",steps:[
+  {n:"nar",t:"Nine at night, a pickup stops at the gate. A young fighter from a rival camp we just fought limps out"},
+  {n:"npc",who:"Praewa Sit Khru Nong",t:"Sorry to bother you… I twisted my ankle running, our camp's truck broke down, the hospital is far…"},
+  {choice:[{t:"Drive her to the hospital yourself (fame +1 · trust +3)",fx:G=>{G.rep+=1;roster(G).forEach(f=>add(G,f.id,"trust",3));},then:[{n:"npc",who:"Praewa Sit Khru Nong",t:"In the ring we're rivals, but tonight… thank you, truly"},{n:"coach",t:"Sportsmanship. That's what Grandpa Chai taught"}]},
+   {t:"Have the camp masseuse look at the ankle first (−฿500 · fame +0.5)",fx:G=>{G.cash-=500;G.rep+=.5;},then:[{n:"kati",f:"happy",t:"Wrap it like this and it'll heal. When it does, let's fight again!"}]},
+   {t:"Call an ambulance for her, then go back to rest",fx:G=>{},then:[{n:"nar",t:"The ambulance arrives in twenty minutes; Praewa waves thanks from the stretcher"}]}]}]},
+ {id:"d_landlord",from:8,to:48,need:G=>G.cash<9000,bg:"gym",look:"casual",steps:[
+  {n:"npc",who:"Jae Muay, the landlady",t:"Next month's rent, pay me a month early, okay? Jae's going on a Japan tour"},
+  {n:"coach",t:"(whispers) There isn't much left in the account"},
+  {choice:[{t:"Pay it (−฿3,000)",fx:G=>{G.cash-=3000;},then:[{n:"npc",who:"Jae Muay, the landlady",t:"Great! Jae'll bring you green-tea KitKats"}]},
+   {t:"Let Coach Daeng negotiate (he courted her in his youth)",fx:G=>{add(G,"kati","morale",3);},then:[{n:"coach",t:"Muay… remember the temple fair in 1987?"},{n:"npc",who:"Jae Muay, the landlady",t:"…Fine, fine, no need to pay early! Don't bring that up in front of the kids!"},{n:"mali",f:"surprised",t:"Coach Daeng has a past?!"}]},
+   {t:"Have the fighters do a street exhibition at the market for cash (+฿2,000 · fatigue +10)",fx:G=>{G.cash+=2000;tire(G,10);},then:[{n:"nar",t:"The whole market crowds around; vendors toss money into the bowl until it overflows"}]}]}]},
+ {id:"d_fanart",from:16,to:48,need:G=>G.rep>=25&&inCamp(G,"mali"),bg:"gym",look:"casual",steps:[
+  {n:"nar",t:"A fan sends a package to camp: a life-size cardboard cutout of Kati, grinning wide and raising a fist"},
+  {n:"kati",f:"flustered",t:"Th-that's me? Why am I smiling so wide!"},
+  {n:"mali",f:"happy",t:"So accurate~ just like Kati's face when she sees mango sticky rice!"},
+  {choice:[{t:"Put it at the camp gate (fame +0.6)",fx:G=>{G.rep+=.6;},then:[{n:"nar",t:"Passing drivers stop to take photos with it every day. The motorbike-taxi uncle bows to it every morning thinking it's a shrine"}]},
+   {t:"Give it to Kati to keep (Kati bond +)",fx:G=>{add(G,"kati","bond",4);},then:[{n:"kati",f:"flustered",t:"I'll put it behind the wardrobe… nobody's allowed to see!"}]},
+   {t:"Auction it to raise money for camp (+฿3,500)",fx:G=>{G.cash+=3500;add(G,"kati","morale",-2);},then:[{n:"kati",f:"pout",t:"I sold for three thousand five hundred… isn't that too cheap?!"}]}]}]},
+ {id:"d_uncle",from:20,to:48,need:G=>G.rep>=20,bg:"gym",look:"casual",steps:[
+  {n:"npc",who:"A stranger",t:"Kati! My niece! I'm Grandpa Chai's half brother! I lost my job, could I borrow five thousand…"},
+  {n:"kati",f:"surprised",t:"…Grandpa didn't have a brother. Grandpa was an only child"},
+  {n:"npc",who:"A stranger",t:"…An only child… with a brother… yes, yes!"},
+  {choice:[{t:"Call Coach Daeng to chase him off",fx:G=>{},then:[{n:"coach",t:"You! Last month you claimed to be Ploy's uncle!"},{n:"nar",t:"The man runs off with only one sandal"}]},
+   {t:"Give him a boxed meal (−฿60 · fame +0.2)",fx:G=>{G.cash-=60;G.rep+=.2;},then:[{n:"npc",who:"A stranger",t:"…Basil fried rice… thank you, niece. Uncle won't scam this camp again"}]}]}]},
+ {id:"d_noodle",from:6,to:48,need:G=>G.cash<6000&&inCamp(G,"mali")&&inCamp(G,"rin"),bg:"gym",look:"casual",steps:[
+  {n:"nar",t:"End of the month. The camp fridge has ten packs of instant noodles and two eggs"},
+  {n:"rin",f:"pout",t:"Protein per person is sixty percent below what athletes need"},
+  {n:"mali",f:"happy",t:"It's fine~ Mali can make Chaiya-style drunken noodles!"},
+  {choice:[{t:"Instant noodle party for the whole camp (morale +4)",fx:G=>cheer(G,4),then:[{n:"kati",f:"happy",t:"Better than a restaurant! Mali could open a shop"}]},
+   {t:"Pay for grilled chicken (−฿600 · fatigue −4)",fx:G=>{G.cash-=600;tire(G,-4);},then:[{n:"rin",f:"happy",t:"Protein restored to safe levels. Thank you"}]},
+   {t:"Ask Auntie Taew to put som tam on credit",fx:G=>cheer(G,2),then:[{n:"npc",who:"Auntie Taew, som tam stall",t:"Credit's fine! But when you win, come take a photo with Auntie!"}]}]}]}
+);
+
+// ---------- two of them want the same evening (the one you don't pick drops a little) ----------
+DILEMMAS.push(
+ {id:"j_loykrathong",from:30,to:40,need:G=>inCamp(G,"kati")&&inCamp(G,"mali"),bg:"river",look:"casual",steps:[
+  {n:"nar",t:"Loy Krathong night. Lights twinkle along the Ping River"},
+  {n:"kati",f:"flustered",t:"Manager… would you float a krathong with me tonight? I made one from banana leaves",with:"mali"},
+  {n:"mali",f:"happy",t:"Oh! Mali was going to invite you too~ Mali made a bread krathong for the fish to eat!"},
+  {choice:[{t:"Go with Kati",fx:G=>{add(G,"kati","bond",5);add(G,"mali","bond",-1);},then:[{n:"kati",f:"happy",t:"I wish we win the title next year… and float krathongs together again"},{n:"mali",f:"pout",t:"(watching from afar) …sigh, little fish, come eat Mali's krathong instead"}]},
+   {t:"Go with Mali",fx:G=>{add(G,"mali","bond",5);add(G,"kati","bond",-1);},then:[{n:"mali",f:"happy",t:"Look! The fish are eating Mali's krathong~ I wish for… secret!"},{n:"kati",f:"sad",t:"(floats a krathong alone, quietly) …It's fine"}]},
+   {t:"Go, all three together",fx:G=>{add(G,"kati","bond",2);add(G,"mali","bond",2);},then:[{n:"kati",f:"happy",t:"Okay! As a team"},{n:"mali",f:"happy",t:"Team Sirichai, float them together, one, two, three!"}]}]}]},
+ {id:"j_ploy_coffee",from:18,to:44,need:G=>inCamp(G,"kati")&&metR(G,"ploy"),bg:"cafe",look:"casual",steps:[
+  {n:"nar",t:"After the district press conference, Ploy walks up to you right in front of Kati"},
+  {n:"ploy",f:"happy",t:"Are you free? I'd like to talk Muay Thai with the manager who revived an abandoned camp. Let's have tea",with:"kati"},
+  {n:"kati",f:"pout",t:"…Manager, didn't we plan to watch tapes together?"},
+  {choice:[{t:"Have tea with Ploy",fx:G=>{add(G,"ploy","bond",5);add(G,"kati","bond",-1);},then:[{n:"ploy",f:"happy",t:"Your camp has something Golden Tiger doesn't… I still can't find the word for it"},{n:"kati",f:"pout",t:"(watches tapes alone, rewinding harder than usual)"}]},
+   {t:"Decline, I have plans with Kati",fx:G=>{add(G,"kati","bond",5);add(G,"ploy","bond",-1);},then:[{n:"kati",f:"happy",t:"(walking ahead very fast) Let's go! The tapes are waiting!"},{n:"ploy",f:"sad",t:"…Another time, then"}]},
+   {t:"Invite Kati along, the three of you",fx:G=>{add(G,"kati","bond",2);add(G,"ploy","bond",2);},then:[{n:"nar",t:"The table falls silent for five full minutes, both staring into their tea"},{n:"ploy",f:"happy",t:"…Your lead hand has improved, Kati"},{n:"kati",f:"flustered",t:"…Your spinning elbow has gotten… scarier too"}]}]}]},
+ {id:"j_rin_fah",from:22,to:46,need:G=>inCamp(G,"rin")&&metR(G,"fah"),bg:"fair",look:"casual",steps:[
+  {n:"nar",t:"The annual temple fair, a balloon-shooting stall"},
+  {n:"fah",f:"angry",t:"You! Shooting contest with Fah, loser buys Fah dinner!",with:"rin"},
+  {n:"rin",f:"pout",t:"Manager, according to plan we buy old videotapes at that stall over there. Twelve minutes left"},
+  {choice:[{t:"Accept Fah's challenge",fx:G=>{add(G,"fah","bond",5);add(G,"rin","bond",-1);},then:[{n:"fah",f:"happy",t:"Haha, you lost! Moo kratha! Let's go, let's go!"},{n:"rin",f:"pout",t:"(buys tapes alone) …the shop closed one minute before I got there"}]},
+   {t:"Go buy tapes with Rin",fx:G=>{add(G,"rin","bond",5);add(G,"fah","bond",-1);},then:[{n:"rin",f:"happy",t:"Found it! Grandpa Chai's 1992 fight… I've been looking for it for three years"},{n:"fah",f:"angry",t:"Tch! Fine, don't play!"}]},
+   {t:"Let Rin and Fah compete",fx:G=>{add(G,"rin","bond",2);add(G,"fah","bond",2);},then:[{n:"rin",f:"happy",t:"I've calculated the trajectory"},{n:"nar",t:"Rin pops ten in a row; Fah's jaw drops"},{n:"fah",f:"surprised",t:"That's cheating! …Teach Fah too"}]}]}]}
+);
+
+// ---------- closeness milestones as weekly events (not only on dates) — heartfelt beats ----------
+const BOND_BEATS={
+ kati:{20:[{n:"nar",t:"Five a.m. You arrive at camp early and find Kati dusting Grandpa Chai's photo on the shelf"},{n:"kati",f:"happy",l:"train",t:"Grandpa always woke before everyone, so I woke before him… and I still can't stop"},{n:"kati",f:"flustered",l:"train",t:"…But lately I'm not the only one awake. That's really nice"}],
+   55:[{n:"nar",t:"Rain is too heavy to train. Kati sits under the eaves wrapping your hands"},{n:"kati",f:"sad",l:"casual",t:"When Grandpa died, I thought this camp would never have laughter again"},{n:"kati",f:"happy",l:"casual",t:"Thank you for not letting the camp go quiet… and not letting me go quiet either"},
+     {choice:[{t:"I don't want you to go quiet either",fx:G=>add(G,"kati","bond",3),then:[{n:"kati",f:"flustered",l:"casual",t:"…Then I'll talk more every day. No complaining!"}]},{t:"This camp has laughter because of you",fx:G=>add(G,"kati","trust",4),then:[{n:"kati",f:"flustered",l:"casual",t:"…Say that and I'll cry"}]}]}]},
+ mali:{20:[{n:"nar",t:"Mali video-calls her mother in Chaiya, then suddenly turns the camera to you"},{n:"mali",f:"happy",l:"casual",t:"Mom~ this is the manager I told you about! The one who buys Mali khanom khrok!"},{n:"nar",t:"Mali's mother puts her hands together through the screen: 'Please take care of my daughter. She smiles a lot, but she gets lonely'"},{n:"mali",f:"flustered",l:"casual",t:"Mom!! You didn't have to say that!"}],
+   55:[{n:"nar",t:"Late at night you find Mali hugging her knees beside the ring"},{n:"mali",f:"sad",l:"casual",t:"Dad used to say girls who fight have no future… Dad never came to watch Mali fight even once"},{n:"mali",f:"sad",l:"casual",t:"So Mali smiles all the time, because if she stops, she's scared she'll believe him"},
+     {choice:[{t:"On title day, I'll send your father a ticket myself",fx:G=>{add(G,"mali","bond",3);add(G,"mali","morale",8);},then:[{n:"mali",f:"flustered",l:"casual",t:"…If Dad really comes, Mali will kick so he sees the future is right here"}]},{t:"You don't have to smile all the time. You can cry here",fx:G=>add(G,"mali","trust",5),then:[{n:"nar",t:"Mali cries in front of someone for the first time, then laughs through the tears"},{n:"mali",f:"happy",l:"casual",t:"Not smiling just for a moment… tomorrow the smile's back~"}]}]}]},
+ rin:{20:[{n:"nar",t:"You see Rin making spreadsheets at one a.m., the laptop lighting her face blue"},{n:"rin",f:"pout",l:"casual",t:"Don't worry. I sleep little as a rule. Data waits for no one"},{n:"rin",f:"flustered",l:"casual",t:"…But if you want to sit there and keep me company, that's fine. Not asking, just saying it's fine"}],
+   55:[{n:"nar",t:"Rin hands you an old notebook, full of a child's handwriting recording Muay Thai stats since age eight"},{n:"rin",f:"sad",l:"casual",t:"As a kid no one ever picked me for a team, so I sat and wrote down why the winning team won"},{n:"rin",f:"flustered",l:"casual",t:"Now I'm on a team… you're the first to choose me for me, not for the numbers"},
+     {choice:[{t:"Your numbers are part of you too",fx:G=>add(G,"rin","trust",5),then:[{n:"rin",f:"happy",l:"casual",t:"…I'll write that sentence on the first page of a new notebook"}]},{t:"This team will never go without you",fx:G=>add(G,"rin","bond",3),then:[{n:"rin",f:"flustered",l:"casual",t:"The probability that I cry right now… is very high. Don't look"}]}]}]},
+ ploy:{20:[{n:"nar",t:"Beside Golden Tiger's training yard, Ploy hands you a water bottle without looking at you"},{n:"ploy",f:"happy",l:"casual",t:"Everyone comes to me for an autograph. You came because you wanted to know how I train… strange"}],
+   55:[{n:"nar",t:"Late at night, Ploy sits alone in the empty stadium stands"},{n:"ploy",f:"sad",l:"casual",t:"Since I was thirteen everyone has called me gifted. No one asks how hard I train"},{n:"ploy",f:"sad",l:"casual",t:"If I lose, people say the talent ran out. If I win, they say well, talent. …I never get to just be someone who tries"},
+     {choice:[{t:"To me, you're someone who has always tried",fx:G=>{add(G,"ploy","bond",3);add(G,"ploy","trust",4);},then:[{n:"ploy",f:"flustered",l:"casual",t:"…I've waited ten years for that sentence"}]},{t:"Kati sees you that way too. She respects you deeply",fx:G=>add(G,"ploy","trust",5),then:[{n:"ploy",f:"happy",l:"casual",t:"Kati?… Then in this year's final, I must fight in a way worthy of that respect"}]}]}]},
+ fah:{20:[{n:"nar",t:"Fah shows up at Sirichai's gate with a bag of sausages"},{n:"fah",f:"pout",l:"casual",t:"Grandma said to share. Not that Fah came to see you! …Want to eat together?"}],
+   55:[{n:"nar",t:"Fah takes you on the back of her motorbike to Grandma's house on the edge of town: a small wooden house, walls covered in photos of little Fah in gloves"},{n:"fah",f:"sad",l:"casual",t:"Grandma raised Fah alone, sold sausages to pay for Fah's Muay Thai… Fah's tough with everyone, but with Grandma Fah never wins"},{n:"fah",f:"flustered",l:"casual",t:"You're the first one Fah's brought here …remember that!"},
+     {choice:[{t:"Your grandma must be so proud of you",fx:G=>add(G,"fah","trust",5),then:[{n:"fah",f:"flustered",l:"casual",t:"…Don't say that in front of Grandma. She'll cry, and then Fah will cry too"}]},{t:"May I take some of Grandma's sausages for everyone at camp?",fx:G=>{add(G,"fah","bond",3);G.cash+=0;},then:[{n:"nar",t:"Fah's grandma laughs until she cries, then packs three big bags of sausages"},{n:"fah",f:"happy",l:"casual",t:"Grandma likes you now. You're doomed, haha"}]}]}]}};
+for(const id of Object.keys(BOND_BEATS))for(const th of [20,55]){
+  EVENTS.push({id:`bb_${id}_${th}`,look:"casual",bg:th===55?"night":id==="ploy"||id==="fah"?"camp":"gym",
+    when:G=>G.F[id]&&G.F[id].met&&(G.F[id].bond||0)>=th&&(id==="ploy"||id==="fah"||G.F[id].camp==="player")&&G.week-(G.lastBeat||0)>=2,
+    steps:[{fx:G=>{G.lastBeat=G.week;}},...BOND_BEATS[id][th]]});}
+
+// ---------- sportsmanship ----------
+EVENTS.push(
+ {id:"sp_ploy_return",look:"casual",bg:"gym",when:G=>G.flags&&G.flags.vs_ploy&&G.week<48&&metR(G,"ploy")&&inCamp(G,"kati"),steps:[
+  {n:"nar",t:"Two days after the fight, Ploy comes to Sirichai holding an old mongkhon"},
+  {n:"ploy",f:"happy",t:"Your mongkhon fell in the ring corner that night. I kept it for you. Things like this must never get lost",with:"kati"},
+  {n:"kati",f:"surprised",t:"Grandpa's mongkhon… I thought it was gone. Thank you, Ploy"},
+  {n:"ploy",f:"happy",t:"In the ring we don't hold back. Out of it, we're fighters alike"},
+  {n:"coach",t:"(mutters) Whose student is so well-mannered… except for the camp-switching part"}]},
+ {id:"sp_kati_wai",look:"fight",bg:"local",when:G=>G.week>=12&&inCamp(G,"kati")&&(G.F.kati.rec.w||0)>=3,steps:[
+  {n:"nar",t:"Last fight, Kati's opponent went down and couldn't rise. Kati ran to help her up before the referee finished counting"},
+  {n:"npc",who:"Community radio commentator",t:"She won, didn't raise her arms, but went to help her opponent first… listeners, THIS is Muay Thai!"},
+  {n:"kati",f:"flustered",t:"Grandpa taught me: beat people in the ring, but never win hearts by stepping on them"},
+  {choice:[{t:"Grandpa Chai must be very proud",fx:G=>{add(G,"kati","morale",5);G.rep+=.5;},then:[{n:"kati",f:"happy",t:"…I hope so"}]},{t:"That's why people love you",fx:G=>{add(G,"kati","bond",3);G.rep+=.5;},then:[{n:"kati",f:"flustered",t:"L-love what? You mean fight fans, right!"}]}]}]},
+ {id:"sp_fah_respect",look:"casual",bg:"camp",when:G=>G.flags&&G.flags.vs_fah==="W"&&metR(G,"fah"),steps:[
+  {n:"nar",t:"The morning after the fight, Fah is waiting at the gate from five a.m."},
+  {n:"fah",f:"pout",t:"Fah didn't come to say thanks! Fah came to say… last night's fight was the most fun since Fah started fighting"},
+  {n:"fah",f:"flustered",t:"Fah lost, but Fah's not sad …confusing? Fah's confused too"},
+  {n:"coach",t:"Not confusing. That's called sportsmanship"}]},
+ {id:"sp_mali_share",look:"train",bg:"gym",when:G=>G.week>=18&&inCamp(G,"mali"),steps:[
+  {n:"nar",t:"District weigh-in day. A small-camp fighter forgot her hand wraps and is crying at the back of the room"},
+  {n:"mali",f:"happy",t:"Take Mali's~ Mali has two sets, one with jasmine patterns, even prettier!"},
+  {n:"npc",who:"Small-camp fighter",t:"But… we have to fight each other"},
+  {n:"mali",f:"happy",t:"Exactly! If you don't have wraps, beating you wouldn't be any fun~"},
+  {choice:[{t:"Praise Mali in front of everyone",fx:G=>{add(G,"mali","morale",6);G.rep+=.4;},then:[{n:"mali",f:"flustered",t:"Don't praise me so loud! Everyone's looking~"}]},{t:"Quietly give her the camp's spare wraps instead",fx:G=>{add(G,"mali","bond",3);},then:[{n:"mali",f:"happy",t:"Manager is even nicer than Mali~"}]}]}]}
+);
+
+// ---------- heartfelt camp moments ----------
+EVENTS.push(
+ {id:"hf_coach_letter",look:"casual",bg:"night",when:G=>G.week>=34&&G.rep>=10&&inCamp(G,"kati"),steps:[
+  {n:"nar",t:"Coach Daeng hands you an old yellow envelope. The handwriting is Grandpa Chai's: 'For my grandchild, once you've stayed half a year'"},
+  {n:"coach",t:"Grandpa Chai said if you didn't last half a year, burn it …I'm glad I didn't have to"},
+  {n:"nar",t:"'Grandchild, a camp isn't built with a ring, but with people who won't let go of each other. Kati has no one left but this camp. Thank you for not letting go of that child. — Grandpa'"},
+  {choice:[{t:"Frame the letter in the camp (everyone's morale +6)",fx:G=>cheer(G,6),then:[{n:"coach",t:"…Good. Let the kids read it every day"}]},{t:"Let Kati read it (Kati trust +)",fx:G=>{add(G,"kati","trust",6);add(G,"kati","morale",6);},then:[{n:"kati",f:"sad",t:"Grandpa's handwriting… (crying) Thank you for not letting go of me"}]}]}]},
+ {id:"hf_team_photo",look:"casual",bg:"gym",when:G=>G.week>=26&&inCamp(G,"kati")&&inCamp(G,"mali")&&inCamp(G,"rin"),steps:[
+  {n:"nar",t:"The neighbor kid asks to take a team photo with his dad's old film camera"},
+  {n:"mali",f:"happy",t:"Everyone squeeze in~ Coach Daeng, smile!",with:"kati"},
+  {n:"rin",f:"pout",t:"I'll stand at the edge of the frame. The light is better here"},
+  {n:"kati",f:"happy",t:"No way! Rin stands in the middle, nobody on our team stands at the edge!"},
+  {n:"nar",t:"Click! The photo comes out a little blurry, Coach Daeng blinked, but everyone is laughing"},
+  {fx:G=>{cheer(G,5);G.camp.beauty=Math.min(10,(G.camp.beauty||0)+1);}},
+  {n:"nar",t:"The photo hangs beside Grandpa Chai's. Camp looks better, everyone's morale +5"}]}
+);
+
+// ---------- silly neighbours (chatter and happenings) ----------
+HAPPENINGS.push(
+ {id:"h_win",need:G=>inCamp(G,"mali"),bg:"camp",steps:[{n:"npc",who:"Uncle Wang, motorbike taxi",t:"Boss! Teach me to kick, a new taxi guy is stealing my spot at the alley entrance"},{n:"coach",t:"Muay Thai isn't for fighting over taxi queues, uncle!"},
+  {choice:[{t:"Teach him the wai khru instead (fame +0.2)",fx:G=>{G.rep+=.2;},then:[{n:"npc",who:"Uncle Wang, motorbike taxi",t:"After the wai, I really did calm down… tomorrow I'll go wai the new guy instead"}]},{t:"Have Mali demonstrate on the heavy bag",fx:G=>cheer(G,2),then:[{n:"nar",t:"Thwack! The bag swings so hard the chain rattles. Uncle Wang quietly goes back to his taxi"}]}]}]},
+ {id:"h_somtam",bg:"camp",steps:[{n:"npc",who:"Auntie Taew, som tam stall",t:"Auntie's named new spice levels! Mild is 'Mali', medium is 'Rin', deadly is 'Kati'!"},
+  {n:"kati",f:"pout",t:"Why am I the deadly one!"},{n:"npc",who:"Auntie Taew, som tam stall",t:"Because of your punches, dear! Eat it and you cry like you got hit by you!"},{fx:G=>{cheer(G,3);G.rep+=.2;}},{n:"nar",t:"The new som tam sells so well Auntie Taew gives the camp free food for a week"}]},
+ {id:"h_rooster",need:G=>inCamp(G,"rin"),bg:"camp",steps:[{n:"nar",t:"The neighbor's fighting rooster jumps the fence to peck the heavy bag every morning"},{n:"rin",f:"pout",t:"It pecks 0.3 seconds faster than our division's average jab. I measured"},
+  {choice:[{t:"Name it the camp mascot, 'Little Red'",fx:G=>{cheer(G,3);},then:[{n:"coach",t:"Why name it after me! …Fine, it's as fierce as I was in my youth"}]},{t:"Ask the owner to keep it caged",fx:G=>{},then:[{n:"npc",who:"Rooster owner",t:"Can't cage him! He's training for a big fight next month, just like your fighters"}]}]}]},
+ {id:"h_mark_back",need:G=>G.seen&&G.seen.d_tourists,bg:"camp",steps:[{n:"npc",who:"Mark (tour guide)",t:"I'm back! This time I wore a mongkhon, wore it around a mall in Phuket, people bowed to me the whole way!"},
+  {n:"coach",t:"A mongkhon is worn for fighting, not mall walking!"},{n:"npc",who:"Mark (tour guide)",t:"I'll bring two more busloads of tours!"},{fx:G=>{G.rep+=.4;}}]},
+ {id:"h_karaoke",bg:"night",need:G=>inCamp(G,"mali")&&inCamp(G,"rin"),steps:[{n:"nar",t:"Friday night, the karaoke bar next to camp holds a singing contest. The prize is a sack of rice"},
+  {n:"mali",f:"happy",t:"Mali can sing luk thung! Let me enter!"},{n:"rin",f:"pout",t:"Mali's volume exceeds one hundred decibels. The neighbors called the police last month"},
+  {choice:[{t:"Send Mali to compete",fx:G=>{cheer(G,3);G.cash+=500;},then:[{n:"nar",t:"Mali wins first place and a sack of rice. The camp saves a month's rice money (+฿500)"}]},{t:"The whole camp enters as a band",fx:G=>{cheer(G,5);},then:[{n:"nar",t:"Band Sirichai finishes last but wins the audience favorite award. Coach Daeng drums off-beat the entire song"}]}]}]},
+ {id:"h_rich_fan",need:G=>G.rep>=28,bg:"camp",steps:[{n:"npc",who:"Sia Tong, longan orchard owner",t:"I'm a fan of this camp! Have Kati fight an exhibition at my son's ordination, I'll pay in five tons of longan!"},
+  {n:"coach",t:"…Five tons?"},
+  {choice:[{t:"Could we take cash instead (+฿4,000)",fx:G=>{G.cash+=4000;tire(G,5);},then:[{n:"npc",who:"Sia Tong, longan orchard owner",t:"Sure! But you get ten crates of longan too, no refusing!"}]},{t:"Take five tons of longan (everyone's morale +4)",fx:G=>{cheer(G,4);G.rep+=.5;},then:[{n:"nar",t:"A ten-wheeler dumps longan in front of the camp. Half the camp gets an upset stomach from eating too much, but everyone laughs all week"}]}]}]},
+ {id:"h_ghost",bg:"night",need:G=>inCamp(G,"mali")&&inCamp(G,"rin"),steps:[{n:"nar",t:"Midnight. Thuds come from the heavy bag in the empty training yard"},{n:"mali",f:"surprised",t:"A g-ghost, Grandpa Chai's ghost is training!! Mali's not sleeping anymore!"},{n:"rin",f:"pout",t:"Ghosts have no mass, so they can't move a heavy bag"},
+  {n:"nar",t:"Everyone tiptoes over with flashlights… and finds the fat orange cat swinging on the bag"},{n:"coach",t:"Hey! It's Orange! Who fed it this fat!"},{n:"mali",f:"flustered",t:"(hides a bag of khanom khrok behind her back)"},{fx:G=>cheer(G,3)}]},
+ {id:"h_broke_pawn",need:G=>G.cash<5000,bg:"camp",steps:[{n:"nar",t:"Coach Daeng disappears for half a day and comes back with three thousand baht, his wristwatch gone"},{n:"coach",t:"Old watch, it ran ten minutes slow every day anyway. Don't worry"},
+  {choice:[{t:"Accept it, and promise to buy the watch back (+฿3,000)",fx:G=>{G.cash+=3000;G.flags.watchDebt=true;},then:[{n:"coach",t:"Buy it back when we win the title, so I can wear it in the ring for the photo"}]},{t:"Refuse, go buy it back right now",fx:G=>{roster(G).forEach(f=>add(G,f.id,"trust",3));},then:[{n:"coach",t:"…Stubborn as Grandpa Chai, no doubt about it"}]}]}]},
+ {id:"h_tv_quiz",need:G=>G.rep>=22&&inCamp(G,"rin"),bg:"camp",steps:[{n:"nar",t:"A local TV game show invites Rin to compete in a general-knowledge quiz"},{n:"rin",f:"flustered",t:"I can answer every question… except the ones about prime-time soap operas"},
+  {choice:[{t:"Send Rin to compete (fame +1 · +฿2,000)",fx:G=>{G.rep+=1;G.cash+=2000;add(G,"rin","bond",3);},then:[{n:"nar",t:"Rin wins by a landslide. The host asks 'Why not become a scientist?' Rin answers 'Muay Thai is science'"}]},{t:"No, a fight is coming up",fx:G=>add(G,"rin","trust",2),then:[{n:"rin",f:"happy",t:"…Good. I'm a little afraid of cameras"}]}]}]}
+);
+CHATTER.push(
+ {id:"c3_kati_rin_math",need:G=>inCamp(G,"rin"),bg:"camp",look:"train",steps:[{n:"rin",f:"happy",t:"Kati, your straight punch is twelve percent faster than at the start of the year",with:"kati"},{n:"kati",f:"surprised",t:"Twelve… is that a lot?"},{n:"rin",f:"happy",t:"Enough to silence everyone who didn't believe in you"},{n:"kati",f:"flustered",t:"…Rin can say nice things?!"},{fx:G=>{add(G,"kati","morale",3);add(G,"rin","morale",3);}}]},
+ {id:"c3_mali_coach",need:G=>inCamp(G,"mali"),bg:"camp",look:"train",steps:[{n:"mali",f:"happy",t:"Coach Daeng, why don't you ever smile~"},{n:"coach",t:"I am smiling"},{n:"mali",f:"surprised",t:"…Where?"},{n:"coach",t:"Inside"},{n:"nar",t:"Mali laughs so hard she falls off the ring. Coach Daeng really does smile at the corner of his mouth"},{fx:G=>cheer(G,2)}]},
+ {id:"c3_trio_dinner",need:G=>inCamp(G,"mali")&&inCamp(G,"rin"),bg:"camp",look:"casual",steps:[{n:"nar",t:"Dinner after training, all three sit around the moo kratha grill"},{n:"mali",f:"happy",t:"Whoever burns the meat does the dishes~",with:"rin"},{n:"rin",f:"pout",t:"The pan temperature is uneven. This is not my fault"},{n:"kati",f:"happy",t:"Rin, you've burned three pieces already!"},
+  {choice:[{t:"Help Rin wash the dishes",fx:G=>add(G,"rin","bond",3),then:[{n:"rin",f:"flustered",t:"…You don't have to help. But if you do, I won't stop you"}]},{t:"Grill for everyone yourself (everyone's morale +3)",fx:G=>cheer(G,3),then:[{n:"mali",f:"happy",t:"Manager grills better than Coach Daeng~"}]}]}]}
+);
+
+// ---------- v1.22 mid-season turning points ----------
+EVENTS.push(
+ {id:"tw_injury",look:"train",bg:"gym",when:G=>G.week>=22&&G.week<=27&&inCamp(G,"kati")&&!G.F.kati.injury,steps:[
+  {n:"nar",t:"Evening sparring. Kati switches stance too fast, her ankle rolls with a crack, and she drops to the floor"},
+  {n:"kati",f:"sad",t:"I'm fine! It's just… just a little sprain. The district round just started, I can't stop now"},
+  {n:"coach",t:"An ankle swollen like this, if she fights through it she might be hurt all year. Your call"},
+  {choice:[{t:"Rest two weeks, no risk (trust +)",fx:G=>{G.F.kati.injury=Math.max(G.F.kati.injury,2);add(G,"kati","trust",5);},then:[{n:"kati",f:"pout",t:"Two weeks… fine, but I'll train my hands sitting on a chair, no stopping me!"}]},
+   {t:"Take her to a famous Thai massage healer (−฿3,000 · rest 1 week)",fx:G=>{G.cash-=3000;G.F.kati.injury=Math.max(G.F.kati.injury,1);add(G,"kati","bond",3);},then:[{n:"npc",who:"Mor Seng, Thai massage healer",t:"Just a little sprain. Three days of massage, four days of herbal compress, and she'll run!"},{n:"kati",f:"happy",t:"It doesn't hurt anymore! Manager, that was expensive, wasn't it… I'll make it worth it"}]},
+   {t:"Let Kati decide",fx:G=>{G.F.kati.fatigue=Math.min(100,G.F.kati.fatigue+12);G.F.kati.grit=Math.min(.12,(G.F.kati.grit||0)+.015);add(G,"kati","trust",3);},then:[{n:"kati",f:"angry",t:"Tape my ankle tight, I'll keep training. Grandpa once fought with cracked ribs"},{n:"coach",t:"…Stubborn as Grandpa Chai. I'll keep an eye on her"},{n:"nar",t:"Kati is much more tired, but her determination steps up another level"}]}]}]},
+ {id:"tw_dirty",look:"casual",bg:"camp",when:G=>G.week>=30&&G.week<=36&&G.rep>=10,steps:[
+  {n:"nar",t:"Monday morning, a big Muay Thai news page posts that 'Sirichai Camp uses banned substances'. The source is anonymous, but everyone knows who's behind it"},
+  {n:"npc",who:"Boss Suea, Golden Tiger Camp",t:"(in an interview) I didn't say it. I'm just 'asking questions'. An abandoned camp winning this fast, it's strange"},
+  {n:"kati",f:"angry",t:"I train at five every morning! How can he say that!"},
+  {choice:[{t:"Hold a press conference and test the whole camp (−฿2,000 · fame +1.5)",fx:G=>{G.cash-=2000;G.rep+=1.5;G.flags.payakShamed=true;},then:[{n:"nar",t:"Everyone tests clean. Reporters turn their questions on Boss Suea instead; the page deletes the post overnight"}]},
+   {t:"Have Rin gather evidence of who leaked it",fx:G=>{if(inCamp(G,"rin")){G.rep+=2;G.flags.payakShamed=true;add(G,"rin","bond",3);}else{G.rep+=.5;}},then:[{n:"rin",f:"happy",t:"The account logged in from Golden Tiger's Wi-Fi. I have twelve screenshots"},{n:"nar",t:"Rin's evidence is shared across the province. Boss Suea has to apologize"}]},
+   {t:"Don't respond, let the fists talk (everyone's morale +6)",fx:G=>cheer(G,6),then:[{n:"coach",t:"Good. The ones who have to shout are the ones who don't trust their own fighters"}]}]},
+  {n:"nar",t:"That evening, someone stands at the camp gate… Ploy"},
+  {n:"ploy",f:"sad",t:"I knew nothing about this, and I don't agree with it. I apologize on behalf of my camp"},
+  {n:"ploy",f:"happy",t:"If I'm going to beat you, I want to do it in the ring, not on a news page"},
+  {fx:G=>{G.F.ploy.met=true;add(G,"ploy","trust",4);}}]},
+ {id:"tw_ploy_night",look:"casual",bg:"night",when:G=>G.week>=43&&G.week<=47&&metR(G,"ploy")&&(G.F.ploy.bond||0)>=10,steps:[
+  {n:"nar",t:"Three nights before the final, your phone buzzes. A message from Ploy: 'Are you free? I'm at the empty field by the temple'"},
+  {n:"ploy",f:"sad",t:"The boss ordered me to knock Kati out no matter what. He says if I lose, I'm out of the camp next year"},
+  {n:"ploy",f:"sad",t:"I fought because I loved it… now I'm not sure what I'm fighting for"},
+  {choice:[{t:"Fight for yourself, not for the boss",fx:G=>{add(G,"ploy","trust",5);add(G,"ploy","bond",3);},then:[{n:"ploy",f:"happy",t:"For myself… yes. On final night, I'll fight the most fun fight of my life"},{n:"nar",t:"(Ploy will enter the ring with a lighter heart, and be just as frightening)"}]},
+   {t:"Kati's waiting for this fight too. She respects you deeply",fx:G=>{add(G,"ploy","trust",3);add(G,"kati","morale",4);},then:[{n:"ploy",f:"happy",t:"…Then I won't hold back. That's the highest honor I can give"}]},
+   {t:"If they don't want you there, there's always room here",fx:G=>{add(G,"ploy","bond",5);G.flags.ployInvite=true;},then:[{n:"ploy",f:"flustered",t:"…Don't say that three nights before the final, I won't be able to fight"},{n:"ploy",f:"happy",t:"After the final… I'll answer"}]}]}]}
+);
+
+// ---------- v1.22 personal ending: the person closest to you gets the last word of the season ----------
+const PERSONAL_END={
+ kati:[{n:"nar",t:"The last night of the year, Kati takes you up on the camp roof. You can see the lights of all of Chiang Mai"},{n:"kati",f:"happy",l:"casual",t:"This time last year I sat here alone, thinking the camp would have to close"},{n:"kati",f:"flustered",l:"casual",t:"This year you're sitting beside me… I think Grandpa is smiling up there"}],
+ mali:[{n:"nar",t:"Mali drags you to the night market on the last night of the year, stopping in front of a tiny khanom khrok stall"},{n:"mali",f:"happy",l:"casual",t:"Someday Mali will open a shop like this, called 'Champion Khanom Khrok', hehe"},{n:"mali",f:"flustered",l:"casual",t:"You have to be the first customer… no, better be my business partner~"}],
+ rin:[{n:"nar",t:"Rin hands you a thick binder; the cover says 'Sirichai Camp Three-Year Plan'"},{n:"rin",f:"happy",l:"casual",t:"I've planned up to year three. Your name is on every page"},{n:"rin",f:"flustered",l:"casual",t:"…Not just because you're the manager. I still haven't found an explanation for this variable"}],
+ ploy:[{n:"nar",t:"After the final, Ploy waits in the parking lot, hand wraps still on"},{n:"ploy",f:"happy",l:"casual",t:"This year I learned what fighting for fun feels like, because of your camp"},{n:"ploy",f:"flustered",l:"casual",t:"Next year we'll meet again. As rivals… or something else, that's up to you"}],
+ fah:[{n:"nar",t:"Fah pulls up on her old motorbike: 'Get on, Grandma's waiting for dinner'"},{n:"fah",f:"pout",l:"casual",t:"Grandma says on New Year's Eve you eat with someone important, so Fah… uh… Grandma made me!"},{n:"fah",f:"flustered",l:"casual",t:"…Come eat next year too. Not begging, just saying"}]};
+function personalEnding(G){let id=G.romance;if(!id){const c=["kati","mali","rin","ploy","fah"].filter(k=>G.F[k]&&G.F[k].met&&(G.F[k].bond||0)>=40).sort((a,b)=>G.F[b].bond-G.F[a].bond);id=c[0];}
+  return id&&PERSONAL_END[id]?PERSONAL_END[id]:[];}

@@ -1,5 +1,8 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.24.0";
+const VERSION="1.25.0";
+const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
+const TH_LABEL=String.fromCharCode(3652,3607,3618);
+function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
 const SAVE_KEY="mtm-save-v13";
 const CANON_IDS=["kati","mali","rin","ploy","fah"];
 let G=null;
@@ -41,7 +44,7 @@ const coachOn=()=>SETTINGS.coach&&!(G&&G.coachAway&&G.week<G.coachAway);
 // v1.6: three save slots (the old single save moves into slot 1)
 const SLOTS=3;const slotKey=i=>`${SAVE_KEY}-s${i}`;
 try{const old=localStorage.getItem(SAVE_KEY);if(old&&!localStorage.getItem(slotKey(1))){localStorage.setItem(slotKey(1),old);}if(old)localStorage.removeItem(SAVE_KEY);}catch(e){}
-function save(){try{if(G&&UI.slot){G.savedAt=Date.now();localStorage.setItem(slotKey(UI.slot),JSON.stringify(G));cloudPush(UI.slot);}}catch(e){}}
+function save(){try{if(G&&UI.slot){G.savedAt=Date.now();G._lang=CUR_LANG;localStorage.setItem(slotKey(UI.slot),JSON.stringify(G));cloudPush(UI.slot);}}catch(e){}}
 // v1.19 cloud save: browser storage can be wiped (other browser/device, private mode, cleared data), so each slot is
 // mirrored to this viewer's private space in the artifact's database; on open, whichever copy is newer wins
 const CLOUD={db:null,uid:null,ready:false,state:"off",timer:null,busy:false,again:new Set()};
@@ -61,8 +64,8 @@ setTimeout(cloudInit,0);
 function exportSave(){if(!G)return;const data=JSON.stringify(G),fn=`muaythaimoe-slot${UI.slot}-wk${G.week}.json`;
   (async()=>{try{const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;if(dl){await dl.save({filename:fn,data});toast("ส่งออกเซฟแล้ว");return;}}catch(e){if(e&&e.code==="declined")return;}
     try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=fn;document.body.appendChild(a);a.click();a.remove();toast("ส่งออกเซฟแล้ว");}catch(e){toast("ส่งออกไม่สำเร็จ");}})();}
-function importSave(file){const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!s||!s.F||!s.week)throw 0;const i=UI.slot||1;fixSave(s);G=s;UI.slot=i;save();UI.modal=null;UI.title=null;UI.tab="home";AU.startMusic("hub");render();toast(`นำเข้าเซฟลงช่อง ${i} แล้ว`);}catch(e){toast("ไฟล์เซฟไม่ถูกต้อง");}};r.readAsText(file);}
-function loadSlot(i){try{const s=localStorage.getItem(slotKey(i));return s?JSON.parse(s):null;}catch(e){return null;}}
+function importSave(file){const r=new FileReader();r.onload=()=>{try{let s=JSON.parse(r.result);if(!s||!s.F||!s.week)throw 0;if(typeof I18N_FIX==="function")s=I18N_FIX(s);const i=UI.slot||1;fixSave(s);G=s;UI.slot=i;save();UI.modal=null;UI.title=null;UI.tab="home";AU.startMusic("hub");render();toast(`นำเข้าเซฟลงช่อง ${i} แล้ว`);}catch(e){toast("ไฟล์เซฟไม่ถูกต้อง");}};r.readAsText(file);}
+function loadSlot(i){try{const s=localStorage.getItem(slotKey(i));return s?(typeof I18N_FIX==="function"?I18N_FIX(JSON.parse(s)):JSON.parse(s)):null;}catch(e){return null;}}
 function loadSave(){for(let i=1;i<=SLOTS;i++){if(loadSlot(i))return loadSlot(i);}return null;}
 function clearSave(i=UI.slot){try{if(i)localStorage.removeItem(slotKey(i));}catch(e){}}
 function slotInfo(s){if(!s)return "ว่าง";const d=s.savedAt?new Date(s.savedAt):null;
@@ -160,9 +163,9 @@ function titleHTML(){const sv=loadSave();
      <button class="btn primary" data-act="newgame">เริ่มเกมใหม่</button>
      <button class="btn gold" data-act="openload" ${sv?"":"disabled"}>โหลดเกม<small>${sv?`${[1,2,3].filter(i=>loadSlot(i)).length} ช่องที่มีเซฟ`:"ยังไม่มีเซฟ"}</small></button>
      <button class="btn" data-act="settings">ตั้งค่า</button></nav>`}</div></div>
-   <div class="version">v${VERSION}</div></div>`;}
+   ${langSwitch("tlang")}<div class="version">v${VERSION}</div></div>`;}
 function settingsHTML(){const t=(k,label,desc)=>`<label class="set"><span><b>${label}</b><small>${desc}</small></span><input type="checkbox" data-act="setopt" data-k="${k}" ${SETTINGS[k]?"checked":""}></label>`;
-  return `<h2>ตั้งค่า</h2><div class="sets">${t("music","เพลงประกอบ","ปี่ชวา กลองแขก ฉิ่ง ระหว่างชก")}${t("sfx","เอฟเฟกต์เสียง","เสียงต่อย เตะ ระฆัง เสียงเชียร์")}${t("coach","ครูแดงแนะนำ","ครูคอยไกด์ในหน้าค่าย ข้อเสนอไฟต์ และช่วงพักยก")}${t("quick","เล่นเร็ว","ข้ามฉากฝึกซ้อมตอนจบสัปดาห์ ไปสรุปผลทันที")}</div>
+  return `<h2>ตั้งค่า</h2><div class="sets"><div class="set"><span><b>ภาษา · Language</b><small>สลับแล้วเกมจะโหลดใหม่ เซฟยังอยู่</small></span>${langSwitch()}</div>${t("music","เพลงประกอบ","ปี่ชวา กลองแขก ฉิ่ง ระหว่างชก")}${t("sfx","เอฟเฟกต์เสียง","เสียงต่อย เตะ ระฆัง เสียงเชียร์")}${t("coach","ครูแดงแนะนำ","ครูคอยไกด์ในหน้าค่าย ข้อเสนอไฟต์ และช่วงพักยก")}${t("quick","เล่นเร็ว","ข้ามฉากฝึกซ้อมตอนจบสัปดาห์ ไปสรุปผลทันที")}</div>
    ${!G&&loadSave()?`<div class="set danger"><span><b>จัดการช่องเซฟ</b><small>ดู โหลด หรือลบเซฟแต่ละช่อง</small></span><button class="btn sm" data-act="openload">เปิด</button></div>`:""}${G?`<p class="meta">กำลังเล่นช่องเซฟ ${UI.slot} · บันทึกอัตโนมัติทุกครั้งที่มีความคืบหน้า${CLOUD.ready?" · สำรองบนคลาวด์แล้ว":" · ยังไม่ได้เชื่อมคลาวด์ (เซฟอยู่ในเบราว์เซอร์นี้เท่านั้น)"}</p>
    <div class="set"><span><b>สำรองเซฟเป็นไฟล์</b><small>เก็บไฟล์ไว้เอง ย้ายเครื่องหรือเบราว์เซอร์ก็นำเข้าได้</small></span><span class="obtns"><button class="btn sm" data-act="exportsave">ส่งออก</button><label class="btn sm">นำเข้า<input type="file" accept=".json,application/json" data-act="importsave" hidden></label></span></div>`:`<div class="set"><span><b>นำเข้าเซฟจากไฟล์</b><small>ไฟล์ที่เคยส่งออกไว้ จะลงช่อง 1</small></span><label class="btn sm">นำเข้า<input type="file" accept=".json,application/json" data-act="importsave" hidden></label></div>`}
    <details class="gloss"><summary><b>คำศัพท์ในเกม</b></summary><dl>${GLOSS.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></details>
@@ -251,7 +254,7 @@ const pickDone=()=>DONE_LINES[G.week%DONE_LINES.length];
 function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
   for(const f of R){const b=G.bookings.find(x=>x.a===f.id);
     if(f.injury)T.push({p:9,t:`${f.name}บาดเจ็บอีก ${f.injury} สัปดาห์ ร่างกายพักเองอัตโนมัติ อย่าเพิ่งรับไฟต์`});
-    else if(f.fatigue>=52&&f.plan.preset!=="rest"&&!trLocked(f))T.push({p:9,t:`${f.name}ล้า ${Math.round(f.fatigue)} แล้ว สัปดาห์นี้ให้พักฟื้นเถอะ`,act:{k:"setrest",id:f.id,label:"ไปหน้าฝึก"}});
+    else if(f.fatigue>=52&&f.plan.preset!=="rest"&&!trLocked(f))T.push({p:9,t:`${f.name} ล้า ${Math.round(f.fatigue)} แล้ว สัปดาห์นี้ให้พักฟื้นเถอะ`,act:{k:"setrest",id:f.id,label:"ไปหน้าฝึก"}});
     if(b&&b.week-G.week<=1&&f.plan.preset!=="prep"&&!f.injury&&!trLocked(f))T.push({p:7,t:`${f.name}มีไฟต์สัปดาห์ ${b.week} กับ${G.F[b.b].name} เปลี่ยนเป็นเตรียมไฟต์ดีไหม`,act:{k:"setprep",id:f.id,label:"ไปหน้าฝึก"}});
     if(b&&scouted(b.b)){const cp=counterPreset(G.F[b.b]);if(cp&&f.plan.preset!==cp&&b.week-G.week>1&&!trLocked(f))T.push({p:4,t:`คู่ชกของ${f.name}${COUNTER_WHY[cp]} ฝึก "${PRESETS[cp].name}" แก้ทางจะได้โบนัสวันชก`,act:{k:"setprep",id:f.id,label:"ไปตั้งโปรแกรม"}});}
     if(b&&!scouted(b.b)&&G.cash>=scoutCost())T.push({p:5,t:`ยังไม่ได้ดูเทป${G.F[b.b].name} คู่ชกของ${f.name} ดูก่อนจะได้รู้ทางแก้`,act:{k:"tab",v:"fights",label:"ไปดูเทป"}});
@@ -259,7 +262,7 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
     if(f.sp>0)T.push({p:6,t:`${f.name}มีแต้มสกิล ${f.sp} แต้ม ไปเลือกสกิลได้เลย`,act:{k:"fighter",id:f.id,v:"skill",label:"เลือกสกิล"}});
     if(f.plan.intensity==="heavy"&&f.fatigue>50)T.push({p:5,t:`${f.name}ซ้อมหนักต่อเนื่อง ระวังบาดเจ็บนะ`});}
   if(!G.bookings.some(b=>G.F[b.a].camp==="player")&&G.offers.length)T.push({p:5,t:"ยังไม่มีไฟต์ในตาราง ครูดูข้อเสนอให้แล้ว มีสีบอกว่าคู่ไหนง่ายหรือเสี่ยง",act:{k:"tab",v:"fights",label:"ดูข้อเสนอ"}});
-  if(weeksLeft()<=6)T.push({p:10,t:`⚠ ถ้ารายรับเท่าเดิม เงินจะหมดในราว ${weeksLeft()} สัปดาห์! รับไฟต์ สอนคลาสพิเศษ หรือลดค่าจ้าง`,act:{k:"tab",v:"fights",label:"ดูไฟต์"}});
+  if(weeksLeft()<=6){if(weeksLeft()<=3||G.week%3===0)T.push({p:10,t:`⚠ ถ้ารายรับเท่าเดิม เงินจะหมดในราว ${weeksLeft()} สัปดาห์! รับไฟต์ สอนคลาสพิเศษ หรือลดค่าจ้าง`,act:{k:"tab",v:"fights",label:"ดูไฟต์"}});}
   else if(weeklyNet(G)<0){const full=studentDemand(G)>studentCap(G);T.push({p:6,t:full?`รายจ่ายมากกว่ารายรับ ${fmt(-weeklyNet(G))}/สัปดาห์ คนอยากเรียนเกินที่รับไหว จ้างผู้ช่วยครูหรือขยายลานสอนจะได้เงินเพิ่ม`:`รายจ่ายมากกว่ารายรับ ${fmt(-weeklyNet(G))}/สัปดาห์ ลองสอนคลาสพิเศษหรือรับไฟต์เพิ่ม`,act:full?{k:"tab",v:"camp",sub:"staff",label:"ไปจ้างผู้ช่วยครู"}:{k:"campacts",label:"เลือกกิจกรรมค่าย"}});}
   if(G.cash<0)T.push({p:10,t:`เงินติดลบมา ${G.negWeeks} สัปดาห์ ถ้าติดลบ 4 สัปดาห์จนเกิน ฿10,000 ค่ายจะล้มละลาย`});
   if(studentDemand(G)>studentCap(G)+2)T.push({p:5,t:`นักเรียนเต็มค่ายแล้ว ยังมีคนอยากเรียนอีก ${studentDemand(G)-studentCap(G)} คน อัปลานสอนคอร์สจะรับเพิ่มได้ทีละ 3 คน`,act:{k:"tab",v:"camp",sub:"fac",label:"ไปอัปลานสอน"}});
@@ -735,7 +738,7 @@ function rinScene(done){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0||
   L.push(tired.length?`${tired.map(f=>f.name).join(", ")}ล้าเกินครึ่งแล้ว ให้พักฟื้นสักสัปดาห์ จะกลับมาแรงกว่าเดิม`:RW[Math.floor(G.week/3)%RW.length]);
   const net=weeklyNet(G),wl=weeksLeft();
   L.push(net<0?`เรื่องเงิน: ตอนนี้ขาดทุนสัปดาห์ละ ${fmt(-net)} อีกราว ${wl} สัปดาห์เงินจะหมด รับไฟต์เพิ่ม หรือเลือกกิจกรรมสอนคลาสพิเศษช่วยได้ค่ะ`:G.cash>40000?`เรื่องเงิน: มีเงินเหลือ ${fmt(G.cash)} ลองอัปเกรดค่ายหรือส่งครูแดงไปอบรม ระยะยาวคุ้มกว่าเก็บไว้ค่ะ`:`เรื่องเงิน: ได้กำไรสัปดาห์ละ ${fmt(net)} ยังไหวค่ะ แต่อย่าเพิ่งใช้จ่ายเยอะ`);
-  playScene([{n:"rin",f:"happy",l:"casual",t:"ผู้จัดการคะ ฉันสรุปข้อมูลสามสัปดาห์มาให้แล้วค่ะ"},...L.map(t=>({n:"rin",f:"happy",l:"casual",t})),{n:"rin",f:"flustered",l:"casual",t:["…แค่นี้แหละค่ะ ใช้ได้ก็ใช้นะ","จบรายงานค่ะ คำถามเชิญได้ …ไม่มีก็ดีค่ะ","ฉันพิมพ์สรุปไว้บนบอร์ดหน้าห้องซ้อมแล้วนะคะ","ถ้าทำตามนี้ ฉันประเมินว่าเราจะดีขึ้นแน่นอนค่ะ"][Math.floor(G.week/3)%4]}],()=>{AU.startMusic("hub");save();done();},{bg:"gym",look:"casual"});}
+  playScene([{n:"rin",f:"happy",l:"casual",t:["ผู้จัดการคะ ฉันสรุปข้อมูลสามสัปดาห์มาให้แล้วค่ะ","รายงานประจำรอบค่ะ อ่านจบในสามนาที …ถ้าอ่านเร็ว","ผู้จัดการคะ กราฟใหม่มาแล้วค่ะ ไม่ยาว สัญญาค่ะ","ฉันนอนดึกทำตารางนี้ค่ะ …ไม่ได้อยากให้ชมนะคะ","ข้อมูลสามสัปดาห์ล่าสุดค่ะ มีข่าวดีหนึ่ง ข่าวต้องระวังหนึ่ง"][Math.floor(G.week/3)%5]},...L.map(t=>({n:"rin",f:"happy",l:"casual",t})),{n:"rin",f:"flustered",l:"casual",t:["…แค่นี้แหละค่ะ ใช้ได้ก็ใช้นะ","จบรายงานค่ะ คำถามเชิญได้ …ไม่มีก็ดีค่ะ","ฉันพิมพ์สรุปไว้บนบอร์ดหน้าห้องซ้อมแล้วนะคะ","ถ้าทำตามนี้ ฉันประเมินว่าเราจะดีขึ้นแน่นอนค่ะ"][Math.floor(G.week/3)%4]}],()=>{AU.startMusic("hub");save();done();},{bg:"gym",look:"casual"});}
 
 // ---------- week flow ----------
 function endWeek(){if(UI.scene||UI.fight||UI.montage)return;AU.resume();UI.tipIdx=0;
@@ -1001,6 +1004,7 @@ const ACT={
     playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"night",look:"train"});},
   continue:()=>{G=loadSave();if(!G)return;fixSave(G);UI.slot=UI.slot||1;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
+  setlang:(d)=>{const v=d.v;if(v===CUR_LANG)return;try{if(G)save();localStorage.setItem("mtm_lang",v);}catch(e){}try{location.hash="lang="+v;}catch(e){}location.reload();},
   settings:()=>{UI.confirmDel=false;UI.modal={type:"settings"};render();},
   setopt:d=>{SETTINGS[d.k]=!SETTINGS[d.k];saveSettings();if(d.k==="music"){if(!SETTINGS.music)AU.stopMusic();else AU.startMusic(!G?"title":UI.fight&&UI.fight.stage==="playing"?"fight":"hub");}render();},
   askdel:()=>{UI.confirmDel=true;render();},

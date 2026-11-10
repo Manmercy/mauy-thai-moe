@@ -2,3 +2,6 @@ node_modules/
 *.log
 .DS_Store
 shots*/
+tools/i18n/node_modules/
+tools/i18n/pos.json
+tools/i18n/segs.json

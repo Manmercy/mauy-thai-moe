@@ -597,7 +597,7 @@ const WIN_SELF={kati:["แต่ยังไม่พอหรอกค่ะ! �
   rin:["ชนะตามที่คำนวณไว้ค่ะ …แต่ส่วนต่างคะแนนยังแคบเกินไป ต้องดีกว่านี้","ผลออกมาตามโมเดลค่ะ ฉันจะปรับโมเดลให้แม่นกว่านี้อีก","…ดีใจค่ะ ฉันแค่แสดงออกไม่เป็น"]};
 const COACH_WIN=["ชนะแล้วอย่าเหลิง พรุ่งนี้ตีห้าเหมือนเดิม","ดี แต่ยกสองการ์ดตก ครูเห็นนะ","ปู่ชัยดูอยู่ ชนะแบบนี้ท่านคงพอใจ","กินให้อิ่ม นอนให้พอ แล้วกลับมาซ้อม","ชนะได้ก็แพ้ได้ อย่าลืมว่าวันนี้ได้มาเพราะอะไร"];
 function aftermathSteps(G,L){const me=G.F[L.a],op=G.F[L.b];const mates=roster(G).filter(f=>f.id!==me.id);const m=mates[0];const steps=[];
-  if(L.win==="A"){steps.push({n:"nar",t:`เช้าวันต่อมา ข่าว${me.name}ชนะ${op.name}ไปทั่วหมู่บ้าน`});
+  if(L.win==="A"){steps.push({n:"nar",t:`เช้าวันต่อมา ข่าว${me.name}เอาชนะ${op.name}ไปทั่วหมู่บ้าน`});
     if(m)steps.push({n:m.id,f:"happy",l:"train",t:WIN_TEASE[m.id]?pickR(WIN_TEASE[m.id],G,"t_"+m.id)(me.name):`ยินดีด้วยนะ ${me.name}!`});
     if(op.id==="ploy")steps.push({n:me.id,f:"flustered",l:"train",t:"หนู… ชนะพี่พลอยได้จริง ๆ เหรอ ตีห้าทุกวันมันไม่เสียเปล่าเลย"});
     else steps.push({n:me.id,f:"happy",l:"train",t:WIN_SELF[me.id]?pickR(WIN_SELF[me.id],G,"s_"+me.id):"แต่ยังไม่พอหรอก!"});
