@@ -5,7 +5,7 @@ const SPK={kati:{name:"กะทิ",color:"#e23b4e"},mali:{name:"มะลิ",
   ploy:{name:"พลอย",color:"#9b62e0"},fah:{name:"ฟ้า",color:"#e7b443"},coach:{name:"ครูแดง",color:"#c98a5a"},nar:{name:""},me:{name:"(คุณ)"}};
 // v1.7: bonds deepen by chapter — the ceiling rises as the season's story moves on
 const bondCap=G=>100;
-const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*.42*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
+const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*.3*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
 
 const EVENTS=[
  {id:"prologue",look:"fight",bg:"night",steps:[

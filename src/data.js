@@ -252,11 +252,12 @@ const CREATURE_COM={
  gang:["หมวกกันน็อกกระเด็นไปตกแถวสามครับ! ใครเก็บได้คืนเจ้าของด้วย!","ลูกน้องข้างเวทีบีบแตรมอไซค์เชียร์ครับ! ตำรวจจราจรมองอยู่นะ!","พวกหมวกกันน็อกเริ่มถอยไปหาที่จอดรถแล้วครับ!","แม่ค้าทั้งตลาดลุกขึ้นเคาะตะหลิว! นี่คือเสียงของประชาชน!"]};
 function comLine(e,F,rng){const R=a=>a[Math.floor(rng()*a.length)];const fill=(s,o)=>s.replace(/\{(\w)\}/g,(m,k)=>o[k]??"");
   const o={a:e.an,d:e.dn,w:WNAME[e.w]||""};const h=fightHeat(F);
-  const fun=x=>{if(!x)return x;const grp=F.B.f&&F.B.f.grp;if(grp&&CREATURE_COM[grp]&&rng()<.33&&(e.ev==="hit"||e.ev==="miss"||e.ev==="counter"))return fill(R(CREATURE_COM[grp]),{a:F.B.name,d:F.A.name})+" "+x;
-    const L=FUN[e.ev==="counter"?"counter":e.ev==="kd"?"kd":e.ev==="miss"?"miss":e.ev==="hit"?"hit":""];if(L&&rng()<(e.ev==="kd"?.5:.16))return x+" "+fill(R(L),o);if(e.ev==="hit"&&rng()<.06)return x+" "+R(FUN.cheer);return x;};
-  const hype=x=>{x=fun(x);if(!h||!x)return x;const big=e.crit||e.ev==="kd"||e.ev==="skill"||e.ev==="rage";
+  const fun=x=>{if(!x)return x;const grp=F.B.f&&F.B.f.grp;if(grp&&CREATURE_COM[grp]&&rng()<.2&&(e.ev==="hit"||e.ev==="miss"||e.ev==="counter"))return fill(R(CREATURE_COM[grp]),{a:F.B.name,d:F.A.name});
+    const L=FUN[e.ev==="counter"?"counter":e.ev==="kd"?"kd":e.ev==="miss"?"miss":e.ev==="hit"?"hit":""];if(L&&rng()<(e.ev==="kd"?.25:.06))return x+" "+fill(R(L),o);if(e.ev==="hit"&&rng()<.02)return x+" "+R(FUN.cheer);return x;};
+  const hype=x=>{if(!h||!x)return x;const big=e.crit||e.ev==="kd"||e.ev==="skill"||e.ev==="rage";
     if(rng()>=(big?.8:.1+h*.1))return x;const L=HYPE[Math.min(4,h+(big&&h>=2?1:0))].filter(y=>y!==F.lastHype);const y=R(L);F.lastHype=y;return x+" "+y;};
-  return hype(baseLine(e,F,R,fill,o,h));}
+  const b=baseLine(e,F,R,fill,o,h);if(!b)return b;let x=hype(b);if(x===b)x=fun(b);return x.length>COM_MAX?b:x;}
+const COM_MAX=62;
 function baseLine(e,F,R,fill,o,h){
   if(e.ev==="ko"&&h>=2)return fill(R(KO_HOT),o);
   if(e.ev==="hit"){if(e.crit)return fill(R(COM.crit),o)+" "+fill(R(COM.hit[e.w]),o);return fill(e.cl&&Math.random()<.5?R(COM.clinch):R(COM.hit[e.w]),o);}

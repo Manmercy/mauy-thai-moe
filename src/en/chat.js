@@ -116,12 +116,17 @@ const CHAT_X={
 function chatTopic(G,id){const L=CHAT[id]||[];G.chatSeen=G.chatSeen||{};const seen=G.chatSeen[id]||[];
   const ctx=L.filter(t=>t.need&&t.need(G)&&!seen.includes(t.id));if(ctx.length)return ctx[0];
   const gen=L.filter(t=>!t.need&&!seen.includes(t.id));if(gen.length)return gen[(G.week+G.seed)%gen.length];
-  const all=L.filter(t=>!t.need);return all[(G.week*7+G.seed)%all.length];}
+  const all=L.filter(t=>!t.need).sort((a,b)=>seen.indexOf(a.id)-seen.indexOf(b.id));return all[0];}
+// v1.27: she texts first, now and then, once you're close enough; an unread chat waits for you
+const CHAT_BOND=15;
+function chatWeekly(G){G.chatIn=G.chatIn||{};G.chatLast=G.chatLast||{};const rng=mulberry32(G.seed*31+G.week*7+3);
+  for(const id of CANON_IDS){const f=G.F[id];if(!f||!f.met||(f.bond||0)<CHAT_BOND||G.chatIn[id])continue;
+    if(G.week-(G.chatLast[id]||-9)<3)continue;if(rng()<.3+((f.bond||0)>=50?.1:0))G.chatIn[id]=G.week;}}
 const chatLen=f=>3+((f.bond||0)>=40?1:0)+((f.bond||0)>=70?1:0);
-const canChat=f=>!!(f&&f.met)&&!(G.chatWk&&G.chatWk[f.id]===G.week);
-function chatOpen(id){const f=G.F[id];if(!f||!canChat(f))return;G.chatWk=G.chatWk||{};G.chatWk[id]=G.week;const T=chatTopic(G,id);
-  G.chatSeen=G.chatSeen||{};G.chatSeen[id]=(G.chatSeen[id]||[]).concat([T.id]).slice(-12);
-  const x=[...T.x];const ex=CHAT_X[id]||[];const extra=chatLen(f)-3;for(let i=0;i<extra&&i<ex.length;i++)x.push(ex[(i+G.week)%ex.length]);
+const canChat=f=>!!(f&&f.met&&G.chatIn&&G.chatIn[f.id]);
+function chatOpen(id){const f=G.F[id];if(!f||!canChat(f))return;delete G.chatIn[id];G.chatLast=G.chatLast||{};G.chatLast[id]=G.week;const T=chatTopic(G,id);
+  G.chatSeen=G.chatSeen||{};G.chatSeen[id]=(G.chatSeen[id]||[]).filter(x=>x!==T.id).concat([T.id]);
+  const x=[...T.x];const ex=CHAT_X[id]||[];G.chatX=G.chatX||{};const xs=G.chatX[id]=G.chatX[id]||[];const extra=Math.min(1,chatLen(f)-3);for(let i=0;i<ex.length&&extra>0;i++)if(!xs.includes(i)&&(i===0||(f.bond||0)>=70)){x.push(ex[i]);xs.push(i);break;}
   const rng=mulberry32(G.seed+G.week*17+id.length);x.forEach(e=>{e.ord=[0,1,2].sort(()=>rng()-.5);});
   UI.chat={id,x,i:0,log:[{w:"them",t:x[0][0]}],gain:0,typing:false};UI.modal={type:"chat"};save();render();}
 function chatPick(k){const C=UI.chat;if(!C||C.typing||C.i>=C.x.length)return;const e=C.x[C.i],o=e[1][k];if(!o)return;
@@ -137,6 +142,6 @@ function chatHTML(){const C=UI.chat;if(!C)return {body:"",foot:true};const f=G.F
   return {foot:false,body:`<div class="chatw px"><div class="chead"><img src="${faceSrc(f.id,"happy","casual")}" alt=""><span><b>${esc(f.name)}</b><small>${C.typing?"typing…":"online"}</small></span><span class="cbond">${HEART_PX}<b class="num">${Math.round(f.bond||0)}</b></span></div>
    <div class="cbody pxscroll" data-sk="chat">${msgs}${C.typing?`<div class="cmsg them typing"><img class="cav" src="${faceSrc(f.id,"happy","casual")}" alt=""><p><i></i><i></i><i></i></p></div>`:""}</div>
    <div class="cfoot2">${e?`<small class="meta">Choose a message to send (${C.i+1}/${C.x.length})</small>${e.ord.map(k=>`<button class="copt" data-act="chatpick" data-v="${k}">${esc(e[1][k][0])}</button>`).join("")}`
-     :C.done?`<p class="cend">${C.gain?`Great conversation · bond increased`:"A short chat today. Talk again next week"}</p><button class="btn primary" data-act="closeModal">Close chat</button>`:`<small class="meta">…</small>`}</div></div>`};}
+     :C.done?`<p class="cend">${C.gain?`Great conversation · bond increased`:"A short chat today. She'll text again sometime"}</p><button class="btn primary" data-act="closeModal">Close chat</button>`:`<small class="meta">…</small>`}</div></div>`};}
 XMODAL.chat=()=>chatHTML();
 Object.assign(ACT,{chat:d=>chatOpen(d.id),chatpick:d=>chatPick(+d.v)});

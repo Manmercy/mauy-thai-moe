@@ -1,7 +1,7 @@
 (function(){
 var L="";try{L=localStorage.getItem("mtm_lang")||"";}catch(e){}
 try{var h=(location.hash||"").match(/lang=(th|en)/);if(h)L=h[1];}catch(e){}
-if(L!=="th"&&L!=="en"){var nl=((navigator.languages&&navigator.languages[0])||navigator.language||"").toLowerCase();L=nl.indexOf("th")===0?"th":"en";}
+if(L!=="th"&&L!=="en")L="th";
 window.LANG=L;try{document.documentElement.lang=L;}catch(e){}
 var D=null,R=null;
 function fwd(){if(!D){try{D=JSON.parse(document.getElementById("i18n-dict").textContent);}catch(e){D={};}}return D;}

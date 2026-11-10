@@ -1174,3 +1174,11 @@ details.skhelp summary{color:var(--muted);font-size:13px}
 /* v1.26 hard-opponent offers */
 .item.offer.spx.hard{box-shadow:inset 0 0 0 3px #ff8a3d,0 0 0 2px #000,0 0 12px rgba(255,138,61,.4);background:linear-gradient(135deg,rgba(255,138,61,.18),transparent 55%),var(--surface)}
 .spx.hard .ribbon{background:#ff8a3d;color:#2a1200}
+
+/* v1.27 */
+.mbadge{min-width:0;width:9px;height:9px;padding:0;top:-2px;right:-2px;font-size:0;line-height:0;box-shadow:0 0 0 2px #000;animation:mblink 1s steps(2) infinite}
+@keyframes mblink{50%{opacity:.15}}
+@media (prefers-reduced-motion:reduce){.mbadge{animation:none}}
+.copt:hover,.copt:focus,.copt:focus-visible{box-shadow:inset 0 0 0 2px var(--line);outline:none}
+.copt:active{background:var(--surface)}
+.giftbtn,.giftbtn.own,.giftbtn.spec{box-shadow:inset 0 0 0 2px var(--line)}
