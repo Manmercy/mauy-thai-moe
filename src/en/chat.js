@@ -5,6 +5,9 @@ const recentRes=(G,id,res)=>{const c=lastFight(G,id);return !!(c&&c.res===res&&G
 const nearFinal=G=>G.week>=42&&G.week<=49;
 const CHAT={
  kati:[
+  {id:"k_lv1",need:G=>G.romance==="kati",x:[
+   ["Darling… I mean, Manager! Typo! …Not really a typo",[["Feel free to make that typo often",2,"…Then I'll make it every day"],["That made me smile",1,"How big? Send a photo"],["Focus on training",0,"Yes… Mister Manager"]]],
+   ["Mali teased me all day about walking around smiling to myself",[["Well, it's a nice smile",2,"…Now you're doing it! No teasing after Mali!"],["Mali knows?",1,"The whole camp knows. Even Coach Daeng nodded at me"],["Try to play it cool",0,"I tried. It won't go away"]]]]},
   {id:"k_student",need:G=>G.seen&&G.seen.first_student,x:[
    ["Manager, Auntie Saeng's boy showed up at dawn. He was waiting at the gate at six",[["Just like someone I know as a kid",2,"…Did Grandpa tell you that!? I used to wait from five, actually"],["Hard worker",1,"Yes, harder than me at that age"],["Isn't that too early?",0,"Fighters get up early"]]],
    ["He asked me 'Kati, were you ever scared?' I didn't know what to say",[["Tell him yes, and that you fight anyway",2,"…Okay. I'll say that. It's the truest answer"],["Well, were you?",1,"Every fight. Don't tell Coach Daeng"],["Say you weren't",0,"I'm bad at lying"]]],
@@ -38,6 +41,9 @@ const CHAT={
    ["I'm bad at resting. I feel guilty every time I don't train",[["Rest is a kind of training too",2,"Rest is training… I'll remember that"],["You'll get used to it",1,"Yeah, I hope so"],["Then go train",0,"Coach Daeng will scold you, Manager, haha"]]],
    ["Thanks for messaging me. I'm not lonely today",[["Message me anytime",2,"Then I'll message you a lot. No getting annoyed!"],["It's fine",1,"Okay, good night"],["Mm",0,"…Okay"]]]]}],
  mali:[
+  {id:"m_lv1",need:G=>G.romance==="mali",x:[
+   ["Manager~ Mali saved your name in her phone as 'Mali's Khanom Khrok'",[["Then you're 'My Som Tam'",2,"Hehe, spicy, just like the name!"],["That's cute",1,"Right!? Mali thought for three days"],["Use my normal name",0,"No! It's permanent now!"]]],
+   ["If Mali wins next fight, can she have one reward?",[["Sure, what do you want?",2,"Go to the night market together and hold hands the whole way! So everyone sees!"],["Win first, then we'll talk",1,"Then Mali's finishing it in round one!"],["You'll ask for a lot",0,"Just a tiny bit!"]]]]},
   {id:"m_join",need:G=>G.F.mali&&G.F.mali.camp==="player",x:[
    ["Manager~ Mali's room at camp has a window! At the last place Mali slept in the glove room",[["This is your home now. Decorate it however you like",2,"Then Mali's hanging frangipani everywhere!"],["It's a small window",1,"Small is still a window! Mali can see stars"],["Keep it tidy",0,"Okaaay… (hides the snack bags under the bed)"]]],
    ["Kati gave Mali half a roll of hand wraps, even though hers are worn out",[["Kati's happy she's not training alone anymore",2,"Mali's happy too! Mali will be the best sparring partner"],["I'll buy you both new rolls",1,"Yay! Pink, please"],["Use them sparingly",0,"Okay, Mali will wrap thin"]]],
@@ -67,6 +73,9 @@ const CHAT={
    ["Mali secretly practices jumping high kicks every night, didn't tell anyone",[["Can I see?",2,"Sure! But don't laugh if Mali falls!"],["Don't train till you get hurt",1,"Yes, yes, Coach Daeng says that too"],["If it's a secret, why tell me?",0,"Because I'm only telling you!"]]],
    ["Thank you for taking Mali into the camp. Nowhere else would",[["We're lucky to have you",2,"…Waah, don't say that late at night, Mali's crying"],["Our camp welcomes everyone",1,"Yes, this camp is the best!"],["Don't forget to pay rent",0,"Haha, way to ruin the mood!"]]]]}],
  rin:[
+  {id:"r_lv1",need:G=>G.romance==="rin",x:[
+   ["Since we started dating, my work efficiency has dropped 8% from daydreaming",[["Worth it for the happiness",2,"…I ran the numbers. Very worth it"],["Daydreaming about who?",1,"That question has one answer. I don't need to say it"],["Then stop daydreaming",0,"…I can't. I tried"]]],
+   ["No spreadsheet tonight. I just wanted to type that I miss you. End of message",[["I miss you too",2,"…Saved. I've reread it four times"],["Shortest message you've ever sent",1,"Yes. Some things need no appendix"],["What time is training tomorrow?",0,"…Six"]]]]},
   {id:"r_join",need:G=>G.F.rin&&G.F.rin.camp==="player",x:[
    ["Manager, I surveyed the camp and found 23 things to improve. I've sent the file",[["Let's start with the top three",2,"Prioritizing… good. My old camp never read a single one"],["Twenty-three?",1,"I removed the one about the orange cat. Otherwise 24"],["The camp is fine as it is",0,"…The data disagrees"]]],
    ["At Golden Tiger I ate every meal alone. Today Mali dragged me to her table. It was very loud",[["Get used to it. We eat together here",2,"…Yes. I noted: 'loud, but the food tastes better'"],["Mali's loud with everyone",1,"Yes. 84 decibels. I measured"],["You can eat alone if you want",0,"…No. I don't want to"]]],
@@ -96,6 +105,8 @@ const CHAT={
    ["Ploy is actually kind. She just has no time for anyone",[["Want to invite Ploy to train with us someday?",2,"…A crazy idea. But I'll message her and see"],["The boss must pressure her",1,"Yes. Every day"],["A rival is a rival",0,"Yes, I understand"]]],
    ["If Kati meets Ploy in the final, who should I cheer for?",[["Cheer for both, and the winner buys dinner",2,"…An answer I hadn't considered. But the best one"],["Kati, obviously",1,"Of course. I'm with Sirichai now"],["No need to cheer",0,"Hard to stop myself"]]]]}],
  ploy:[
+  {id:"p_prom",need:G=>G.promise&&G.promise.ploy!=null,x:[
+   ["Three sessions tomorrow. Not only to beat Kati. …I want that day to come sooner",[["I'm waiting for it too",2,"…Don't say that before a fight. I won't sleep"],["Don't overtrain",1,"Yes. The person waiting for me wouldn't want me hurt"],["Kati's going to win, though",0,"Heh. We'll see"]]]]},
   {id:"p_meet",need:G=>G.seen&&G.seen.rival_meet,x:[
    ["Hello, this is Ploy from Golden Tiger. I apologize again for Fah at the night market",[["It's fine. Fah just talks fast",2,"Yes. Fast, but harmless. Thank you for seeing that"],["Does the captain apologize for everything?",1,"…Nearly everything"],["Tell her to apologize herself",0,"I'll try. No promises"]]],
    ["I watched Grandpa Chai teach when I was little. He gave me a candy, even though I was from another camp",[["He probably saw your talent even then",2,"…I still have the wrapper. Don't tell anyone"],["He gave candy to everyone",1,"Yes. But mine was lime"],["Never heard that one",0,"It's a small thing"]]],
@@ -121,6 +132,8 @@ const CHAT={
    ["If I lose, the boss will be furious",[["Whatever the result, you're a fighter worth respecting",2,"…I'll carry that sentence into the ring"],["Then don't lose",1,"That's the plan"],["Forget the boss",0,"Easy to say…"]]],
    ["See you in the ring, manager of Sirichai",[["See you, Ploy",2,"…Yes (sends one small curled-up tiger sticker)"],["Don't hold back",1,"I never do"],["Bye",0,""]]]]}],
  fah:[
+  {id:"f_prom",need:G=>G.promise&&G.promise.fah!=null,x:[
+   ["Fah wrote it down, first page of the notebook: 'Don't forget: beat Ploy, then ask.' …Don't you pretend to forget",[["I definitely won't",2,"…Good! Fah's off to train (smiling, but you don't need to know)"],["The first page?",1,"Because it's the most important! Wait, Fah didn't say that!"],["What if you can't beat Ploy?",0,"Fah WILL!! Just watch!!"]]]]},
   {id:"f_visit",need:G=>G.seen&&G.seen.fah_visit,x:[
    ["Hey, your camp's heavy bag is rock hard. Fah's shin was purple for three days",[["Come train again. I'll have ice ready",2,"…Who said Fah's coming back! …Is Wednesday free?"],["It's new. Not broken in",1,"Then Fah'll kick it soft for you. Free"],["Who told you to kick that hard",0,"It's Muay Thai, you kick hard!"]]],
    ["Tell Kati that Fah went easy in round six that day (Fah didn't, but say it anyway)",[["Kati said it was a blast. She wants a rematch",2,"…Really? Hmph. Well… Fah didn't say it wasn't fun"],["I'll pass it on word for word",1,"Hey, not the part in brackets!"],["You were gasping before she was",0,"Not true!! You saw wrong!"]]],

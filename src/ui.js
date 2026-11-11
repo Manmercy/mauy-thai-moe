@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.29.4";
+const VERSION="1.30.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -357,32 +357,33 @@ function masteryLine(f){const s=mainStyle(f),v=styleVal(f,s),m=mastery(f);
 function twoRoads(f,T){const s=T.strong,w=T.weak,m=mastery(f),v=styleVal(f,s.p);const cur=f.plan.preset;
   const pro=m>=1?`เชี่ยวชาญเต็มขั้นแล้ว ฝึกต่อค่าก็ยังขึ้นเรื่อย ๆ`:m?`อาวุธหลักยิ่งแม่นและแรงขึ้น (ตอนนี้ ${Math.round(m*100)}%)`:`อีก ${(MASTERY_AT-v).toFixed(1)} แต้มจะปลด "เชี่ยวชาญสาย" ${STYLE_NAME[s.p]}แม่นและแรงขึ้น`;
   return `<div class="roads">
-   <div class="road ${cur===s.p?"on":""}"><b>ทางที่ 1 · เสริมจุดแข็งตามสาย</b><span class="rp">${PRESETS[s.p].name} · ${INTENSITY[s.i].name}</span>
+   <div class="road ${cur===s.p?"on":""}"><b>ทางที่ 1 · เสริมจุดแข็งตามสาย</b><span class="rp">${planName(s.p,s.i)}</span>
     <span class="up">+ ${pro}</span><span class="up">+ สายตัวเองฝึกแล้วค่าตันช้ากว่า</span><span class="dn">− ${esc(w.w)}ยังเป็นช่องให้คู่ชกเล่น</span></div>
-   <div class="road ${cur===w.p?"on":""}"><b>ทางที่ 2 · อุดจุดอ่อน</b><span class="rp">${PRESETS[w.p].name} · ${INTENSITY[w.i].name}</span>
+   <div class="road ${cur===w.p?"on":""}"><b>ทางที่ 2 · อุดจุดอ่อน</b><span class="rp">${planName(w.p,w.i)}</span>
     <span class="up">+ ${esc(w.w)}ต่ำสุด (${w.v.toFixed(1)}) ค่าต่ำฝึกขึ้นไว</span><span class="up">+ คู่ชกหาช่องโหว่ยากขึ้น</span><span class="dn">− อาวุธหลักไม่คมขึ้น</span></div></div>`;}
 const DRILL_ROW={punch:"punch",elbow:"punch",defense:"punch",balanced:"punch",kick:"knee",knee:"knee",cond:"knee"};
 const DRILL_Q={perfect:"เป๊ะ!",good:"ดี",ok:"พอใช้"};
 function drillHTML(){const D=UI.drill;if(!D)return "";const f=G.F[D.id],P=PRESETS[f.plan.preset];
   const at=Object.keys(P.w).map(k=>ATTR_LABEL[k]).filter(Boolean).slice(0,4).join(" · ");
   const res=D.done?`<div class="dres"><b class="${D.bonus>=8?"goldt":""}">${D.bonus>=10?"ซ้อมได้ยอดเยี่ยม!":D.bonus>=6?"ซ้อมได้ดี":"ซ้อมผ่านไปได้"}</b>
-     <span>โบนัสผลการฝึกสัปดาห์นี้ <b class="goldt">+${D.bonus}%</b></span><span class="meta">${esc(P.name)} · ${INTENSITY[f.plan.intensity].name} → ${at}</span>
+     <span>โบนัสผลการฝึกสัปดาห์นี้ <b class="goldt">+${D.bonus}%</b></span><span class="meta">${esc(planName(f.plan.preset,f.plan.intensity))} → ${at}</span>
      <div class="mfoot"><button class="btn primary" data-act="dskip">ตกลง</button></div></div>`
    :`<div class="dctl"><span class="dpips">${Array.from({length:D.need},(_,i)=>`<i class="${D.res[i]||""}">${D.res[i]?DRILL_Q[D.res[i]]:""}</i>`).join("")}</span>
      <button class="btn primary big dtap" data-act="dtap" ${D.taps>=D.need?"disabled":""}>${DRILL_ROW[f.plan.preset]==="knee"?"เตะ!":"ต่อย!"}</button><button class="btn sm ghost" data-act="dskip">ข้าม</button></div>`;
   return `<h2>ซ้อม${esc(P.name)} · ${esc(f.name)}</h2><p class="meta">กดให้${esc(f.name)}${DRILL_ROW[f.plan.preset]==="knee"?"เตะ":"ต่อย"}กระสอบ ${D.need} ครั้ง ลุ้นโบนัสการฝึก</p>
    <div class="drillstage" style="background-image:url(${ASSET}${gymBg()})"><canvas width="360" height="200" data-drill="${f.id}"></canvas></div>${res}`;}
-function adviceHTML(id){const f=G.F[id],A=trainAdvice(f);const same=f.plan.preset===A.p&&f.plan.intensity===A.i;
+function adviceHTML(id){const f=G.F[id],A=trainAdvice(f);const same=f.plan.preset===A.p&&(A.p==="rest"||f.plan.intensity===A.i);
   if(A.two)return `<h2>ครูแดงแนะนำ · ${esc(f.name)}</h2><div class="ctip big"><img src="${faceSrc("coach")}" alt=""><span>${esc(A.why)}</span></div>
-   <div class="kv-row"><span>ตอนนี้</span><b>${PRESETS[f.plan.preset].name} · ${INTENSITY[f.plan.intensity].name}</b></div>${twoRoads(f,A.two)}
+   <div class="kv-row"><span>ตอนนี้</span><b>${planName(f.plan.preset,f.plan.intensity)}</b></div>${twoRoads(f,A.two)}
    ${planTip(f)}<p class="meta">${masteryLine(f)} · ครูแค่ให้ความเห็น ตัดสินใจเองนะ</p>
    <div class="mfoot roadbtns">${trLocked(f)?`<span class="meta">ยืนยันโปรแกรมสัปดาห์นี้ไปแล้ว</span>`:`<button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.two.strong.p}" data-i="${A.two.strong.i}">ใช้ทางที่ 1</button><button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.two.weak.p}" data-i="${A.two.weak.i}">ใช้ทางที่ 2</button>`}<button class="btn primary" data-act="closeModal">ปิด</button></div>`;
   return `<h2>ครูแดงแนะนำ · ${esc(f.name)}</h2><div class="ctip big"><img src="${faceSrc("coach")}" alt=""><span>${esc(A.why)}</span></div>
-   <div class="kv-row"><span>ตอนนี้</span><b>${PRESETS[f.plan.preset].name} · ${INTENSITY[f.plan.intensity].name}</b></div>
-   <div class="kv-row"><span>ครูแนะนำ</span><b class="goldt">${PRESETS[A.p].name} · ${INTENSITY[A.i].name}</b></div>
+   <div class="kv-row"><span>ตอนนี้</span><b>${planName(f.plan.preset,f.plan.intensity)}</b></div>
+   <div class="kv-row"><span>ครูแนะนำ</span><b class="goldt">${planName(A.p,A.i)}</b></div>
    ${planTip(f)}<p class="meta">${same?"ตอนนี้ตั้งตรงกับที่ครูคิดไว้แล้ว":"ครูแค่ให้ความเห็น ตัดสินใจเองนะ"}</p>
    <div class="mfoot roadbtns">${!same&&!trLocked(f)?`<button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.p}" data-i="${A.i}">ใช้ตามนี้</button>`:""}<button class="btn primary" data-act="closeModal">ปิด</button></div>`;}
 const trLocked=f=>f?f.lockWeek===G.week:false;
+const planName=(p,i)=>PRESETS[p].name+(p==="rest"||!INTENSITY[i]?"":" · "+INTENSITY[i].name);
 function trainHTML(){const R=roster(G);if(!R.length)return "";
   // v1.13: each fighter gets her own card with the big training animation; programmes are picked in a sheet, then the week is locked in
   return `<div class="tcards">${R.map(f=>tcard(f,trLocked(f))).join("")}</div>`;}
@@ -390,7 +391,7 @@ function tcard(f,L){const pf=projFatigue(f),rest=f.plan.preset==="rest";const ti
   return `<section class="px tcard ${L?"locked":""}">${!L&&!f.injury?'<i class="tdot" aria-label="ยังไม่ได้ยืนยันโปรแกรม"></i>':""}<div class="tc-anim" role="button" tabindex="0" data-act="fighter" data-id="${f.id}" data-v="train" aria-label="ข้อมูล ${esc(f.name)}" style="background-image:url(${ASSET}${gymBg()})"><canvas width="220" height="190" data-sprite="${f.id}" data-floor="1"></canvas>
      <span class="tr-pre">${f.injury?"พักรักษา":PRESETS[f.plan.preset].name}</span></div>
    <div class="tc-body"><div class="tc-h"><b class="nm">${esc(f.name)}</b><span class="lv">Lv.${f.lvl}</span>${prepLine(f)}</div>
-    <div class="minis"><span>ล้า ${Math.round(f.fatigue)} → ${Math.round(pf)}</span>${mini(pf,pf>70?"var(--red)":pf>55?"var(--warn)":"var(--green)")}</div>
+    <div class="fatg"><span>ล้า <b class="num">${Math.round(f.fatigue)}</b> → <b class="num">${Math.round(pf)}</b></span><i class="fgbar" style="--now:${clamp(f.fatigue,0,100)}%;--next:${clamp(pf,0,100)}%;--bc:${pf>70?"var(--red)":pf>55?"var(--warn)":"var(--green)"}"><s></s></i></div>
     ${tired?`<p class="warnchip">ล้ามาก ควรพักฟื้นสัปดาห์นี้</p>`:""}
     ${f.id==="kati"?`<div class="grit" title="ซ้อมจริงทุกสัปดาห์ ความพยายามสะสมเป็นแรงฮึดวันชก"><span>ความพยายาม</span><i style="--v:${Math.round((f.grit||0)/.1*100)}%"></i><b>${Math.round((f.grit||0)/.1*100)}%</b></div>`:""}<div class="tc-prog"><span class="pill ${L?"":"gold"}">${f.injury?"พักรักษาตัว":PRESETS[f.plan.preset].name+(rest?"":" · "+INTENSITY[f.plan.intensity].name)}</span></div>
     ${f.injury?"":`<div class="tc-btns">${L?"":`<button class="btn sm" data-act="tpick" data-id="${f.id}">โปรแกรมฝึก</button>`}${coachOn()&&!L?`<button class="btn sm" data-act="advice" data-id="${f.id}">คำแนะนำครู</button>`:""}
@@ -454,7 +455,7 @@ function rankHTML(){const st=stageOf(G.week),cut=st==="local"?4:st==="district"?
 function peopleHTML(){const met=CANON_IDS.map(id=>G.F[id]).filter(f=>f.met);
   return `<div class="card-h"><p class="meta">ใช้เวลาด้วยกันสัปดาห์ละ 1 ครั้ง · พอสนิทกัน เธอจะทักแชทมาเองเป็นครั้งคราว</p>${G.freeUsed?'<span class="pill">เวลาว่าง: ใช้แล้ว</span>':'<span class="pill gold">เวลาว่าง: เหลือ 1</span>'}</div>
    <div class="plist">${met.map(f=>`<section class="px pcard"><button class="pthumb" data-act="fighter" data-id="${f.id}" data-v="rel" aria-label="ดูโปรไฟล์${esc(f.name)}"><img src="${stand(f.id,"casual")}" alt="" loading="lazy"></button>
-     <div class="pbody"><div class="pnm"><b class="nm">${esc(f.name)}</b><span class="meta">${f.camp==="player"?"ค่ายศิริชัย":f.camp==="rival"?"พยัคฆ์ทอง":"อิสระ"}${G.romance===f.id?" · คนรัก ♥":""}</span></div>${hearts(f.bond)}
+     <div class="pbody"><div class="pnm"><b class="nm">${esc(f.name)}</b><span class="meta">${f.camp==="player"?"ค่ายศิริชัย":f.camp==="rival"?"พยัคฆ์ทอง":"อิสระ"}${G.romance===f.id?" · คนรัก ♥":G.promise&&G.promise[f.id]!=null?" · สัญญาไว้ ♡":""}</span></div>${hearts(f.bond)}
       <div class="pbtns"><button class="btn sm" data-act="fighter" data-id="${f.id}" data-v="rel">ประวัติ</button><button class="btn sm primary" data-act="hang" data-id="${f.id}" ${G.freeUsed?"disabled":""}>ใช้เวลาด้วยกัน</button><button class="btn sm gold giftb" data-act="giftpick" data-id="${f.id}" ${f.giftWeek===G.week?"disabled":""}>${PIX.gift}<span>${f.giftWeek===G.week?"ให้แล้ว":"ของขวัญ"}</span></button><button class="btn sm chatb" data-act="chat" data-id="${f.id}" ${canChat(f)?"":"disabled"}>${CHAT_PX}<span>${canChat(f)?"แชทใหม่":(f.bond||0)<CHAT_BOND?"ยังไม่สนิท":"ไม่มีข้อความ"}</span>${canChat(f)?'<i class="dot"></i>':""}</button></div></div></section>`).join("")}</div>`;}
 function hangHTML(id){const f=G.F[id];const pref=k=>f.know["act_"+k]==="like"?'<i class="likeb">ชอบ</i>':f.know["act_"+k]==="dislike"?'<i class="disb">ไม่ชอบ</i>':"";
   return `<h2>ใช้เวลากับ${esc(f.name)}</h2><p class="meta">เลือกที่ที่อยากไปด้วยกัน</p><div class="acts">${Object.entries(ACTIVITIES).filter(([k,a])=>!a.campOnly||f.camp==="player").map(([k,a])=>`<button class="actbtn" data-act="date" data-id="${f.id}" data-v="${k}" ${G.freeUsed||G.cash<a.cost?"disabled":""}><b>${a.name}${pref(k)}</b><small>${a.cost?fmt(a.cost):"ฟรี"}</small></button>`).join("")}</div>`;}
@@ -787,7 +788,7 @@ function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
    <section class="px card"><h3>ผลงานฤดูกาลนี้</h3>${res.length?res.map(r=>`<div class="kv-row"><span>${faceImg(r.f,"sm")} ${esc(r.f.name)} · รุ่น ${r.d}</span><span class="pill ${r.c}">${r.t}</span></div>`).join(""):'<p class="meta">ปีนี้ยังไม่มีนักมวยผ่านรอบตำบล</p>'}</section>
    <div class="grid g3"><section class="px card"><h3>ค่าย</h3><div class="kv-row"><span>ระดับค่าย</span><b>Lv.${campLevel(G)} ${CAMP_LV_NAME[campLevel(G)]}</b></div><div class="kv-row"><span>เงินสด</span><b class="num">${fmt(G.cash)}</b></div><div class="kv-row"><span>หนี้คงเหลือ</span><b class="num">${fmt(G.debt)}</b></div><div class="kv-row"><span>นักเรียน</span><b class="num">${students(G)} คน</b></div><div class="kv-row"><span>ชื่อเสียง</span><b class="num">${G.rep.toFixed(1)}</b></div></section>
    <section class="px card"><h3>นักมวยในค่าย</h3>${all.map(f=>`<div class="kv-row"><span>${esc(f.name)} Lv.${f.lvl}</span><span class="num">${rec(f)}</span></div>`).join("")}</section>
-   <section class="px card"><h3>ความสัมพันธ์</h3>${CANON_IDS.map(id=>G.F[id]).filter(f=>f.met).map(f=>`<div class="kv-row"><span>${esc(f.name)}${G.romance===f.id?" ♥ คนรัก":""}</span>${hearts(f.bond)}</div>`).join("")}</section></div>
+   <section class="px card"><h3>ความสัมพันธ์</h3>${CANON_IDS.map(id=>G.F[id]).filter(f=>f.met).map(f=>`<div class="kv-row"><span>${esc(f.name)}${G.romance===f.id?" ♥ คนรัก":G.promise&&G.promise[f.id]!=null?" ♡ สัญญาไว้":""}</span>${hearts(f.bond)}</div>`).join("")}</section></div>
    <section class="px card teaser"><span class="pill red">ฤดูกาลหน้า · เร็ว ๆ นี้</span><h3>เส้นทางสู่เวทีระดับภาค</h3>
     <ul><li>ค่ายพยัคฆ์ทองดึงเทรนเนอร์จากกรุงเทพฯ และฟ้าจะไม่ใช่คนเดิมอีกต่อไป</li><li>นักมวยหน้าใหม่จากมวยท่าเสาและมวยโคราชกำลังมองหาค่าย</li><li>หนี้ของปู่ชัยยังมีความลับที่กะทิไม่ได้เล่าทั้งหมด</li></ul></section>
    <div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">เล่นต่อ ฤดูกาลที่ ${(G.season||1)+1} ▸</button>`:""}<button class="btn primary" data-act="replay">เล่นใหม่อีกรอบ</button><button class="btn" data-act="restart">กลับหน้าแรก</button></div></main>`;}
@@ -1077,7 +1078,7 @@ const ACT={
   give:d=>{const r=giveGift(G,d.id,d.v);if(!r)return;UI.modal=null;UI.tab="people";save();AU.startMusic("date");giftScene(d.id,r);},
   buyfac:d=>{const before=campLevel(G);if(buyFacility(G,d.v)){save();const after=campLevel(G);AU.sfx("level");toast(after>before?`ค่ายเลื่อนเป็น Lv.${after}: ${CAMP_LV_NAME[after]}!`:`อัปเกรด${FACILITIES[d.v].name}แล้ว`);}},
   daeng:()=>{if(upgradeDaeng(G)){save();toast(`ครูแดงผ่านการอบรม Lv.${G.fac.daeng}`);}},
-  useroad:d=>{const f=G.F[d.id];if(!f||trLocked(f)||!PRESETS[d.p])return;f.plan={...f.plan,preset:d.p,intensity:d.i};UI.modal=null;save();toast(`ตั้ง${f.name}: ${PRESETS[d.p].name} · ${INTENSITY[d.i].name} แล้ว อย่าลืมกดยืนยัน`);},
+  useroad:d=>{const f=G.F[d.id];if(!f||trLocked(f)||!PRESETS[d.p])return;f.plan={...f.plan,preset:d.p,intensity:d.i};UI.modal=null;save();toast(`ตั้ง${f.name}: ${planName(d.p,d.i)} แล้ว อย่าลืมกดยืนยัน`);},
   equip:d=>{if(toggleEquip(G,d.id,d.v)){AU.sfx("ui");save();render();}else toast(`เลือกได้สูงสุด ${MAX_EQUIP} สกิล เอาออกก่อน 1 ท่า`);},
   hirestaff:d=>{if(hireStaff(G,d.v)){AU.sfx("level");save();toast(`${STAFF[d.v].name}เข้าร่วมค่ายแล้ว`);render();}},
   firestaff:d=>{fireStaff(G,d.v);save();toast(`เลิกจ้าง${STAFF[d.v].name}แล้ว`);render();},
