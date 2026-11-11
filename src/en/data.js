@@ -309,7 +309,7 @@ const GIFT_LINES={
 function giftTier(id,g){const P=GIFT_PREF[id];return P.love.includes(g)?"love":P.like.includes(g)?"like":P.dislike.includes(g)?"dislike":"ok";}
 function giveGift(G,id,g){const f=G.F[id],it=GIFTS[g];if(G.cash<it.price||f.giftWeek===G.week)return null;G.cash-=it.price;f.giftWeek=G.week;
   // v1.16: the same gift again means less (and she says so)
-  f.giftN=f.giftN||{};const n=f.giftN[g]||0;f.giftN[g]=n+1;
+  f.giftN=f.giftN||{};f.giftL=f.giftL||{};if(f.giftL[g]&&G.week-f.giftL[g]>=6)f.giftN[g]=0;const n=f.giftN[g]||0;f.giftN[g]=n+1;f.giftL[g]=G.week;f.giftTot=(f.giftTot||0)+1;
   const t=giftTier(id,g),base=Math.round({love:6,like:4,ok:2,dislike:0}[t]*(it.bond&&t!=="dislike"?1.5:1)),gain=base>0?Math.max(1,Math.round(base*(n===0?1:t==="love"?(n===1?.6:.4):(n===1?.5:.25)))):base;
   const before=f.bond;add(G,id,"bond",gain);if(t==="love")add(G,id,"morale",n<2?6:4);
   f.know["gift_"+g]=t;return {t,gain:Math.round((f.bond-before)*10)/10,g,n};}
@@ -393,7 +393,7 @@ const GIFT_TALK={
   khanom:"The khanom khrok is still warm! Can I eat it now… mmm, so much coconut! Half for you",
   coffee:"Coffee? Whenever I drink it my heart races all night. I'll give it to Coach Daeng instead",
   malai:"The garland smells lovely. I'll offer it to Grandpa's picture on the shelf",
-  sausage:"Isan sausage! After training with sticky rice, it's the best. Thank you",
+  sausage:"Isan sausage! Grilled crispy, with sliced ginger, bird's-eye chili and cabbage, it's the best! Thank you",
   tea:"Oolong… I don't drink much tea, but I'll try brewing it",
   sketch:"A sketchbook? I can't draw at all… can I use it for training schedules instead?",
   doll:"A tiger plushie… it looks just like Fah, haha. I'll put it by my bed to guard the camp",
@@ -469,6 +469,41 @@ const GIFT_TALK={
   bracelet:"A bracelet… mm, not that Fah likes it, just something to keep the hands busy",
   mongkhon:"A self-braided mongkhon… so crooked, haha …no, you're not getting it back, Fah's keeping it"},
 };
+// v1.34: more gifts, a few of them silly on purpose
+Object.assign(GIFTS,{moo:{name:"20 sticks of moo ping with sticky rice",price:200,cat:"food"},pla:{name:"Big basket of Mae Klong mackerel",price:160,cat:"food"},
+  yadom:{name:"Herbal smelling salts, 12-pack",price:120,cat:"keep",fun:1},helmet:{name:"Golden helmet (confiscated from the gang)",price:60,cat:"wear",fun:1},
+  poster:{name:"Life-size poster of the Manager",price:450,cat:"keep",fun:1},rooster:{name:"A real fighting rooster named Diamond",price:800,cat:"keep",fun:1}});
+[["kati",{like:["moo","yadom","poster"],dislike:["rooster"]}],["mali",{love:["moo"],like:["pla","poster"],dislike:["rooster"]}],["rin",{like:["yadom"],dislike:["poster","moo"]}],
+ ["ploy",{like:["pla","yadom"],dislike:["poster","helmet"]}],["fah",{love:["rooster"],like:["helmet","moo"],dislike:["yadom"]}]].forEach(([id,P])=>{for(const k in P)GIFT_PREF[id][k].push(...P[k]);});
+const GIFT_TALK2={
+ kati:{moo:"Moo ping and sticky rice! This is real fighter food. I'm taking the first three sticks, the rest for Coach Daeng",pla:"Mackerel! I'll fry it for the whole camp tomorrow morning; the whole lane will smell it",
+  yadom:"Twelve smelling salts! I'll put them in every corner of camp in case anyone gets dizzy training hard",helmet:"That gang's helmet… I'll wear it when I bike to the market so they see it and get scared!",
+  poster:"A poster… of the Manager… life-size. I'll… hang it outside the training room. For motivation (blushing)",rooster:"A chicken!? You're giving me a chicken!? It's pecking me! Diamond is pecking me!!"},
+ mali:{moo:"Moo pinggg! Mali smelled it the moment you walked in. Thank you, Mali's eating it with sticky rice right now~",pla:"Mackerel! I miss home. Down south we eat it with shrimp-paste chili dip. Mali'll make some for you",
+  yadom:"So many smelling salts~ Mali will keep one for the bus ride home",helmet:"A golden helmet… can Mali bake khanom krok in it? It's the same shape as the pan, hehe",
+  poster:"Wow~ it's you, life-size! Mali'll put it by the bed, wait, no, by the camp gate is better!",rooster:"Eek! That chicken's bigger than our dog back home! Mali's scared, let Diamond live with the rooster boss instead"},
+ rin:{moo:"Moo ping… very high in saturated fat. But… it smells so good I can't do the math. One stick, please",pla:"Mackerel. Good protein, high omega-3. A logical gift. Thank you",
+  yadom:"Twelve smelling salts. I'll pin them to the stats board for when the numbers won't add up",helmet:"That gang's helmet… I'll keep it as evidence, in case it's needed in court",
+  poster:"…A poster of you, life-size. I don't know where to put it so I won't have to make eye contact",rooster:"A fighting rooster… about two years old, strong legs. If he could box, I'd analyze him"},
+ ploy:{moo:"Market moo ping… I haven't had this in ages; Golden Tiger watches our diet closely. Thank you",pla:"Mae Klong mackerel, bent necks and all, the real thing. I'll make tom yum for the juniors tonight",
+  yadom:"Herbal smelling salts… I like this scent. It reminds me of Grandma. Thank you",helmet:"A thug's helmet… why give this to me? Return it to its owner",
+  poster:"…You want me to hang your face up at Golden Tiger? The boss would faint",rooster:"A fighting rooster… I don't keep animals, but this one stands up straight. Disciplined. Thank you"},
+ fah:{moo:"Moo ping! Fah can eat thirty sticks, you only bought twenty? …Kidding. Thanks",pla:"Mackerel? Fah's not a cat! …But Iron Fist will love it. Thanks on his behalf",
+  yadom:"Smelling salts? Fah's not some old auntie! Give them to Rin",helmet:"Ha! Their helmet! Fah's wearing it round the market so they know who really runs this town!",
+  poster:"A poster of YOU… who'd want that!! …Fine, give it. Fah'll use it as a kicking target (but hang it in the bedroom)",rooster:"A FIGHTING ROOSTER!!! Diamond! He's the coolest thing in the world! Fah's gonna teach him to kick! And introduce him to Iron Fist!"}};
+for(const id in GIFT_TALK2)Object.assign(GIFT_TALK[id],GIFT_TALK2[id]);
+// v1.34: after many gifts she says something about it, and after more she gives one back
+const GIFT_FREQ={
+ kati:[[{n:"kati",f:"flustered",t:"Manager… if you keep giving me things, Coach Daeng teases that I'm the favorite grandkid"},{n:"coach",t:"It's true. Kati's room has more stuff than the glove room now"}],
+  [{n:"kati",f:"happy",t:"This time let me give you something back! Hand wraps I wrapped myself. They're not very neat, but I tried really hard"},{n:"nar",t:"Red hand wraps with a little bow tied at the end, held out with both hands"}]],
+ mali:[[{n:"mali",f:"flustered",t:"You've given Mali so much that Mom called to ask, 'Who is this manager, dear?' Mali didn't know what to say~"}],
+  [{n:"mali",f:"happy",t:"Now it's Mali's turn! The first tray from the pan I've practiced on all month. Only a little burnt. Try it"},{n:"nar",t:"Only half the tray is burnt. The other half is so good you forget the first"}]],
+ rin:[[{n:"rin",f:"flustered",t:"I've been keeping stats. You've given me gifts 5 times, well above the average person… I'm not complaining"}],
+  [{n:"rin",f:"happy",t:"This time I prepared something for you. A summary of every fight our camp has had, handwritten, the whole book"},{n:"nar",t:"The first page reads: 'For the Manager, who gives every number its meaning'"}]],
+ ploy:[[{n:"ploy",f:"flustered",t:"You give me things so often the juniors at Golden Tiger are getting suspicious. I have to say a fan sent them"}],
+  [{n:"ploy",f:"happy",t:"Take it. Tea from the hills that I roasted with my grandma. I've never given it to anyone outside family"},{n:"nar",t:"A neat packet of tea leaves tied with banana string, with small handwriting: 'Brew at 85 degrees'"}]],
+ fah:[[{n:"fah",f:"flustered",t:"You give Fah stuff so often, Iron Fist is getting jealous! …Fah's not jealous, Fah said the CAT is jealous!"}],
+  [{n:"fah",f:"pout",t:"Here! I didn't buy it for you, I just found it"},{n:"nar",t:"A leather wristband stitched with tiny letters: 'Team Fah'. The price tag is still on it: ฿390"}]]};
 // v1.5: sulky / shy moments that use the new casual expressions
 CHATTER.push(
  {id:"c_kati_jealous",need:G=>G.F.kati.bond>=30&&["mali","rin","fah","ploy"].some(id=>G.F[id].bond>=25),bg:"night",look:"casual",steps:[
