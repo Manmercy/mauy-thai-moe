@@ -99,8 +99,8 @@ function mailWeekly(G){G.mail=G.mail||[];G.gang=G.gang||{st:0,next:0};G.mailSeen
     addMail(G,{kind:"quest",q:"gang",qk:k,from:"Morning-market vendors (unsigned)",title:G.gang.st>=4?"Big Boss Golden Helmet is coming himself!":"The helmet gang is back",
       body:[`They're back collecting interest again. This time "${QK[k].name}" is in charge. Anyone who doesn't pay twenty percent gets their stall wrecked. Can you help us one more time?`,`${QK[k].name} threatened to seize Grandma Waew's meatball cart. If Sirichai doesn't stop him, no one can`,`The whole market has gone silent, because "${QK[k].name}" has been sitting guard since five a.m. Please`,`They say the big boss "${QK[k].name}" is coming to collect himself. The whole market owes him. Take this one down and the gang is finished`][G.gang.st-1],exp:G.week+3});G.gang.next=G.week+5;}
   // cow on the loose — once, mid season
-  if(!G.mailSeen.cow&&G.week>=12&&rng()<.35){G.mailSeen.cow=1;addMail(G,{kind:"quest",q:"cow",qk:"bull1",from:"Uncle Chaloem, dairy farm",title:"Help! The cow's loose!!",body:"Fresh Milk, the fiercest cow on the farm, broke out of her pen. She watches Muay Thai on TV every night and now she can hold a guard! She's blocking the road in front of the market and kicks anyone who comes near. Send a fighter, please. Uncle will pay, plus a bucket of fresh milk",exp:G.week+2,pay:1500});}
-  if(!G.mailSeen.rooster&&G.week>=7&&rng()<.3){G.mailSeen.rooster=1;addMail(G,{kind:"quest",q:"rooster",qk:"rooster1",from:"Sia Tong, rooster arena",title:"My rooster flew into your camp",body:"My hot-headed bantam flew over the fence and has been pecking your heavy bag since morning. It squares up at anyone who comes close. Please catch it for me. I'll pay, plus two trays of eggs",exp:G.week+2,pay:1000});}
+  if(!G.mailSeen.cow&&G.week>=9&&rng()<.6){G.mailSeen.cow=1;addMail(G,{kind:"quest",q:"cow",qk:"bull1",from:"Uncle Chaloem, dairy farm",title:"Help! The cow's loose!!",body:"Fresh Milk, the fiercest cow on the farm, broke out of her pen. She watches Muay Thai on TV every night and now she can hold a guard! She's blocking the road in front of the market and kicks anyone who comes near. Send a fighter, please. Uncle will pay, plus a bucket of fresh milk",exp:G.week+2,pay:1500});}
+  if(!G.mailSeen.rooster&&G.week>=5&&rng()<.6){G.mailSeen.rooster=1;addMail(G,{kind:"quest",q:"rooster",qk:"rooster1",from:"Sia Tong, rooster arena",title:"My rooster flew into your camp",body:"My hot-headed bantam flew over the fence and has been pecking your heavy bag since morning. It squares up at anyone who comes close. Please catch it for me. I'll pay, plus two trays of eggs",exp:G.week+2,pay:1000});}
   // rivals we keep ignoring write in to taunt us
   const sn=Object.entries(G.snub||{}).filter(([id,n])=>n>=3&&G.F[id]&&!G.F[id].canon&&(G.F[id].camp==="npc"||G.F[id].camp==="rival")&&!G.mailSeen["ch_"+id]).sort((a,b)=>b[1]-a[1])[0];
   if(sn&&rng()<.5&&G.week<=46){const op=G.F[sn[0]];G.mailSeen["ch_"+op.id]=1;
@@ -119,9 +119,9 @@ function mailWeekly(G){G.mail=G.mail||[];G.gang=G.gang||{st:0,next:0};G.mailSeen
   // odd fights posted to the offers board (rare, pays well)
   beastOffer(G,rng);
   qCleanup(G);}
-const BEAST_WEEKS=[9,15,21,27,33,38,44];
+const BEAST_WEEKS=[7,11,15,19,23,27,31,35,39,43,47];
 function beastOffer(G,rng){if(!BEAST_WEEKS.includes(G.week))return;const R=roster(G).filter(f=>!f.injury);if(!R.length)return;
-  const i=BEAST_WEEKS.indexOf(G.week);const kinds=["rooster2","bull2","rooster3","rooster4","bull3","rooster5","bull3"];const kind=kinds[i];const f=R[Math.floor(rng()*R.length)];
+  const i=BEAST_WEEKS.indexOf(G.week);const kinds=["rooster2","bull2","rooster3","bull2","rooster4","bull3","rooster4","rooster5","bull3","rooster5","bull3"];const kind=kinds[i];const f=R[Math.floor(rng()*R.length)];
   const wk=G.week+2;if(G.bookings.some(b=>b.a===f.id&&Math.abs(b.week-wk)<=1))return;const qid=makeQ(G,kind,f.id,"o"+G.week);const K=QK[kind];
   const win=Math.round((6000+G.week*180)*(1+K.lvl*.2)/100)*100,lose=Math.round(win*.35/100)*100;
   G.offers.unshift({id:`ob${G.week}_${f.id}`,a:f.id,b:qid,week:wk,tier:"beast",beast:kind,win,lose});
@@ -338,7 +338,7 @@ Object.assign(ACT,{
   dmno:()=>{G.dmSeen=G.dmSeen||{};G.dmSeen[G.week]=1;UI.modal=null;save();render();},
   dmstart:()=>{const sel=(UI.dmSel||[]).filter(id=>dmMine(id)&&dmCanEnter(G.F[id]));if(!sel.length)return;G.dmSeen=G.dmSeen||{};G.dmSeen[G.week]=1;
     G.dm=dmBuild(G,sel);UI.modal=null;save();
-    playScene([{n:"npc",who:"Ring announcer",t:"Ladies and gentlemen! Tonight there is no tomorrow! Eight fighters from every division, fighting until one is left! DEATH MATCH!!"},
+    playScene([{n:"npc",who:"Ring announcer",t:vary("dm1",["Ladies and gentlemen! Tonight there is no tomorrow! Eight fighters from every division, fighting until one is left! DEATH MATCH!!","We're back! The fight with no rest! Eight go in, one comes out! DEATH MATCH!!","If you're tired, go home now! Tonight we fight straight through to a champion! DEATH MATCH!!","The tent's packed so tight it might burst! Eight of the best women fighters from every division, the Death Match is here!!"])},
       {n:"coach",t:G=>`${ME(G)}, listen. Win and you fight again right away. The energy you spend won't come back in time. Don't waste it in the early rounds`},
       {n:sel[0],f:"angry",l:"fight",t:"Everyone here is strong… but our camp came to win!"}],()=>{dmAdvance();UI.modal={type:"dm"};render();},{bg:"hall",look:"fight"});},
   dmopen:()=>{UI.modal={type:"dm"};render();},

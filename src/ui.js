@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.37.0";
+const VERSION="1.38.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -266,6 +266,7 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
     if(b&&!scouted(b.b)&&G.cash>=scoutCost())T.push({p:5,t:`ยังไม่ได้ดูเทป${G.F[b.b].name} คู่ชกของ${f.name} ดูก่อนจะได้รู้ทางแก้`,act:{k:"tab",v:"fights",label:"ไปดูเทป"}});
     if(b&&!b.planSet)T.push({p:5,t:`ยังไม่ได้ตั้งแผนไฟต์ของ${f.name} (สัปดาห์ ${b.week})`,act:{k:"tab",v:"train",label:"ไปตั้งแผน"}});
     if(skReady(f))T.push({p:6,t:`${f.name}มีแต้มสกิล ${f.sp} แต้ม ไปเลือกสกิลได้เลย`,act:{k:"fighter",id:f.id,v:"skill",label:"เลือกสกิล"}});
+    if(f.plan.preset==="rest"&&f.fatigue<20&&!f.injury&&!trLocked(f))T.push({p:7,t:`${f.name}หายล้าแล้ว (ล้า ${Math.round(f.fatigue)}) ยังตั้งเป็นพักฟื้นอยู่ ถ้าพักต่อจะเสียสัปดาห์ซ้อมไปเปล่า ๆ`,act:{k:"tab",v:"train",label:"ไปตั้งโปรแกรม"}});
     if(f.plan.intensity==="heavy"&&f.fatigue>50)T.push({p:5,t:`${f.name}ซ้อมหนักต่อเนื่อง ระวังบาดเจ็บนะ`});}
   if(!G.bookings.some(b=>G.F[b.a].camp==="player")&&G.offers.length)T.push({p:5,t:"ยังไม่มีไฟต์ในตาราง ครูดูข้อเสนอให้แล้ว มีสีบอกว่าคู่ไหนง่ายหรือเสี่ยง",act:{k:"tab",v:"fights",label:"ดูข้อเสนอ"}});
   if(G.loan>0)T.push({p:G.cash>=G.loan?8:4,t:`ยังติดเงินกู้หมวกทอง ${fmt(G.loan)} ดอกขึ้น 10% ทุก 4 สัปดาห์ และพวกมันจะมาวนเวียนแถวตลาดบ่อยขึ้น${G.cash>=G.loan?" ตอนนี้มีเงินพอคืนแล้วนะ":""}`,act:{k:"tab",v:"camp",label:"ไปหน้าการเงิน"}});
@@ -431,9 +432,9 @@ function fightsHTML(){
   return `<div class="seg subtabs"><button data-act="fsub" data-v="offers" aria-pressed="${sub==="offers"}">ข้อเสนอ & ตาราง</button><button data-act="fsub" data-v="rank" aria-pressed="${sub==="rank"}">อันดับ</button></div>`+(sub==="rank"?rankHTML():offersHTML());}
 // v1.7 scouting: watch tape to see the opponent's tendencies (free when Rin is in the camp)
 // v1.21: tape is always a deliberate step again — Rin (or the analyst) just makes it free
-const SCOUT_COST=400;const rinIn=()=>G.F.rin.camp==="player";const rinFree=()=>rinIn()&&G.rinTapeWk!==G.week; // v1.32: Rin studies one tape a week for free
+const SCOUT_COST=400;const rinIn=()=>G.F.rin.camp==="player";const RIN_GAP=3;const rinFree=()=>rinIn()&&!(G.rinTapeWk!=null&&G.week-G.rinTapeWk<RIN_GAP); // v1.38: Rin studies one tape for free every 3 weeks
 const scoutCost=()=>rinFree()||(G.staff||[]).includes("wit")?0:(G.fac.video||0)>=1?200:SCOUT_COST;
-const scoutLabel=()=>rinIn()?"ให้รินดูเทป (ฟรี)":scoutCost()?`ดูเทป ${fmt(scoutCost())}`:"ดูเทป (ฟรี)";
+const scoutLabel=()=>rinFree()?"ให้รินดูเทป (ฟรี ทุก 3 สัปดาห์)":scoutCost()?`ดูเทป ${fmt(scoutCost())}`:"ดูเทป (ฟรี)";
 const scouted=id=>G.scout&&G.scout[id]!=null&&G.week-G.scout[id]<=8;
 function oppIntel(op){const a=op.a;const wp=[["หมัด",a.punch],["เตะ",a.kick],["เข่า",a.knee],["ศอก",a.elbow]].sort((x,y)=>y[1]-x[1]);
   const weak=[["guard","การ์ดหลวม · เล่นหัวได้ผล"],["stamina","แรงน้อย · เล่นลำตัวดูดแรง"],["foot","ฟุตเวิร์กช้า · เตะขาให้ช้าลงอีก"],["clinch","คลินช์อ่อน · เข้าวงในได้เปรียบ"],["dur","ทนแรงกระแทกได้น้อย"]].sort((x,y)=>a[x[0]]-a[y[0]])[0];
@@ -782,7 +783,7 @@ function afterWeekFlow(){if(typeof mailWeekly==="function"&&!G.ended)mailWeekly(
     const go=()=>coachBackScene(()=>aftermathScene(()=>tiredScene(()=>rinScene(fin))));if(played)go();else weeklyExtra(go);});}
 // v1.15: a worn-out fighter asks for a rest week herself
 function tiredScene(done){G.tiredAt=G.tiredAt||{};const f=roster(G).find(x=>!x.injury&&x.fatigue>=58&&x.plan.preset!=="rest"&&(G.tiredAt[x.id]||-9)<G.week-3);if(!f||!coachOn()&&f.fatigue<70){done();return;}
-  G.tiredAt[f.id]=G.week;const ask={kati:"ครูคะ… ขามันหนักไปหมดเลย ขอพักสักสัปดาห์ได้ไหมคะ",mali:"ฮือ… มะลิเตะไม่ขึ้นแล้วอ่ะ ขอนอนยาว ๆ สักอาทิตย์นะ~",rin:"ตัวเลขชีพจรตอนเช้าฉันสูงผิดปกติ… ร่างกายต้องการพักค่ะ"}[f.id]||"ขอพักสักหน่อยได้ไหมคะ";
+  G.tiredAt[f.id]=G.week;const ask=vary("tired_"+f.id,({kati:["ครูคะ… ขามันหนักไปหมดเลย ขอพักสักสัปดาห์ได้ไหมคะ","หนูวิ่งเช้านี้ช้ากว่าเมื่อวานอีกค่ะ… ขอพักสักหน่อยนะคะ","ไหล่หนูยกไม่ขึ้นแล้วค่ะ ครู… หนูยังไหวนะ แต่…"],mali:["ฮือ… มะลิเตะไม่ขึ้นแล้วอ่ะ ขอนอนยาว ๆ สักอาทิตย์นะ~","มะลิหลับในตอนยืดเส้นไปแล้วสองรอบ… ขอพักนะคะ","ขามะลิสั่นเหมือนเยลลี่เลยอ่ะ~ วันนี้ขอนอนได้ไหม"],rin:["ตัวเลขชีพจรตอนเช้าฉันสูงผิดปกติ… ร่างกายต้องการพักค่ะ","กราฟความล้าของฉันพุ่งเกินเส้นแดงแล้วค่ะ ขอพักหนึ่งสัปดาห์","ฉันพิมพ์ผิดในสเปรดชีตสามครั้งเช้านี้… ร่างกายเตือนแล้วค่ะ"]})[f.id]||["ขอพักสักหน่อยได้ไหมคะ"]);
   playScene([{n:f.id,f:"sad",l:"fight",t:ask},...(coachOn()?[{n:"coach",t:`ล้า ${Math.round(f.fatigue)} แล้ว ฝืนต่อเสี่ยงเจ็บ ครูว่าพักฟื้นสัปดาห์นี้`}]:[]),
     {choice:[{t:"ให้พักฟื้นสัปดาห์นี้",fx:()=>{if(!trLocked(f))f.plan.preset="rest";f.morale=Math.min(100,f.morale+4);},then:[{n:f.id,f:"happy",l:"fight",t:{kati:"ขอบคุณค่ะ! สัปดาห์หน้าหนูจะกลับมาเต็มร้อย",mali:"เย้~ นอนกอดเจ้าโค้ชทั้งวันเลย!",rin:"ขอบคุณค่ะ ฉันจะใช้วันพักทบทวนเทปไปด้วย"}[f.id]||"ขอบคุณค่ะ!"}]},
      {t:"อดทนอีกนิด ไฟต์ใกล้แล้ว",fx:()=>{f.morale=Math.max(0,f.morale-5);},then:[{n:f.id,f:"sad",l:"fight",t:{kati:"…ค่ะ หนูจะพยายาม",mali:"งื้อ… ได้ค่ะ แต่ห้ามดุนะถ้ามะลิช้า",rin:"…รับทราบค่ะ ฉันจะบันทึกไว้ว่าฝืนเพราะอะไร"}[f.id]||"…ค่ะ"}]}]}],()=>{AU.startMusic("hub");save();done();},{bg:"gym",look:"fight"});}
@@ -846,14 +847,16 @@ function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.
 const RAM={phrom:{name:"พรหมสี่หน้า",hint:"ไหว้ครบสี่ทิศ · ใจนิ่ง แม่นขึ้นยกแรก"},hong:{name:"หงส์เหิน",hint:"สง่างามดั่งหงส์ · กำลังใจ +6"},
   phra:{name:"พระรามแผลงศร",hint:"น้าวคันศร · ยกแรกออกอาวุธดุดัน"}};
 function waiKhruScene(b){const me=G.F[b.a],first=!(G.flags&&G.flags.waiSeen);const away=!!(G.coachAway&&G.week<G.coachAway);
-  const own={kati:"คุณปู่คะ… ไฟต์นี้หนูไหว้ครูให้คุณปู่นะคะ",mali:"แม่จ๋า มะลิจะรำให้สวยที่สุดเลย",rin:"ไหว้ครูไม่ใช่แค่พิธี มันคือการตั้งสมาธิ… ฉันพร้อมแล้ว",ploy:"ครูสอนว่าก่อนชนะคนอื่น ต้องชนะใจตัวเองก่อน",fah:"รำให้คนดูจำได้เลย คอยดูนะ!"}[me.id]||"ขอไหว้ครูก่อนนะคะ";
-  return [{n:"nar",t:"ปี่ชวาขึ้นเสียงแหลมยาว กลองแขกตีเป็นจังหวะช้า ฉิ่งดังกังวาน ถึงเวลา \"ไหว้ครูรำมวย\""},
+  const own=vary("own_"+me.id,{kati:["คุณปู่คะ… ไฟต์นี้หนูไหว้ครูให้คุณปู่นะคะ","ปู่คะ ดูหนูนะ หนูจะรำให้เหมือนที่ปู่สอนทุกท่าเลย","หนูซ้อมท่ารำทุกเช้าเลยนะคะปู่ วันนี้ไม่พลาดแน่!"],mali:["แม่จ๋า มะลิจะรำให้สวยที่สุดเลย","แม่ดูไลฟ์อยู่ไหมน้า~ มะลิจะโบกมือให้ตอนรำท่าสุดท้าย!","รำเสร็จแล้วมะลิจะได้หายตื่นเต้น… มั้งนะ~"],rin:["ไหว้ครูไม่ใช่แค่พิธี มันคือการตั้งสมาธิ… ฉันพร้อมแล้ว","ระหว่างรำฉันจะสังเกตการยืนของคู่ชก …ครูไม่ว่าใช่ไหมคะ","ชีพจรฉันลดจาก 112 เหลือ 88 ทุกครั้งที่รำจบ น่าสนใจมากค่ะ"],ploy:["ครูสอนว่าก่อนชนะคนอื่น ต้องชนะใจตัวเองก่อน"],fah:["รำให้คนดูจำได้เลย คอยดูนะ!"]}[me.id]||["ขอไหว้ครูก่อนนะคะ"]);
+  return [{n:"nar",t:vary("wai1",["ปี่ชวาขึ้นเสียงแหลมยาว กลองแขกตีเป็นจังหวะช้า ฉิ่งดังกังวาน ถึงเวลา \"ไหว้ครูรำมวย\"","เสียงปี่ชวาดังขึ้น คนดูลดเสียงลงเอง ถึงเวลาไหว้ครู","กลองแขกเริ่มตีช้า ๆ ทั้งเวทีเงียบลง นักมวยค่อย ๆ ก้าวขึ้นเชือก","ฉิ่งดังสามที เพลงไหว้ครูเริ่มขึ้น ลมเย็นพัดผ่านเวทีพอดี"])},
     ...(first&&!away?[{n:"coach",t:"ไหว้ครูคือการระลึกถึงครูบาอาจารย์ พ่อแม่ และสิ่งศักดิ์สิทธิ์ นักมวยจะเดินรอบเวที \"ปิดเวที\" ก่อน แล้วค่อยรำ"}]:[]),
-    {n:"nar",t:`${me.name}สวมมงคลบนศีรษะ ผูกประเจียดที่ต้นแขน ก้มกราบสามครั้งกลางเวที`},
+    {n:"nar",t:vary("wai2_"+me.id,({kati:[`กะทิสวมมงคลบนศีรษะ ผูกประเจียดที่ต้นแขน ก้มกราบสามครั้งกลางเวที`,`กะทิเดินปิดเวทีเร็วกว่าทุกคน ก้าวยาวจนผ้าประเจียดสะบัด แล้วกราบหนักแน่นสามที`,`ก่อนกราบ กะทิแตะประเจียดของปู่ชัยที่ผูกต้นแขนอยู่ แล้วยิ้มกับตัวเอง`],
+      mali:[`มะลิสวมมงคล ยิ้มให้กล้องที่แม่ดูอยู่ แล้วก้มกราบช้า ๆ สามครั้ง`,`มะลิรำท่าแบบสายไชยาที่แม่สอน มือนุ่มเหมือนรำละคร คนดูปรบมือก่อนรำจบ`,`มะลิเผลอยิ้มแป้นตอนรำ พอนึกได้ก็รีบทำหน้าขรึม แต่ก็ยิ้มอีกอยู่ดี`],
+      rin:[`รินถอดแว่นยื่นให้ครูแดง สวมมงคล แล้วกราบสามครั้งอย่างเป็นระเบียบ`,`รินเดินปิดเวทีนับก้าวในใจ ทุกมุมเท่ากันเป๊ะสิบสองก้าว`,`รินหลับตารำ ไม่เหลียวมองคนดูเลยสักครั้ง สมาธิแน่นิ่งจนคนรอบเวทีเงียบตาม`]})[me.id]||[`${me.name}สวมมงคลบนศีรษะ ผูกประเจียดที่ต้นแขน ก้มกราบสามครั้งกลางเวที`])},
     {n:me.id,f:"happy",l:"fight",t:own},
     {choice:Object.entries(RAM).map(([k,r])=>({t:`รำท่า${r.name} — ${r.hint}`,fx:()=>{b.wai=k;if(k==="hong")me.morale=Math.min(100,me.morale+6);}}))},
-    ...(away?[{n:"nar",t:"จบท่ารำ ครูแดงลาพักอยู่ คุณจึงเป็นคนถอดมงคลออกจากศีรษะให้เอง"}]:[{n:"nar",t:"จบท่ารำ ครูแดงถอดมงคลออกจากศีรษะ เป่ากระหม่อมเบา ๆ แล้วตบไหล่หนึ่งที"},
-    {n:"coach",t:"ไปเลย ครูอยู่ตรงมุมนี้ตลอด"}]),
+    ...(away?[{n:"nar",t:"จบท่ารำ ครูแดงลาพักอยู่ คุณจึงเป็นคนถอดมงคลออกจากศีรษะให้เอง"}]:[{n:"nar",t:vary("wai3",["จบท่ารำ ครูแดงถอดมงคลออกจากศีรษะ เป่ากระหม่อมเบา ๆ แล้วตบไหล่หนึ่งที","ครูแดงถอดมงคลออก กระซิบคาถาสั้น ๆ ข้างหู","ครูแดงยื่นน้ำให้หนึ่งอึก แล้วถอดมงคลออกอย่างช้า ๆ"])},
+    {n:"coach",t:vary("wai4_"+me.id,({kati:["ไปเลย ครูอยู่ตรงมุมนี้ตลอด","ใจร้อนได้ แต่การ์ดห้ามตก จำไว้","ปู่ชัยดูอยู่ ไปเลยหลาน"],mali:["ยิ้มได้ แต่ห้ามยิ้มตอนโดนต่อย","ขาเธอคืออาวุธ อย่าเพิ่งใช้หมดในยกแรก","แม่ดูอยู่ ชกให้สวยเหมือนรำเมื่อกี้"],rin:["ข้อมูลอยู่ในหัวเธอแล้ว ที่เหลือคือใจ","อย่าคิดนานเกินไป เชื่อตัวเองบ้าง","ไม่มีแว่น ก็ยังมีครูตาดีอยู่ตรงมุม"]})[me.id]||["ไปเลย ครูอยู่ตรงมุมนี้ตลอด"])}]),
     {n:me.id,f:"happy",l:"fight",t:({kati:"…ก่อนขึ้นเวที ช่วยพูดอะไรกับหนูหน่อยสิคะ",mali:"ผู้จัดการ~ พูดอะไรให้มะลิฮึดหน่อยสิ",rin:"…มีอะไรจะบอกฉันก่อนขึ้นเวทีไหมคะ"})[me.id]||"ช่วยพูดอะไรหน่อยสิคะ"},
     {choice:cheerLines(me).map(([t,rep,best])=>({t,fx:()=>{me.morale=Math.min(100,me.morale+(best?8:3));b.cheer=best?2:1;},then:[{n:me.id,f:best?"flustered":"happy",l:"fight",t:rep}]}))}];}
 const CHEER={kati:[["ปู่ชัยดูอยู่นะ ชกให้ท่านภูมิใจ","…ค่ะ! หนูจะชกให้ปู่ได้ยินเสียงเชียร์ถึงข้างบนเลย!",1],["ชนะแล้วไปกินหมูกระทะกัน","ฮ่า ๆ สัญญาแล้วนะ! หนูสั่งเยอะแน่",0],["ใจเย็น ๆ ทำตามแผน","อื้อ… ตามแผน ๆ",0]],
@@ -885,7 +888,7 @@ function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
     if(U.stage==="playing")mid+=`<div class="fctl2"><div class="seg sm">${[["1","x1"],["2","x2"]].map(([v,t])=>`<button data-act="fspeed" data-v="${v}" aria-pressed="${String(UI.speed)===v}" aria-label="ความเร็ว ${t}">${t}</button>`).join("")}</div>${skillBarHTML()}</div>`;
     if(U.stage==="corner")mid+=cornerHTML(F);
     if(U.stage==="done")mid+=resultHTML();
-    mid+=`<details class="logd"><summary>บันทึกการชกทั้งหมด</summary><div class="flog">${U.shown.map(l=>l.rd?`<div class="rd">${l.rd}</div>`:`<div class="${l.s}">${esc(l.t||"")}</div>`).join("")}</div></details>`;}
+    mid+=`<details class="logd" ${UI.logOpen?"open":""} ontoggle="UI.logOpen=this.open"><summary>บันทึกการชกทั้งหมด</summary><div class="flog">${U.shown.map(l=>l.rd?`<div class="rd">${l.rd}</div>`:`<div class="${l.s}">${esc(l.t||"")}</div>`).join("")}</div></details>`;}
   const tw=UI.confirmTowel?`<div class="tconfirm" role="alertdialog"><div class="px"><h3>🏳️ โยนผ้ายอมแพ้?</h3><p>ไฟต์นี้จะนับเป็นแพ้ทันที แต่นักมวยจะไม่เจ็บหนักกว่านี้</p><div class="ctrl"><button class="btn" data-act="towelno">ชกต่อ</button><button class="btn primary" data-act="towelyes">ยอมแพ้</button></div></div></div>`:"";
   return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":U.stage==="done"?"isdone":""}" data-sk="fight" role="dialog" aria-label="การชก"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b>${U.F&&U.F.round&&U.stage==="playing"?(()=>{const s=Math.max(0,Math.round(180*(1-Math.min(U.F.ex||0,EX_PER_ROUND)/EX_PER_ROUND)));return `<span class="meta">ยก ${U.F.round}/${b.rounds}</span><span class="rclock num">${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}</span><i class="rcbar" style="--v:${Math.round(s/1.8)}%"></i>`;})():`<span class="meta">${b.rounds} ยก</span>`}</div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
 function liveStats(){const U=UI.fight,F=U.F;if(!F)return "";let la=0,lb=0;
@@ -930,10 +933,11 @@ function cornerRate(F){const A=F.A,B=F.B,fa=A.f.a,fb=B.f.a,left=F.rounds-F.round
   R.none=behind&&last?["r","ตามอยู่ แผนเดิมอาจไม่พอ"]:!behind&&!tired?["g","แผนเดิมยังได้ผล"]:["y","ไม่เปลี่ยนอะไร"];
   return R;}
 // v1.32: the coach also guesses a win chance per order; how close the guess is depends on his training level
-const ODDS_ERR=[0,14,8,3];
+const ODDS_ERR=[0,15,10,6],ODDS_W=[0,30,20,12];
 function cornerPct(F){const U=UI.fight;U.odds=U.odds||{};if(!U.odds[F.round]){const o=typeof cornerOdds==="function"?cornerOdds(F):null;if(!o)return null;
     const err=ODDS_ERR[G.fac.daeng||1]||14,r=mulberry32((F.seed||1)+F.round*101);U.odds[F.round]=Object.fromEntries(Object.entries(o).map(([k,v])=>[k,clamp(Math.round(v*100+(r()*2-1)*err),1,99)]));}
   return U.odds[F.round];}
+function pctRange(c){const w=ODDS_W[G.fac.daeng||1]||30,r5=v=>Math.round(v/5)*5,lo=clamp(r5(c-w/2),5,95),hi=clamp(r5(c+w/2),5,95);return lo>=85?"85%+":hi<=15?"<15%":`${lo}-${hi}%`;}
 function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x+c[0]-c[1],0),left=F.rounds-F.round;const R=cornerRate(F);const P=cornerPct(F),err=ODDS_ERR[G.fac.daeng||1]||14;
   const first=!(G.flags&&G.flags.pctSeen);if(first){G.flags=G.flags||{};G.flags.pctSeen=true;}
   const read=diff>1?"ครูว่าเรานำอยู่":diff<-1?"ครูว่าเราตามอยู่":"ครูว่ายังสูสี";
@@ -944,8 +948,8 @@ function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x
   return `<div class="fpop" role="dialog" aria-label="คำแนะนำครู"><div class="fpop-in px"><div class="fp-h"><img src="${faceSrc("coach")}" alt=""><div><b>ครูแดง</b><div class="meta">${read} · เหลือ ${left} ยก · แรง ${Math.round(A.sta)}% / ${Math.round(B.sta)}%</div></div></div>
    <div class="ctalk">${T.map(t=>`<p>“${t}”</p>`).join("")}</div>
    ${first?`<p class="pctintro">ครูลองคิดล่วงหน้าว่าถ้าสั่งแต่ละแบบ เราน่าจะชนะกี่เปอร์เซ็นต์ เป็นแค่การเดาจากประสบการณ์ ส่งครูไปอบรมแล้วจะเดาแม่นขึ้น</p>`:""}
-   <div class="rate">${Object.entries(CORNER).map(([k,o])=>`<div class="rt ${R[k][0]}"><i></i><b>${o.name}</b>${P?`<span class="pct num">~${P[k]}%</span>`:""}<small>${R[k][1]}</small></div>`).join("")}</div>
-   <p class="meta">เขียว = เหมาะตอนนี้ · เหลือง = พอได้ · แดง = ไม่แนะนำ${P?` · % = โอกาสชนะที่ครูประเมิน (คลาดเคลื่อน ±${err}%${(G.fac.daeng||1)<3?" · ส่งครูอบรมให้แม่นขึ้น":""})`:""}</p>
+   <div class="rate">${Object.entries(CORNER).map(([k,o])=>`<div class="rt ${R[k][0]}"><i></i><b>${o.name}</b>${P?`<span class="pct num">${pctRange(P[k])}</span>`:""}<small>${R[k][1]}</small></div>`).join("")}</div>
+   <p class="meta">เขียว = เหมาะตอนนี้ · เหลือง = พอได้ · แดง = ไม่แนะนำ${P?` · % = ช่วงโอกาสชนะที่ครูเดา${(G.fac.daeng||1)<3?" · ส่งครูอบรม ช่วงจะแคบลง":""}`:""}</p>
    <button class="btn primary" data-act="chint">เข้าใจแล้ว</button></div></div>`;}
 function roundReport(F){const A=F.A,B=F.B,c=F.cards[F.cards.length-1]||[10,10];const W={punch:"หมัด",kick:"เตะ",knee:"เข่า",elbow:"ศอก"};
   const top=s=>{const e=Object.entries(s.rw||{}).sort((a,b)=>b[1]-a[1])[0];return e&&e[1]?`${W[e[0]]} ${e[1]} ครั้ง`:"ไม่มี";};
@@ -1045,6 +1049,7 @@ function tick(){const U=UI.fight;if(!U||U.stage!=="playing")return;
     if(e.ev==="kd"){AU.sfx("kd");wait=2300;}
     if(e.ev==="ko"){AU.sfx("kd");AU.cheer(1);wait=2600;}
     if(e.ev==="cut")wait=1700;
+    if(e.ev==="wake"){AU.sfx("kd");AU.cheer(.9);wait=2200;}
     if(e.ev==="skill"){U.cutin={id:e.rid,name:e.an,side:sd,t:now,skill:e.skn,kind:e.skk,w:e.w};AU.sfx(e.skk==="rec"?"level":"kd");AU.cheer(.7);wait=2000;setTimeout(()=>{if(UI.fight&&UI.fight.cutin&&UI.fight.cutin.t===now){UI.fight.cutin=null;render();}},1900);}
     if(e.ev==="rage"){if(sd==="A"){G.flags=G.flags||{};G.flags.rageShown=true;}U.cutin={id:e.rid,name:e.an,side:sd,t:now};AU.sfx("kd");AU.cheer(1);wait=2200;setTimeout(()=>{if(UI.fight&&UI.fight.cutin&&UI.fight.cutin.t===now){UI.fight.cutin=null;render();}},2000);}}
   render();U.timer=setTimeout(tick,(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches?400:wait)/(UI.speed===2?2:1));}
@@ -1052,7 +1057,7 @@ function fskip(){const U=UI.fight;clearTimeout(U.timer);while(!roundDone(U.F))U.
   const ko=rest.find(x=>x.ev==="ko");if(ko)FS.play({...ko,side:sideOf(ko,U.F)},performance.now());roundFinish(U.F);roundEnd();}
 function roundEnd(){const U=UI.fight;clearTimeout(U.timer);const F=U.F;
   if(F.over){fightEnd();return;}AU.sfx("bell1");U.caption={text:COM.end[Math.floor(Math.random()*2)],side:""};U.stage="corner";U.care={need:careNeeds(F),got:[],done:false};U.pick=null;U.hint=false;render();}
-function fightEnd(){const U=UI.fight;U.stage="done";{const w=U.F.result.win;U.bubble=postBubble(U.F.B.f,w==="A"?"lose":w==="B"?"win":"draw",(U.F.seed>>>3)+G.week);}AU.startMusic("hub");setTimeout(()=>AU.sfx(U.F.result.win==="A"?"win":U.F.result.win==="B"?"lose":"bell1"),200);
+function fightEnd(){const U=UI.fight;U.stage="done";{const w=U.F.result.win;U.bubble=postBubble(U.F.B.f,w==="A"?"lose":w==="B"?"win":"draw",(U.F.seed>>>3)+G.week+[...U.F.B.f.id].reduce((a,c)=>a*31+c.charCodeAt(0)|0,0)+(G.cal||[]).length*7);}AU.startMusic("hub");setTimeout(()=>AU.sfx(U.F.result.win==="A"?"win":U.F.result.win==="B"?"lose":"bell1"),200);
   const me=G.F[U.b.a];if(me.injury)me.trust=clamp(me.trust-12,0,100);
   U.res=applyResult(G,U.F,U.b);if(U.b.dm)U.b.result=dmWinFrom(U.F);me.prepBonus=false;if(U.b.tier==="final"||U.b.tier==="semi")finishBracket(G,U.b,U.F);
   const r=U.F.result;if(FS.A){if(r.win==="A"){FS.A.win=true;FS.A.anim="win";}else if(r.win==="B"){FS.B.win=true;FS.B.anim="win";}}
@@ -1178,7 +1183,7 @@ const ACT={
   fpok:d=>{const b=G.bookings.find(x=>x.id===d.id);if(b){b.plan=UI.fpDraft.plan;b.tac={...(b.tac||{}),target:UI.fpDraft.target};b.planSet=true;save();}UI.modal=null;render();},
   bplanb:d=>{const b=G.bookings.find(x=>x.id===d.id);if(!b)return;b.plan=d.v;save();render();},
   btgt:d=>{const b=G.bookings.find(x=>x.id===d.id);if(!b)return;b.tac={...(b.tac||{}),target:d.v};save();render();},ctac:d=>{UI.fight.F.A.tac[d.k]=d.v;render();},
-  scout:d=>{if(G.cash<scoutCost()||scouted(d.v))return;const free=rinFree();G.cash-=scoutCost();G.scout=G.scout||{};G.scout[d.v]=G.week;if(free)G.rinTapeWk=G.week;save();if(free){toast(`รินดูเทป${G.F[d.v].name}แล้ว (สัปดาห์ละ 1 เทป)`);render();return;}toast("ดูเทปคู่ชกแล้ว ครูจดจุดอ่อนไว้ให้");render();},
+  scout:d=>{if(G.cash<scoutCost()||scouted(d.v))return;const free=rinFree();G.cash-=scoutCost();G.scout=G.scout||{};G.scout[d.v]=G.week;if(free)G.rinTapeWk=G.week;save();if(free){toast(`รินดูเทป${G.F[d.v].name}แล้ว (ดูฟรีได้อีกครั้งสัปดาห์ ${G.week+RIN_GAP})`);render();return;}toast("ดูเทปคู่ชกแล้ว ครูจดจุดอ่อนไว้ให้");render();},
   corner:d=>{AU.sfx("ui");UI.fight.F.A.instr=d.v;playRound();},
   chint:()=>{UI.fight.hint=!UI.fight.hint;render();},
   repinfo:()=>{UI.modal={type:"repinfo"};render();},

@@ -1,5 +1,7 @@
 // ================= MUAY THAI MOE — STORY & DATING CONTENT =================
 // Scene step: {n:speaker, f:face, t:text|fn} | {choice:[{t,fx,then:[...]}]} | {fx:fn} | {bg:key}
+// v1.38: rotate through variants so recurring scenes do not repeat word for word
+const vary=(key,arr)=>{if(typeof G==="undefined"||!G)return arr[0];G.vary=G.vary||{};const i=G.vary[key]||0;G.vary[key]=i+1;return arr[i%arr.length];};
 const ME=G=>G.player.name, PR=G=>G.player.gender==="m"?"":"", PA=G=>G.player.gender==="m"?"":"";
 const SPK={kati:{name:"Kati",color:"#e23b4e"},mali:{name:"Mali",color:"#4a7fe0"},rin:{name:"Rin",color:"#3fae6a"},
   ploy:{name:"Ploy",color:"#9b62e0"},fah:{name:"Fah",color:"#e7b443"},coach:{name:"Coach Daeng",color:"#c98a5a"},nar:{name:""},me:{name:"(You)"}};
@@ -433,9 +435,9 @@ const TAUNTS={
  rin_ploy:[["ploy","Rin, who used to be on my camp's staff… I never thought we'd stand in opposite corners"],["rin","I thought about it a long time ago. And I've already planned how to win"]],
 };
 function tauntScene(G,me,op){const T=TAUNTS[`${me}_${op}`];if(!T)return null;
-  return [{n:"nar",t:"In the center of the ring, the two fighters stand face to face before the pi chawa begins"},
+  return [{n:"nar",t:vary("face",["In the center of the ring, the two fighters stand face to face before the pi chawa begins","The referee calls both to the center, barely a hand's width apart","The spotlight hits the center of the ring; the two stare each other down, neither looks away","The crowd goes silent before the bout as the two fighters meet in the center"])},
     {n:T[0][0],f:"angry",l:"fight",t:T[0][1]},{n:T[1][0],f:"angry",l:"fight",with:T[0][0],t:T[1][1]},
-    {n:"nar",t:"The cheers explode; the referee sends both back to their corners"}];}
+    {n:"nar",t:vary("face2",["The cheers explode; the referee sends both back to their corners","The referee steps in between; each walks back to her corner without breaking eye contact","The announcer shouts over the cheers; both turn back to their corners at the same time","The crowd roars; the referee has to raise a hand to separate them"])}];}
 
 // ---------- v1.7: mid-season dilemmas (one decision, real trade-offs, each once) ----------
 const DILEMMAS=[
@@ -833,7 +835,12 @@ QBUB.gang.win.push("The boss is giving me a bonus for sure, haha!","Tell {me} th
 QBUB.gang.lose.push("Mom! My helmet's dented! …Er, not Mom, Boss!","I just came to buy vegetables, not collect interest, honest","Can I get the camp's number? …I want to sign up for classes");
 QBUB.rooster.win.push("(struts around the ring like a beauty queen)","Cock-a-doodle! (crows into the announcer's mic until the whole fair hears feedback)");QBUB.rooster.lose.push("(plays dead mid-ring, one eye open, peeking)","(flies onto the tent roof and refuses to come down)");
 QBUB.bull.win.push("(chews its cud like a champion)","MOO! (stands on the canvas until one corner of the ring caves in)");QBUB.bull.lose.push("(turns its rear to the referee and walks off)","Moo… (walks to its owner, asking to go home)");
+// v1.38: teammates meeting in the Death Match say something friendly, not a taunt
+const TEAM_BUB={kati:{win:["Phew… fighting a campmate makes my heart race more than fighting Ploy. Let's go eat","Sorry! Did I kick too hard? I'll get you an ice pack!"],lose:["Great job! I'm proud to lose to someone from our camp","I'll get you back next time! …At training tomorrow"]},
+ mali:{win:["Hehe, Mali wins~ but Mali's treating everyone to moo kratha tonight","Sorry~ Mali's legs did it on their own!"],lose:["You're so good, Mali gives up~","Waah… but I'm glad the winner is from our camp!"]},
+ rin:{win:["Thank you for giving it everything. This fight's data is very valuable","I'll send you a summary of where you got hit. Tonight"],lose:["…I miscalculated one thing. You improved faster than the graph","Congratulations. Beating me means our camp is truly strong"]}};
 function postBubble(op,res,seed){const R=a=>a[Math.abs(seed)%a.length].replace(/\{me\}/g,typeof G!=="undefined"&&G?G.player.name:"");
+  if(op.camp==="player"&&TEAM_BUB[op.id]&&res!=="draw")return R(TEAM_BUB[op.id][res]);
   if(op.grp&&QBUB[op.grp])return R(QBUB[op.grp][res]||QBUB[op.grp].draw);
   if(POST_BUBBLE[op.id]&&res!=="draw")return R(POST_BUBBLE[op.id][res]);
   const P=typeof PERSONA!=="undefined"&&PERSONA[op.name];if(P&&res==="win"&&seed%3===0)return P.line;

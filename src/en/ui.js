@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.37.0";
+const VERSION="1.38.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -266,6 +266,7 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
     if(b&&!scouted(b.b)&&G.cash>=scoutCost())T.push({p:5,t:`Haven't scouted ${G.F[b.b].name}, the opponent of ${f.name}. Scout first to find the counter`,act:{k:"tab",v:"fights",label:"Scout the tape"}});
     if(b&&!b.planSet)T.push({p:5,t:`No fight plan set for ${f.name} (week ${b.week})`,act:{k:"tab",v:"train",label:"Set the plan"}});
     if(skReady(f))T.push({p:6,t:`${f.name} has ${f.sp} skill point(s), go pick a skill`,act:{k:"fighter",id:f.id,v:"skill",label:"Pick skills"}});
+    if(f.plan.preset==="rest"&&f.fatigue<20&&!f.injury&&!trLocked(f))T.push({p:7,t:`${f.name} has recovered (fatigue ${Math.round(f.fatigue)}) but is still set to rest. Resting again wastes a training week`,act:{k:"tab",v:"train",label:"Set the program"}});
     if(f.plan.intensity==="heavy"&&f.fatigue>50)T.push({p:5,t:`${f.name}: long stretch of hard training, watch for injuries`});}
   if(!G.bookings.some(b=>G.F[b.a].camp==="player")&&G.offers.length)T.push({p:5,t:"No fights scheduled. Coach has checked the offers; colors show which are easy or risky",act:{k:"tab",v:"fights",label:"See offers"}});
   if(G.loan>0)T.push({p:G.cash>=G.loan?8:4,t:`Still owe the Gold Helmet loan ${fmt(G.loan)} Interest grows 10% every 4 weeks, and they'll hang around the market more often.${G.cash>=G.loan?" You have enough to repay it now":""}`,act:{k:"tab",v:"camp",label:"Go to finance"}});
@@ -431,9 +432,9 @@ function fightsHTML(){
   return `<div class="seg subtabs"><button data-act="fsub" data-v="offers" aria-pressed="${sub==="offers"}">Offers & schedule</button><button data-act="fsub" data-v="rank" aria-pressed="${sub==="rank"}">Rankings</button></div>`+(sub==="rank"?rankHTML():offersHTML());}
 // v1.7 scouting: watch tape to see the opponent's tendencies (free when Rin is in the camp)
 // v1.21: tape is always a deliberate step again — Rin (or the analyst) just makes it free
-const SCOUT_COST=400;const rinIn=()=>G.F.rin.camp==="player";const rinFree=()=>rinIn()&&G.rinTapeWk!==G.week; // v1.32: Rin studies one tape a week for free
+const SCOUT_COST=400;const rinIn=()=>G.F.rin.camp==="player";const RIN_GAP=3;const rinFree=()=>rinIn()&&!(G.rinTapeWk!=null&&G.week-G.rinTapeWk<RIN_GAP); // v1.38: Rin studies one tape for free every 3 weeks
 const scoutCost=()=>rinFree()||(G.staff||[]).includes("wit")?0:(G.fac.video||0)>=1?200:SCOUT_COST;
-const scoutLabel=()=>rinIn()?"Let Rin scout (free)":scoutCost()?`Scout ${fmt(scoutCost())}`:"Scout (free)";
+const scoutLabel=()=>rinFree()?"Let Rin study the tape (free every 3 weeks)":scoutCost()?`Scout ${fmt(scoutCost())}`:"Scout (free)";
 const scouted=id=>G.scout&&G.scout[id]!=null&&G.week-G.scout[id]<=8;
 function oppIntel(op){const a=op.a;const wp=[["Punch",a.punch],["Kick",a.kick],["Knee",a.knee],["Elbow",a.elbow]].sort((x,y)=>y[1]-x[1]);
   const weak=[["guard","Loose guard · head shots work"],["stamina","Low power · body shots drain her"],["foot","Slow footwork · leg kicks slow her more"],["clinch","Weak clinch · inside fighting has the edge"],["dur","Can't take much punishment"]].sort((x,y)=>a[x[0]]-a[y[0]])[0];
@@ -782,7 +783,7 @@ function afterWeekFlow(){if(typeof mailWeekly==="function"&&!G.ended)mailWeekly(
     const go=()=>coachBackScene(()=>aftermathScene(()=>tiredScene(()=>rinScene(fin))));if(played)go();else weeklyExtra(go);});}
 // v1.15: a worn-out fighter asks for a rest week herself
 function tiredScene(done){G.tiredAt=G.tiredAt||{};const f=roster(G).find(x=>!x.injury&&x.fatigue>=58&&x.plan.preset!=="rest"&&(G.tiredAt[x.id]||-9)<G.week-3);if(!f||!coachOn()&&f.fatigue<70){done();return;}
-  G.tiredAt[f.id]=G.week;const ask={kati:"Coach… my legs feel so heavy. Can I rest for a week?",mali:"Waah… Mali can't lift her kicks anymore. Let me sleep for a whole week~",rin:"My morning heart rate is abnormally high… my body needs rest"}[f.id]||"Can I rest a little?";
+  G.tiredAt[f.id]=G.week;const ask=vary("tired_"+f.id,({kati:["Coach… my legs feel so heavy. Can I rest for a week?","My run this morning was even slower than yesterday… can I rest a little?","My shoulders won't lift anymore, Coach… I can still go, but…"],mali:["Waah… Mali can't lift her kicks anymore. Let me sleep for a whole week~","Mali fell asleep twice while stretching… can I rest?","Mali's legs are wobbling like jelly~ can I sleep today?"],rin:["My morning heart rate is abnormally high… my body needs rest","My fatigue graph has shot past the red line. I need a week off","I made three typos in my spreadsheet this morning… my body is warning me"]})[f.id]||["Can I rest a little?"]);
   playScene([{n:f.id,f:"sad",l:"fight",t:ask},...(coachOn()?[{n:"coach",t:`Fatigue ${Math.round(f.fatigue)} already. Pushing on risks injury, Coach says recover this week`}]:[]),
     {choice:[{t:"Rest this week",fx:()=>{if(!trLocked(f))f.plan.preset="rest";f.morale=Math.min(100,f.morale+4);},then:[{n:f.id,f:"happy",l:"fight",t:{kati:"Thank you! Next week I'll be back at a hundred percent",mali:"Yay~ hugging Little Coach in bed all day!",rin:"Thank you. I'll use the rest day to review tapes"}[f.id]||"Thank you!"}]},
      {t:"Hang in there a bit longer, the fight is close",fx:()=>{f.morale=Math.max(0,f.morale-5);},then:[{n:f.id,f:"sad",l:"fight",t:{kati:"…Okay. I'll try",mali:"Waah… okay, but don't scold Mali if she's slow",rin:"…Understood. I'll note down why we're pushing through"}[f.id]||"…Okay"}]}]}],()=>{AU.startMusic("hub");save();done();},{bg:"gym",look:"fight"});}
@@ -846,14 +847,16 @@ function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.
 const RAM={phrom:{name:"Four-Faced Brahma",hint:"Bow to all four directions · calm mind, sharper in round one"},hong:{name:"Soaring Swan",hint:"Graceful as a swan · morale +6"},
   phra:{name:"Rama Draws His Bow",hint:"Drawing the bow · aggressive first round"}};
 function waiKhruScene(b){const me=G.F[b.a],first=!(G.flags&&G.flags.waiSeen);const away=!!(G.coachAway&&G.week<G.coachAway);
-  const own={kati:"Grandpa… I'm dedicating this wai khru to you",mali:"Mom, Mali will dance the most beautiful one ever",rin:"Wai khru isn't just ritual, it's focus… I'm ready",ploy:"Coach taught me: before you beat others, beat yourself",fah:"I'll dance so the crowd remembers. Watch!"}[me.id]||"Let me pay respects first";
-  return [{n:"nar",t:"The pi chawa rises in a long shrill note, the khaek drums beat slowly, the ching rings out. Time for the \"wai khru ram muay\""},
+  const own=vary("own_"+me.id,{kati:["Grandpa… I'm dedicating this wai khru to you","Grandpa, watch me. I'll dance every move just like you taught me","I practiced the dance every morning, Grandpa. No mistakes today!"],mali:["Mom, Mali will dance the most beautiful one ever","Is Mom watching live~? Mali will wave at the end of the dance!","Once the dance is done Mali won't be nervous anymore… probably~"],rin:["Wai khru isn't just ritual, it's focus… I'm ready","During the dance I'll observe how my opponent stands… Coach doesn't mind, right?","My pulse drops from 112 to 88 every time I finish the dance. Very interesting"],ploy:["Coach taught me: before you beat others, beat yourself"],fah:["I'll dance so the crowd remembers. Watch!"]}[me.id]||["Let me pay respects first"]);
+  return [{n:"nar",t:vary("wai1",["The pi chawa rises in a long shrill note, the khaek drums beat slowly, the ching rings out. Time for the \"wai khru ram muay\"","The pi chawa sounds and the crowd hushes on its own. Time for the wai khru","The khaek drums begin slowly; the whole ring falls quiet as the fighter steps through the ropes","The cymbals ring three times and the wai khru music begins, a cool breeze sweeping the ring"])},
     ...(first&&!away?[{n:"coach",t:"Wai khru honors one's teachers, parents and the sacred. The fighter first walks around the ring to \"seal the ring\", then dances"}]:[]),
-    {n:"nar",t:`${me.name}, mongkhon on her head and prajiad on her arm, bows three times at center ring`},
+    {n:"nar",t:vary("wai2_"+me.id,({kati:[`Kati puts on the mongkhon, ties the prajiad on her arm, and bows three times in the center of the ring`,`Kati circles the ring faster than anyone, long strides making her prajiad snap, then bows three solid times`,`Before bowing, Kati touches Grandpa Chai's prajiad tied on her arm and smiles to herself`],
+      mali:[`Mali puts on the mongkhon, smiles at the camera her mom is watching through, and bows slowly three times`,`Mali dances the Chaiya style her mom taught her, hands soft as classical dance; the crowd claps before she even finishes`,`Mali breaks into a huge grin mid-dance, remembers, puts on a serious face… and grins again anyway`],
+      rin:[`Rin hands her glasses to Coach Daeng, puts on the mongkhon, and bows three precise times`,`Rin walks the ring counting steps in her head: exactly twelve to every corner`,`Rin dances with her eyes closed, never glancing at the crowd; her focus is so still the ringside goes quiet too`]})[me.id]||[`${me.name} The mongkhon on her head, the prajiad on her arm, she bows three times at center ring`])},
     {n:me.id,f:"happy",l:"fight",t:own},
     {choice:Object.entries(RAM).map(([k,r])=>({t:`She dances the ${r.name} — ${r.hint}`,fx:()=>{b.wai=k;if(k==="hong")me.morale=Math.min(100,me.morale+6);}}))},
-    ...(away?[{n:"nar",t:"The dance ends. Coach Daeng is on leave, so you remove the mongkhon from her head yourself"}]:[{n:"nar",t:"The dance ends. Coach Daeng removes the mongkhon, blows softly on the crown of her head, and pats her shoulder once"},
-    {n:"coach",t:"Go on. Coach is in this corner the whole time"}]),
+    ...(away?[{n:"nar",t:"The dance ends. Coach Daeng is on leave, so you remove the mongkhon from her head yourself"}]:[{n:"nar",t:vary("wai3",["The dance ends. Coach Daeng removes the mongkhon, blows softly on the crown of her head, and pats her shoulder once","Coach Daeng removes the mongkhon and whispers a short blessing in her ear","Coach Daeng offers a sip of water, then slowly lifts the mongkhon off"])},
+    {n:"coach",t:vary("wai4_"+me.id,({kati:["Go on. Coach is in this corner the whole time","Hot-headed is fine, but that guard never drops. Remember","Grandpa Chai is watching. Go, kiddo"],mali:["Smile all you want, just not while getting punched","Your legs are your weapons. Don't spend them all in round one","Your mom's watching. Fight as beautifully as you danced"],rin:["The data's in your head already. The rest is heart","Don't overthink it. Trust yourself a little","No glasses, but your coach has sharp eyes right here in the corner"]})[me.id]||["Go on. Coach is in this corner the whole time"])}]),
     {n:me.id,f:"happy",l:"fight",t:({kati:"…Before I go in, say something to me",mali:"Manager~ say something to fire Mali up",rin:"…Anything to tell me before I step in?"})[me.id]||"Say something, please"},
     {choice:cheerLines(me).map(([t,rep,best])=>({t,fx:()=>{me.morale=Math.min(100,me.morale+(best?8:3));b.cheer=best?2:1;},then:[{n:me.id,f:best?"flustered":"happy",l:"fight",t:rep}]}))}];}
 const CHEER={kati:[["Grandpa Chai is watching. Make him proud","…Yes! I'll fight so Grandpa hears the cheers all the way up there!",1],["Win and we'll go eat moo kratha","Haha, it's a promise! I'm ordering a lot",0],["Stay calm, follow the plan","Mm… the plan, the plan",0]],
@@ -885,7 +888,7 @@ function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
     if(U.stage==="playing")mid+=`<div class="fctl2"><div class="seg sm">${[["1","x1"],["2","x2"]].map(([v,t])=>`<button data-act="fspeed" data-v="${v}" aria-pressed="${String(UI.speed)===v}" aria-label="Speed ${t}">${t}</button>`).join("")}</div>${skillBarHTML()}</div>`;
     if(U.stage==="corner")mid+=cornerHTML(F);
     if(U.stage==="done")mid+=resultHTML();
-    mid+=`<details class="logd"><summary>Full fight log</summary><div class="flog">${U.shown.map(l=>l.rd?`<div class="rd">${l.rd}</div>`:`<div class="${l.s}">${esc(l.t||"")}</div>`).join("")}</div></details>`;}
+    mid+=`<details class="logd" ${UI.logOpen?"open":""} ontoggle="UI.logOpen=this.open"><summary>Full fight log</summary><div class="flog">${U.shown.map(l=>l.rd?`<div class="rd">${l.rd}</div>`:`<div class="${l.s}">${esc(l.t||"")}</div>`).join("")}</div></details>`;}
   const tw=UI.confirmTowel?`<div class="tconfirm" role="alertdialog"><div class="px"><h3>🏳️ Throw in the towel?</h3><p>This fight counts as a loss immediately, but your fighter won't get hurt any worse</p><div class="ctrl"><button class="btn" data-act="towelno">Keep fighting</button><button class="btn primary" data-act="towelyes">Surrender</button></div></div></div>`:"";
   return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":U.stage==="done"?"isdone":""}" data-sk="fight" role="dialog" aria-label="Fight"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b>${U.F&&U.F.round&&U.stage==="playing"?(()=>{const s=Math.max(0,Math.round(180*(1-Math.min(U.F.ex||0,EX_PER_ROUND)/EX_PER_ROUND)));return `<span class="meta">Rd ${U.F.round}/${b.rounds}</span><span class="rclock num">${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}</span><i class="rcbar" style="--v:${Math.round(s/1.8)}%"></i>`;})():`<span class="meta">${b.rounds} rds</span>`}</div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
 function liveStats(){const U=UI.fight,F=U.F;if(!F)return "";let la=0,lb=0;
@@ -930,10 +933,11 @@ function cornerRate(F){const A=F.A,B=F.B,fa=A.f.a,fb=B.f.a,left=F.rounds-F.round
   R.none=behind&&last?["r","Behind, the current plan may not be enough"]:!behind&&!tired?["g","The current plan is still working"]:["y","Change nothing"];
   return R;}
 // v1.32: the coach also guesses a win chance per order; how close the guess is depends on his training level
-const ODDS_ERR=[0,14,8,3];
+const ODDS_ERR=[0,15,10,6],ODDS_W=[0,30,20,12];
 function cornerPct(F){const U=UI.fight;U.odds=U.odds||{};if(!U.odds[F.round]){const o=typeof cornerOdds==="function"?cornerOdds(F):null;if(!o)return null;
     const err=ODDS_ERR[G.fac.daeng||1]||14,r=mulberry32((F.seed||1)+F.round*101);U.odds[F.round]=Object.fromEntries(Object.entries(o).map(([k,v])=>[k,clamp(Math.round(v*100+(r()*2-1)*err),1,99)]));}
   return U.odds[F.round];}
+function pctRange(c){const w=ODDS_W[G.fac.daeng||1]||30,r5=v=>Math.round(v/5)*5,lo=clamp(r5(c-w/2),5,95),hi=clamp(r5(c+w/2),5,95);return lo>=85?"85%+":hi<=15?"<15%":`${lo}-${hi}%`;}
 function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x+c[0]-c[1],0),left=F.rounds-F.round;const R=cornerRate(F);const P=cornerPct(F),err=ODDS_ERR[G.fac.daeng||1]||14;
   const first=!(G.flags&&G.flags.pctSeen);if(first){G.flags=G.flags||{};G.flags.pctSeen=true;}
   const read=diff>1?"Coach thinks we're ahead":diff<-1?"Coach thinks we're behind":"Coach thinks it's even";
@@ -944,8 +948,8 @@ function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x
   return `<div class="fpop" role="dialog" aria-label="Coach's tip"><div class="fpop-in px"><div class="fp-h"><img src="${faceSrc("coach")}" alt=""><div><b>Coach Daeng</b><div class="meta">${read} · ${left} rounds left · energy ${Math.round(A.sta)}% / ${Math.round(B.sta)}%</div></div></div>
    <div class="ctalk">${T.map(t=>`<p>“${t}”</p>`).join("")}</div>
    ${first?`<p class="pctintro">The coach estimates how likely we are to win with each order. It's only a guess from experience; send him to training and he'll guess better.</p>`:""}
-   <div class="rate">${Object.entries(CORNER).map(([k,o])=>`<div class="rt ${R[k][0]}"><i></i><b>${o.name}</b>${P?`<span class="pct num">~${P[k]}%</span>`:""}<small>${R[k][1]}</small></div>`).join("")}</div>
-   <p class="meta">Green = good now · Yellow = okay · Red = not advised ${P?` · % = coach's estimated win chance (±${err}%${(G.fac.daeng||1)<3?" · Send the coach to training for better guesses":""})`:""}</p>
+   <div class="rate">${Object.entries(CORNER).map(([k,o])=>`<div class="rt ${R[k][0]}"><i></i><b>${o.name}</b>${P?`<span class="pct num">${pctRange(P[k])}</span>`:""}<small>${R[k][1]}</small></div>`).join("")}</div>
+   <p class="meta">Green = good now · Yellow = okay · Red = not advised ${P?` · % = coach's guessed win range ${(G.fac.daeng||1)<3?" · send the coach to training to narrow the range":""}`:""}</p>
    <button class="btn primary" data-act="chint">Got it</button></div></div>`;}
 function roundReport(F){const A=F.A,B=F.B,c=F.cards[F.cards.length-1]||[10,10];const W={punch:"Punch",kick:"Kick",knee:"Knee",elbow:"Elbow"};
   const top=s=>{const e=Object.entries(s.rw||{}).sort((a,b)=>b[1]-a[1])[0];return e&&e[1]?`${W[e[0]]} ${e[1]} times`:"None";};
@@ -1045,6 +1049,7 @@ function tick(){const U=UI.fight;if(!U||U.stage!=="playing")return;
     if(e.ev==="kd"){AU.sfx("kd");wait=2300;}
     if(e.ev==="ko"){AU.sfx("kd");AU.cheer(1);wait=2600;}
     if(e.ev==="cut")wait=1700;
+    if(e.ev==="wake"){AU.sfx("kd");AU.cheer(.9);wait=2200;}
     if(e.ev==="skill"){U.cutin={id:e.rid,name:e.an,side:sd,t:now,skill:e.skn,kind:e.skk,w:e.w};AU.sfx(e.skk==="rec"?"level":"kd");AU.cheer(.7);wait=2000;setTimeout(()=>{if(UI.fight&&UI.fight.cutin&&UI.fight.cutin.t===now){UI.fight.cutin=null;render();}},1900);}
     if(e.ev==="rage"){if(sd==="A"){G.flags=G.flags||{};G.flags.rageShown=true;}U.cutin={id:e.rid,name:e.an,side:sd,t:now};AU.sfx("kd");AU.cheer(1);wait=2200;setTimeout(()=>{if(UI.fight&&UI.fight.cutin&&UI.fight.cutin.t===now){UI.fight.cutin=null;render();}},2000);}}
   render();U.timer=setTimeout(tick,(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches?400:wait)/(UI.speed===2?2:1));}
@@ -1052,7 +1057,7 @@ function fskip(){const U=UI.fight;clearTimeout(U.timer);while(!roundDone(U.F))U.
   const ko=rest.find(x=>x.ev==="ko");if(ko)FS.play({...ko,side:sideOf(ko,U.F)},performance.now());roundFinish(U.F);roundEnd();}
 function roundEnd(){const U=UI.fight;clearTimeout(U.timer);const F=U.F;
   if(F.over){fightEnd();return;}AU.sfx("bell1");U.caption={text:COM.end[Math.floor(Math.random()*2)],side:""};U.stage="corner";U.care={need:careNeeds(F),got:[],done:false};U.pick=null;U.hint=false;render();}
-function fightEnd(){const U=UI.fight;U.stage="done";{const w=U.F.result.win;U.bubble=postBubble(U.F.B.f,w==="A"?"lose":w==="B"?"win":"draw",(U.F.seed>>>3)+G.week);}AU.startMusic("hub");setTimeout(()=>AU.sfx(U.F.result.win==="A"?"win":U.F.result.win==="B"?"lose":"bell1"),200);
+function fightEnd(){const U=UI.fight;U.stage="done";{const w=U.F.result.win;U.bubble=postBubble(U.F.B.f,w==="A"?"lose":w==="B"?"win":"draw",(U.F.seed>>>3)+G.week+[...U.F.B.f.id].reduce((a,c)=>a*31+c.charCodeAt(0)|0,0)+(G.cal||[]).length*7);}AU.startMusic("hub");setTimeout(()=>AU.sfx(U.F.result.win==="A"?"win":U.F.result.win==="B"?"lose":"bell1"),200);
   const me=G.F[U.b.a];if(me.injury)me.trust=clamp(me.trust-12,0,100);
   U.res=applyResult(G,U.F,U.b);if(U.b.dm)U.b.result=dmWinFrom(U.F);me.prepBonus=false;if(U.b.tier==="final"||U.b.tier==="semi")finishBracket(G,U.b,U.F);
   const r=U.F.result;if(FS.A){if(r.win==="A"){FS.A.win=true;FS.A.anim="win";}else if(r.win==="B"){FS.B.win=true;FS.B.anim="win";}}
@@ -1178,7 +1183,7 @@ const ACT={
   fpok:d=>{const b=G.bookings.find(x=>x.id===d.id);if(b){b.plan=UI.fpDraft.plan;b.tac={...(b.tac||{}),target:UI.fpDraft.target};b.planSet=true;save();}UI.modal=null;render();},
   bplanb:d=>{const b=G.bookings.find(x=>x.id===d.id);if(!b)return;b.plan=d.v;save();render();},
   btgt:d=>{const b=G.bookings.find(x=>x.id===d.id);if(!b)return;b.tac={...(b.tac||{}),target:d.v};save();render();},ctac:d=>{UI.fight.F.A.tac[d.k]=d.v;render();},
-  scout:d=>{if(G.cash<scoutCost()||scouted(d.v))return;const free=rinFree();G.cash-=scoutCost();G.scout=G.scout||{};G.scout[d.v]=G.week;if(free)G.rinTapeWk=G.week;save();if(free){toast(`Rin scouted ${G.F[d.v].name} (1 tape per week)`);render();return;}toast("Tape scouted, Coach has noted the weak spots");render();},
+  scout:d=>{if(G.cash<scoutCost()||scouted(d.v))return;const free=rinFree();G.cash-=scoutCost();G.scout=G.scout||{};G.scout[d.v]=G.week;if(free)G.rinTapeWk=G.week;save();if(free){toast(`Rin scouted ${G.F[d.v].name} (next free tape: week ${G.week+RIN_GAP})`);render();return;}toast("Tape scouted, Coach has noted the weak spots");render();},
   corner:d=>{AU.sfx("ui");UI.fight.F.A.instr=d.v;playRound();},
   chint:()=>{UI.fight.hint=!UI.fight.hint;render();},
   repinfo:()=>{UI.modal={type:"repinfo"};render();},

@@ -287,7 +287,7 @@ const CFX={
 function cfxRoster(){return (G?Object.values(G.F).filter(f=>f.camp==="player"):[]).slice(0,3);}
 const MONK_PX=["......kkkkk.......", ".....ksssssk......", "....kssssssdk.....", "....ksesssesk.....", "....kssssssdk.....", "....kdssmssdk.....", ".....kddssdk......", "......kkddk.......", ".....kOoookkk.....", "....kOoohoosdk....", "...kOoohoooossk...", "...kOohooooosdk...", "...kOohoookkkkk...", "...kOhoookBBBBBk..", "...kOhooksbbbbbk..", "...kOooooksbbbk...", "...kOooooookkkk...", "...kOoooohoooOk...", "...kOoooohoooOk...", "...kOooohooooOk...", "...kOooohooooOk...", "...kOoohoooooOk...", "...kOoohoooooOk...", "...kOohooooooOk...", "...kOOooooooOOk...", "....kOOOOOOOOk....", "....kdsk..kdsk....", "....kssk..kssk....", "...kkkkk..kkkkk..."];
 const MONK_PAL={k:"#3a2014",s:"#d9a27b",d:"#b07a55",e:"#2a1a10",m:"#965040",O:"#c25e10",o:"#e8892a",h:"#f6b45a",b:"#2b2530",B:"#6e6478"};
-function drawMonk(x,cx,y,t,i,sc){const bob=Math.floor(t/300+i)%2,H=MONK_PX.length,W=MONK_PX[0].length;x.save();x.translate(Math.round(cx),Math.round(y));x.scale(-sc,sc);
+function drawMonk(x,cx,y,t,i,sc,right){const bob=Math.floor(t/300+i)%2,H=MONK_PX.length,W=MONK_PX[0].length;x.save();x.translate(Math.round(cx),Math.round(y));x.scale(right?sc:-sc,sc);
   MONK_PX.forEach((r,yy)=>{for(let xx=0;xx<W;xx++){const c=MONK_PAL[r[xx]];if(!c)continue;x.fillStyle=c;x.fillRect(xx-W/2,yy-H+(yy<26?-bob:0),1.04,1.04);}});x.restore();}
 function drawStudentNpc(x,id,cx,fy,h,row,t,flip){drawFrame(x,sheetFor({id,canon:false}),ROW[row],Math.floor(t/170)%4,cx,fy,h,flip);}
 function drawCampFx(x,k,t){const C=CFX[k]||CFX.rest,W=x.canvas.width,H=x.canvas.height;x.imageSmoothingEnabled=false;
@@ -299,13 +299,13 @@ function drawCampFx(x,k,t){const C=CFX[k]||CFX.rest,W=x.canvas.width,H=x.canvas.
   if(C.students)for(let i=0;i<C.students;i++){const sx=W*(.52+i*.12),sy=fy-6+(i%2)*6;drawStudentNpc(x,"stu"+i+k,sx,sy,fh*.78,Math.floor(t/1400+i)%2?C.row:"guard",t+i*90,true);}
   if(C.masseuse)drawStudentNpc(x,"masseuse",W*.72,fy,fh*.9,"idle",t,true);
   if(C.crew){drawStudentNpc(x,"crew1",W*.84,fy,fh*.85,"idle",t,true);}
+  if(C.monks)for(let i=0;i<3;i++){const mx=-40+((t/22)+i*70)%(W+160);drawMonk(x,mx,fy-fh*.1,t,i,fh*.7/29,true);} // v1.38: monks walk behind, left to right
   if(C.spar&&R.length){const a=R[0],b=R[1]||{id:"sparnpc",canon:false};const ph=Math.floor(t/900)%2;
     drawFrame(x,sheetFor(a),ROW[ph?"punch":"guard"],Math.floor(t/150)%4,W*.4,fy,fh,false);drawFrame(x,sheetFor(b),ROW[ph?"guard":"knee"],Math.floor(t/150)%4,W*.6,fy,fh,true);}
   else R.forEach((f,i)=>{let cx=W*(C.students||C.masseuse||C.crew?.16+i*.14:(.3+i*.2)),row=C.row||"idle";
     if(C.walk){const span=W*.5;cx=W*.15+((t/18+i*span/3)%span);row="walk";}
     if(C.kneel){cx=W*(.18+i*.13);row="idle";}
     drawFrame(x,sheetFor(f),ROW[row],Math.floor(t/(row==="idle"?260:150))%4,cx,C.kneel?fy+fh*.12:fy,C.kneel?fh*.88:fh,false);});
-  if(C.monks)for(let i=0;i<3;i++){const mx=W+40-((t/22)+i*70)%(W+160);drawMonk(x,mx,fy-2,t,i,fh*.82/29);}
   if(C.planks){P(W*.7,fy-40,46,6,"#8a5a32");P(W*.7,fy-30,46,6,"#a06a3a");P(W*.72,fy-46,4,40,"#5a3a22");P(W*.82,fy-46,4,40,"#5a3a22");}
   if(C.phone){const px=W*.78,py=H*.18;P(px,py,44,74,"#111");P(px+3,py+6,38,58,"#2c5fb3");P(px+5,py+8,34,10,"#e23b4e");x.fillStyle="#fff";x.font="bold 8px sans-serif";x.fillText("LIVE",px+12,py+16);
     for(let i=0;i<3;i++)P(px+6,py+24+i*12,26-i*6,6,"rgba(255,255,255,.6)");}

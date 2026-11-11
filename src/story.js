@@ -1,5 +1,7 @@
 // ================= MUAY THAI MOE — STORY & DATING CONTENT =================
 // Scene step: {n:speaker, f:face, t:text|fn} | {choice:[{t,fx,then:[...]}]} | {fx:fn} | {bg:key}
+// v1.38: rotate through variants so recurring scenes do not repeat word for word
+const vary=(key,arr)=>{if(typeof G==="undefined"||!G)return arr[0];G.vary=G.vary||{};const i=G.vary[key]||0;G.vary[key]=i+1;return arr[i%arr.length];};
 const ME=G=>G.player.name, PR=G=>G.player.gender==="m"?"ผม":"ฉัน", PA=G=>G.player.gender==="m"?"ครับ":"ค่ะ";
 const SPK={kati:{name:"กะทิ",color:"#e23b4e"},mali:{name:"มะลิ",color:"#4a7fe0"},rin:{name:"ริน",color:"#3fae6a"},
   ploy:{name:"พลอย",color:"#9b62e0"},fah:{name:"ฟ้า",color:"#e7b443"},coach:{name:"ครูแดง",color:"#c98a5a"},nar:{name:""},me:{name:"(คุณ)"}};
@@ -433,9 +435,9 @@ const TAUNTS={
  rin_ploy:[["ploy","รินที่เคยเป็นทีมงานค่ายพี่… ไม่คิดว่าจะได้ยืนคนละมุม"],["rin","ฉันคิดไว้นานแล้วค่ะ และวางแผนไว้แล้วด้วยว่าจะชนะยังไง"]],
 };
 function tauntScene(G,me,op){const T=TAUNTS[`${me}_${op}`];if(!T)return null;
-  return [{n:"nar",t:"กลางเวที สองนักมวยเดินมาประจันหน้ากันก่อนเสียงปี่ชวาจะเริ่ม"},
+  return [{n:"nar",t:vary("face",["กลางเวที สองนักมวยเดินมาประจันหน้ากันก่อนเสียงปี่ชวาจะเริ่ม","กรรมการเรียกทั้งคู่มากลางเวที ระยะห่างไม่ถึงคืบ","ไฟสปอตไลต์ส่องลงกลางเวที สองนักมวยจ้องตากันไม่มีใครยอมหลบ","ก่อนชกคนดูเงียบกริบ สองนักมวยเดินมาเจอกันกลางเวที"])},
     {n:T[0][0],f:"angry",l:"fight",t:T[0][1]},{n:T[1][0],f:"angry",l:"fight",with:T[0][0],t:T[1][1]},
-    {n:"nar",t:"เสียงเชียร์ดังลั่น กรรมการเรียกทั้งคู่กลับมุม"}];}
+    {n:"nar",t:vary("face2",["เสียงเชียร์ดังลั่น กรรมการเรียกทั้งคู่กลับมุม","กรรมการแทรกตัวเข้ามาแยก ต่างคนต่างเดินกลับมุมโดยไม่ละสายตา","โฆษกตะโกนแข่งกับเสียงเชียร์ สองคนหันหลังกลับมุมพร้อมกัน","คนดูส่งเสียงฮือ กรรมการต้องยกมือแยกทั้งคู่ออกจากกัน"])}];}
 
 // ---------- v1.7: mid-season dilemmas (one decision, real trade-offs, each once) ----------
 const DILEMMAS=[
@@ -833,7 +835,12 @@ QBUB.gang.win.push("หัวหน้าต้องให้โบนัสฉ
 QBUB.gang.lose.push("แม่! หมวกหนูบุบ! …เอ๊ย ไม่ใช่แม่ หัวหน้า!","ผมแค่มาซื้อผักครับ ไม่ได้มาเก็บดอก จริง ๆ","ขอเบอร์ค่ายหน่อย …จะไปสมัครเรียน");
 QBUB.rooster.win.push("(เดินวนรอบเวทีแบบนางงาม)","เอ้ก! (ขันใส่ไมค์โฆษกจนหอนไปทั้งงาน)");QBUB.rooster.lose.push("(แกล้งตายกลางเวที แต่ลืมตาข้างนึงแอบดู)","(บินขึ้นหลังคาเต็นท์ ไม่ยอมลงมาอีกเลย)");
 QBUB.bull.win.push("(เคี้ยวเอื้องอย่างผู้ชนะ)","มอ! (ยืนบนผ้าใบจนเวทียุบไปหนึ่งมุม)");QBUB.bull.lose.push("(หันก้นใส่กรรมการแล้วเดินออก)","มอ… (เดินไปหาเจ้าของ ขอให้พากลับบ้าน)");
+// v1.38: teammates meeting in the Death Match say something friendly, not a taunt
+const TEAM_BUB={kati:{win:["เฮ้อ… ชกกับคนในค่ายนี่ใจเต้นกว่าชกกับพลอยอีก ไปกินข้าวกันนะ","ขอโทษนะ! หนูเตะแรงไปไหม เดี๋ยวหนูประคบให้!"],lose:["เก่งมาก! หนูภูมิใจที่แพ้ให้คนในค่ายเรา","รอบหน้าหนูเอาคืนนะ! …ตอนซ้อมพรุ่งนี้เลย"]},
+ mali:{win:["ฮิ ๆ มะลิชนะ~ แต่เย็นนี้มะลิเลี้ยงหมูกระทะเองนะ","ขอโทษน้า~ ขามะลิมันไปเอง!"],lose:["เก่งชะมัดเลย มะลิยอมจริง ๆ~","ฮือ… แต่ก็ดีใจที่คนชนะเป็นคนในค่ายเรา!"]},
+ rin:{win:["ขอบคุณที่ชกเต็มที่ ข้อมูลไฟต์นี้มีค่ามากค่ะ","ฉันจะส่งสรุปจุดที่โดนให้นะคะ คืนนี้เลย"],lose:["…ฉันคำนวณพลาดไปจุดหนึ่ง เธอเก่งขึ้นเร็วกว่ากราฟ","ยินดีด้วยค่ะ ชนะฉันได้แปลว่าค่ายเราแข็งแรงจริง"]}};
 function postBubble(op,res,seed){const R=a=>a[Math.abs(seed)%a.length].replace(/\{me\}/g,typeof G!=="undefined"&&G?G.player.name:"");
+  if(op.camp==="player"&&TEAM_BUB[op.id]&&res!=="draw")return R(TEAM_BUB[op.id][res]);
   if(op.grp&&QBUB[op.grp])return R(QBUB[op.grp][res]||QBUB[op.grp].draw);
   if(POST_BUBBLE[op.id]&&res!=="draw")return R(POST_BUBBLE[op.id][res]);
   const P=typeof PERSONA!=="undefined"&&PERSONA[op.name];if(P&&res==="win"&&seed%3===0)return P.line;

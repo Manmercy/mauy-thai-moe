@@ -190,6 +190,9 @@ function trainWeek(G,f,rng){
   let load=p.load*it.l*7*(pr==="cond"?1-hill*.08-(st.includes("tong")?.1:0):1);{const pm=passiveMods(f);load*=clamp(1-pm.fatAll-(pr==="kick"?pm.fatKick:0),.4,1);}
   f.fatigue=clamp(f.fatigue+load-(10+G.fac.recovery*5+G.fac.kitchen*2+clin*3)-(f.plan.preset==="rest"?22:0),0,100);
   if(f.plan.preset==="rest")f.morale=clamp(f.morale+3,0,100);
+  // v1.38: a rest week is one week: once recovered she goes back to what she was training before
+  if(pr!=="rest"&&pr!=="prep")f.lastWork=pr;
+  else if(pr==="rest"&&f.fatigue<=25&&!f.injury){f.plan.preset=f.lastWork||"balanced";G.log.push(`${f.name}หายล้าแล้ว กลับไปซ้อม "${PRESETS[f.plan.preset].name}" ต่อ`);}
   f.prepBonus=f.plan.preset==="prep";
   {const nb=G.bookings.filter(b=>b.a===f.id&&b.week>=G.week).sort((x,y)=>x.week-y.week)[0];const sc=!!(nb&&G.scout&&G.scout[nb.b]!=null&&G.week-G.scout[nb.b]<=8);const hit=!!(nb&&sc&&f.plan.preset===counterPreset(G.F[nb.b]));
    // v1.14: counter work done before fight week carries into fight night if that week is spent on fight prep
@@ -325,12 +328,14 @@ function fightEx(F){const rng=F.rng,log=[],ex=F.ex,mA=F.mA,mB=F.mB;
     const atk=a[wpn]*.7+a.speed*.15+a.iq*.15;
     const def=clinch?((d.clinch+df.sk.clDef)*.5+d.guard*.3+d.iq*.2):(d.guard*.5+d.foot*.3+d.iq*.2);
     const fatA=(100-at.sta)/100*.22,fatD=(100-df.sta)/100*.12;
-    const hitP=clamp(.42+(atk-def)*.03+at.prep+at.mor+(at.careMor||0)-fatA+fatD-md.evade-md.guard-df.sk.evade+(at.sk.hit[wpn]||0)+(at.hp<45?at.sk.clutch:0)+(at.rage?.1:0)-(at.tac.target==="head"?.015:0)+df.legs/400+(bA&&bA.w===wpn?.12*bA.pw:0)-(bD?.12*bD.pw:0),.12,.9);
+    const fury=at.f&&at.f.id==="fah"?clamp((60-at.hp)/50,0,1):0; // v1.38: Fah gets more dangerous the more she is hurt
+    if(fury>.4&&!at.wake){at.wake=1;log.push({ha:F.A.hp,hb:F.B.hp,sa:F.A.sta,sb:F.B.sta,s:at===F.A?"A":"B",t:`${at.name}ยิ้มทั้งที่เลือดออก… ยิ่งเจ็บยิ่งดุ! สายตาเปลี่ยนไปแล้ว!`,k:"big",ev:"wake",an:at.name,dn:df.name});}
+    const hitP=clamp(.42+fury*.04+(atk-def)*.03+at.prep+at.mor+(at.careMor||0)-fatA+fatD-md.evade-md.guard-df.sk.evade+(at.sk.hit[wpn]||0)+(at.hp<45?at.sk.clutch:0)+(at.rage?.1:0)-(at.tac.target==="head"?.015:0)+df.legs/400+(bA&&bA.w===wpn?.12*bA.pw:0)-(bD?.12*bD.pw:0),.12,.9);
     at.thrown++;at.rthrown++;at.sta=clamp(at.sta-W_INFO[wpn].cost*(1.25-a.stamina/40)*ma.sta*(1+Math.max(0,ma.aggr))*(1-at.sk.staSave),0,100);
     const tx=TXT[wpn][Math.floor(rng()*TXT[wpn].length)];
     if(rng()<hitP){
       const crit=rng()<(at.rage?.35:.07);const q=crit?1.6:.6+rng()*.6;if(at.rage)at.rage--;
-      let dmg=1.35*W_INFO[wpn].imp*q*(.6+a.power/25)*(1-d.guard/70)*(1.25-d.dur/40)*(1+(at.sk.dmg[wpn]||0))*(bA&&bA.w===wpn?1+.3*bA.pw:1);const tg=at.tac.target;
+      let dmg=1.35*W_INFO[wpn].imp*q*(.6+a.power/25)*(1-d.guard/70)*(1.25-d.dur/40)*(1+(at.sk.dmg[wpn]||0))*(bA&&bA.w===wpn?1+.3*bA.pw:1)*(1+fury*.4);const tg=at.tac.target;
       if(tg==="head")dmg*=1.1;if(tg==="body"){dmg*=.9;df.sta=clamp(df.sta-dmg*.9,0,100);}if(tg==="legs"&&(wpn==="kick"||wpn==="knee")){dmg*=.85;df.legs=Math.min(60,df.legs+dmg*.8);}
       // v1.32 "flash knockout": a clean crit to the head can drop anyone early — rarer for durable/guarded fighters, likelier when the attacker clearly outclasses
       if(crit&&tg!=="body"&&(wpn!=="punch"||a.power>=10)&&rng()<clamp(.16+(ovr(a)-ovr(d))*.06-(d.dur-8)*.012,.05,.4)){dmg+=10+rng()*8;at.flash=1;}
@@ -399,7 +404,7 @@ function newGame(opts){
   for(const f of Object.values(G.F))if(f.camp!=="player"&&f.camp!=="free")G.rank[f.div][f.id]={pts:0,w:0,l:0,d:0};
   G.rank.A.kati={pts:0,w:0,l:0,d:0};
   // v1.22 difficulty also moves where the two stars start
-  {const d=G.diff;for(const id of ["ploy","fah"]){const adj=(d==="easy"?-.7:d==="hard"?.35:0)+(id==="ploy"?-.8:-.8);/* v1.23: stars start lower, grow when beaten */const f=G.F[id];if(!f)continue;for(const [k] of ATTRS)f.a[k]=clamp(f.a[k]+adj,1,20);f.potential+=adj*.8;}}
+  {const d=G.diff;for(const id of ["ploy","fah"]){const adj=(d==="easy"?-.7:d==="hard"?.35:0)+(id==="ploy"?-.8:-1.5);/* v1.23: stars start lower, grow when beaten */const f=G.F[id];if(!f)continue;for(const [k] of ATTRS)f.a[k]=clamp(f.a[k]+adj,1,20);f.potential+=adj*.8;}}
   return G;
 }
 const roster=G=>Object.values(G.F).filter(f=>f.camp==="player");
@@ -587,7 +592,7 @@ function applyResult(G,F,booking){
     me.fatigue=clamp(me.fatigue+(off?14:22),0,100);
     const s=side==="A"?A:B;
     if(s.hp<40&&!off&&mulberry32(F.seed+(side==="A"?1:2))()<.45)me.injury=Math.max(me.injury,2+(s.hp<15?2:0));
-    if(res==="L"&&/KO|TKO/.test(r.type))me.injury=Math.max(me.injury,3);
+    if(res==="L"&&/KO|TKO/.test(r.type))me.injury=Math.max(me.injury,booking.dm?1:3); // v1.37.1: a Death Match KO costs one week, not three
     const pmods=passiveMods(me);if(G.romance===me.id)pmods.moraleLoss+=.3;if(me.camp==="player"&&me.trust>=60)pmods.moraleLoss+=.25;me.morale=clamp(me.morale+(res==="W"?10:res==="L"?-10*(1-Math.min(.9,pmods.moraleLoss)):2),0,100);
     // v1.21: beating someone stronger is worth more (ranking point, fame, EXP) — a reason to take the hard offers
     const upset=res==="W"&&ovr(op.a)-ovr(me.a)>.4;
