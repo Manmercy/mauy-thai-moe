@@ -1178,10 +1178,9 @@ EVENTS.push(
 
 // v1.45: mid-season stakes — Golden Tiger tries to poach one of your girls; trust decides
 const POACH_WHY={mali:"The owner says he'll double my pay… I could send so much more to Mom.",rin:"The owner says this time he'll listen to my data, and give me my own analysis room… something they never had."};
-const POACH_L={mali:{wait:"I haven't answered them… I wanted to talk to you first.",pay:"…Thank you. I didn't really want to go. I just wanted to know this place still wants me.",ok:"…You didn't stop me, even though you could have. I'm staying. Nothing to think about.",think:"…Give me two weeks to think.",stay:"I've decided. I'm staying at Sirichai. …Don't ask me why."},
- rin:{wait:"I haven't answered them yet… I wanted to talk to you first.",pay:"…Thank you. It was never about money. I just wanted to know this camp still values my data.",ok:"…You didn't stop me, even though you could have. I didn't include that variable in my model. I'm staying.",think:"…Give me two weeks to analyze it.",stay:"I've decided. I'm staying at Sirichai. …The numbers don't favor this place. But some things don't need calculating."}};
+const POACH_L={mali:{wait:"I haven't answered them… I wanted to talk to you first.",pay:"…Thank you. I didn't really want to go. I just wanted to know this place still wants me.",ok:"…You didn't stop me, even though you could have. I'm staying. Nothing to think about.",think:"…Give me two weeks to think.",stay:"I've decided. I'm staying at Sirichai. …Don't ask me why.",stay2:"I'm staying… It just feels strange that I almost left. Give me a little time."},
+ rin:{wait:"I haven't answered them yet… I wanted to talk to you first.",pay:"…Thank you. It was never about money. I just wanted to know this camp still values my data.",ok:"…You didn't stop me, even though you could have. I didn't include that variable in my model. I'm staying.",think:"…Give me two weeks to analyze it.",stay:"I've decided. I'm staying at Sirichai. …The numbers don't favor this place. But some things don't need calculating.",stay2:"I'm staying… I just haven't sorted out my thoughts yet. Give me a little more time."}};
 const poachTarget=G=>["mali","rin"].filter(id=>inCamp(G,id)).sort((a,b)=>G.F[a].trust-G.F[b].trust)[0];
-function poachLeave(G,id){const f=G.F[id];f.camp="rival";G.bookings=G.bookings.filter(b=>b.a!==id&&b.b!==id);G.flags.poached=id;if(G.romance===id)G.romance=null;}
 EVENTS.push(
  {id:"poach",pri:1,look:"casual",when:G=>G.week>=24&&G.week<=34&&!!poachTarget(G),bg:"night",steps:[
   {inject:G=>{const id=poachTarget(G),f=G.F[id];G._poach=id;return [
@@ -1193,9 +1192,9 @@ EVENTS.push(
     {t:"I'll raise your pay (wage +฿600/week · she stays for sure)",fx:G2=>{f.wage+=600;add(G2,id,"trust",3);},then:[{n:id,f:"happy",l:"casual",t:POACH_L[id].pay}]},
     {t:`I trust you. Your call (depends on Trust, now ${Math.round(f.trust)})`,fx:G2=>{if(f.trust>=45){add(G2,id,"trust",8);add(G2,id,"bond",6);G2._poachOk=1;}else{G2.poach={id,wk:G2.week+2};G2._poachOk=0;}},
      then:[{inject:G2=>G2._poachOk?[{n:id,f:"flustered",l:"casual",t:POACH_L[id].ok},{n:"nar",t:`${f.name} tears up the gold envelope in front of you (Trust +, Bond +)`}]
-       :[{n:id,f:"sad",l:"casual",t:POACH_L[id].think},{n:"nar",t:`(${f.name} will decide in two weeks · if her Trust reaches 40, she stays)`}]}]}]}];}}]},
+       :[{n:id,f:"sad",l:"casual",t:POACH_L[id].think},{n:"nar",t:`(${f.name} will decide in two weeks · if her Trust reaches 40, she'll be fully confident in the camp again)`}]}]}]}];}}]},
  {id:"poach_end",look:"casual",when:G=>!!G.poach&&G.week>=G.poach.wk,bg:"camp",steps:[
   {inject:G=>{const id=G.poach.id,f=G.F[id];G.poach=null;if(!inCamp(G,id))return [];
    if(f.trust>=40){add(G,id,"bond",5);return [{n:"nar",t:`Monday morning, ${f.name} is at training by five a.m., before everyone else.`},{n:id,f:"happy",l:"train",t:POACH_L[id].stay}];}
-   poachLeave(G,id);return [{n:"nar",t:`Monday morning. ${f.name}'s room is empty. Just a short note left on the bed.`},{n:"nar",t:`"I'm sorry. Thank you for everything." — ${f.name} has moved to Golden Tiger.`},{n:"kati",f:"sad",l:"casual",t:"…I'm not angry at her. But next time we meet in the ring, I won't hold back."}];}}]}
+   add(G,id,"bond",2);f.morale=Math.max(0,f.morale-8);return [{n:"nar",t:`Monday morning, ${f.name} sent the gold envelope back to Golden Tiger, but she trains quietly and barely talks.`},{n:id,f:"flustered",l:"train",t:POACH_L[id].stay2},{n:"kati",f:"happy",l:"casual",t:"No need to answer anything yet. Just stay here with us. You'll realize this is home."},{n:"nar",t:`(${f.name} stays, but is still a little unsure · morale down slightly. Try spending more time with her)`}];}}]}
 );
