@@ -34,13 +34,15 @@ const NPC_NAMES={
   A:[["Namphueng S.Wilaiporn",7],["Petchdao Luk Mae Ping",8],["Thapthim Kiatsiam",8],["Praewa Sit Khru Nong",9],["Chanpen T.Prasert",10]],
   B:[["Fonthip P.Pongthai",8],["Lamyai Sit Doi Kham",8],["Khwankhao Ch.Chaiwat",9],["Butsaba Saengthong Gym",10],["Baitoei S.Mueang Nuea",10]],
 };
-const NPC_DISTRICT={A:[["Saifa W.Wanthawi",10],["Mukda Petchyindee",10]],B:[["Kaewkanlaya K.Kitti",10],["Arunee S.Srisuk",10]]};
+const NPC_DISTRICT={A:[["Saifa W.Wanthawi",11],["Mukda Petchyindee",11]],B:[["Kaewkanlaya K.Kitti",11],["Arunee S.Srisuk",11]]};
 const NPC_COLORS=["#8a6f5a","#5a7a8a","#7a5a8a","#5a8a6a","#8a5a5a","#6a6a8a"];
 
+// v1.43: the field keeps improving through the season so mid/late fights stay honest
+const NPC_POT=5,NPC_RATE=w=>w>16?.055:.022;
 function mkNPC(id,name,div,lvl,rng,i){
   const a={};for(const [k] of ATTRS)a[k]=clamp(Math.round(lvl+(rng()*4-2)),3,18);
   const fav=pickW(rng,[["punch",1],["kick",1],["knee",1],["elbow",1]]);a[fav]=clamp(a[fav]+3,3,19);
-  return {id,name,full:name,div,camp:"npc",color:NPC_COLORS[i%NPC_COLORS.length],potential:lvl+3,a};
+  return {id,name,full:name,div,camp:"npc",color:NPC_COLORS[i%NPC_COLORS.length],potential:lvl+NPC_POT,a};
 }
 // ---------- SKILLS (unique per canon) ----------
 // v1.3: skills rooted in the old regional schools — "หมัดหนักโคราช ฉลาดลพบุรี ท่วงทีไชยา ไวกว่าท่าเสา"
@@ -408,7 +410,8 @@ function newGame(opts){
   return G;
 }
 const roster=G=>Object.values(G.F).filter(f=>f.camp==="player");
-const wages=G=>roster(G).reduce((s,f)=>s+f.wage,0)+(G.staff?G.staff.reduce((s,k)=>s+STAFF[k].wage,0):G.fac.assistants*2500);
+const wageOf=f=>Math.round(f.wage*(1+((f.lvl||1)-1)*.06)/100)*100; // v1.43: stars ask for more as they level up
+const wages=G=>roster(G).reduce((s,f)=>s+wageOf(f),0)+(G.staff?G.staff.reduce((s,k)=>s+STAFF[k].wage,0):G.fac.assistants*2500);
 // ---------- CAMP FACILITIES & STUDENTS ----------
 const FACILITIES={
   gym:{name:"Training gear",cost:[20000,35000,60000],desc:"Training effect +10% per level"},
@@ -427,6 +430,7 @@ const FACILITIES={
   van:{name:"Songthaew student shuttle",cost:[20000,35000],desc:"+4 wanting to join per level",req:{week:24}},
   sauna:{name:"Herbal sauna",cost:[30000,50000],desc:"Fatigue recovery +3 · morale +1 weekly, per level",req:{week:28}},
   lights:{name:"Night-training floodlights",cost:[40000,60000],desc:"All training +6% per level",req:{week:32}},
+  retreat:{name:"Chiang Dao training retreat",cost:[55000],desc:"One-time: take every fighter up the mountain for two weeks. Core stats +0.4, morale +15, fatigue fully cleared.",req:{week:38}},
   hall:{name:"Grandpa Chai Hall of Honor",cost:[50000,80000],desc:"Fame +1.5 · fame fades slower · morale +1/wk",req:{week:36}},
 };
 const facLocked=(G,k)=>{const r=FACILITIES[k].req;if(!r)return "";if(r.lv&&campLevel(G)<r.lv)return `Camp Lv.${r.lv}`;if(r.rep&&G.rep<r.rep)return `Fame ${r.rep}`;if(r.week&&G.week<r.week&&!(G.season>1))return `Week ${r.week}`;return "";};
@@ -462,7 +466,7 @@ const studentFee=G=>Math.round(dif(G).inc*560*(1+(G.fac.daeng-1)*.12)*(1+(campLe
 const classIncome=G=>Math.round(students(G)*studentFee(G)*(G.disaster&&G.week<G.disaster.until?(G.disaster.inc||0):1)); // v1.37: floods and storms keep students away
 function campLook(G){return clamp(Math.round(facTotal(G)+(G.camp?G.camp.beauty:0)/2+Math.min(G.rep,30)/8),0,20);}
 function buyFacility(G,k){const F=FACILITIES[k],lv=G.fac[k]||0;if(lv>=F.cost.length||facLocked(G,k))return false;const c=F.cost[lv];if(G.cash<c)return false;
-  G.cash-=c;G.fac[k]=lv+1;if(k==="brand")G.rep+=.5;if(k==="shrine")G.rep+=1;if(k==="hall")G.rep+=1.5;return true;}
+  G.cash-=c;G.fac[k]=lv+1;if(k==="brand")G.rep+=.5;if(k==="shrine")G.rep+=1;if(k==="hall")G.rep+=1.5;if(k==="retreat")roster(G).forEach(f=>{["punch","kick","knee","elbow","clinch","guard","foot","stamina","power","speed"].forEach(q=>{f.a[q]=Math.min(Math.max(f.a[q],f.potential||18),f.a[q]+.4);});f.morale=Math.min(100,f.morale+15);f.fatigue=0;});return true;}
 function upgradeDaeng(G){const lv=G.fac.daeng;if(lv>=3)return false;const c=DAENG_COST[lv];if(G.cash<c)return false;G.cash-=c;G.fac.daeng++;return true;}
 const CAMP_ACTIONS={
   rest:{name:"Camp day off (no activity)",desc:"Free, everyone rests, fatigue −4",cost:0},
@@ -521,7 +525,7 @@ function advise(G,a,b,rounds,n=40){const fa=G.F[a],fb=G.F[b];const res={};
   for(const plan of Object.keys(PLANS)){let w=0;for(let i=0;i<n;i++){const F=newFight(fa,fb,{seed:9001+i*7,rounds,planA:plan});
     while(!F.over){F.A.instr=aiCorner(F,F.A,F.B);F.B.instr=aiCorner(F,F.B,F.A);fightRound(F);}if(F.result.win==="A")w++;else if(F.result.win==="D")w+=.5;}res[plan]=w/n;}
   const best=Object.entries(res).sort((x,y)=>y[1]-x[1])[0];return {rates:res,best:best[0],bestRate:best[1],base:res.balanced};}
-const upkeep=G=>1800+(G?facTotal(G)*220:0);
+const upkeep=G=>1800+(G?facTotal(G)*220+[0,0,800,1800][campLevel(G)]:0); // v1.43: a bigger camp costs more to run
 function weeklyNet(G){return classIncome(G)-upkeep(G)-wages(G);}
 
 function eligible(G,f){const st=stageOf(G.week);
@@ -532,6 +536,8 @@ const CROSS_OF={kati:"fah",mali:"ploy",rin:"fah"},SPECIAL_WEEKS=[8,13,18,23,28,3
 const RIVAL_OF={kati:"ploy",mali:"fah"},RIVAL_WEEKS=[25,29,33,36],RIVAL_EARLY={mali:[7,12,17,21]};
 // v1.21: promoters keep calling even when a fight is booked (further out), more calls with fame,
 // and each batch mixes an easier bout, an even one and (with fame) a step up — a real challenge curve
+// v1.43: a plain difficulty label for a matchup
+function diffTag(me,op){const d=ovr(op.a)-ovr(me.a)+((op.lvl||1)-(me.lvl||1))*.15;return d<-.6?["easy","Easy"]:d<.35?["even","Even"]:d<1.1?["hard","Hard"]:["vhard","Very hard"];}
 const OFFER_BANDS=[-.7,.45,1.4,.9];
 function genOffers(G){
   const rng=mulberry32(G.seed+G.week*7919+11);G.snub=G.snub||{};for(const o of G.offers||[])if(!o.beast)G.snub[o.b]=(G.snub[o.b]||0)+1;G.offers=[];const st=stageOf(G.week);
@@ -599,7 +605,7 @@ function applyResult(G,F,booking){
     if(!off&&booking.tier!=="exhibition"&&booking.tier!=="special"&&booking.tier!=="final"){const rk=G.rank[me.div][me.id];if(rk){rk.pts+=res==="W"?3+(upset?1:0):res==="D"?1:0;rk[res==="W"?"w":res==="L"?"l":"d"]++;}}
     if(me.camp==="player"){
       const W=booking.win||tier.win,Lo=booking.lose||tier.lose;const pay=res==="W"?W:res==="D"?(W+Lo)/2:Lo;if(booking.fair){G.fairPay=G.fairPay||[];G.fairPay.push({amt:pay,op:op.name,res});}else{G.cash+=pay;G.wkFight=(G.wkFight||0)+pay;}
-      G.rep=Math.max(0,G.rep+(res==="W"?tier.rep*(upset?1.5:1):res==="L"?0:.5)/(1+Math.max(0,G.rep-25)/25));
+      G.rep=Math.max(0,G.rep+(res==="W"?tier.rep*clamp(1+(ovr(op.a)-ovr(me.a))*.5,.35,1.6):res==="L"?0:.5)/(1+Math.max(0,G.rep-25)/25));
       if(res==="W"&&!G.flags.firstWin)G.flags.firstWin=me.id;
       if(res==="L"&&!G.flags.firstLoss)G.flags.firstLoss=me.id;
       if(op.id==="fah"||op.id==="ploy"){G.flags[`vs_${op.id}`]=res;
@@ -675,7 +681,7 @@ function weekTrain(G){
     if(f.injury>0){f.injury--;}f.fatigue=clamp(f.fatigue-8,0,100);
     // v1.23: the two stars coast until someone beats them — a loss lights a fire (surge) that carries them to the final
     const sg=f.surge>0?(f.surge--,f.id==="ploy"?.16:.13):0;
-    npcGrow(f,rng,(f.canon&&f.camp==="rival"?dif(G).rival:1)*(f.id==="ploy"?(G.week>40?.07:G.week>30?.022:.012)+sg:f.id==="fah"?(G.week>40?.07:G.week>30?.03:G.week>10&&G.week<=24?.042:.026)+sg:f.camp==="rival"?.035:f.camp==="free"?.025:.02));f.morale+=(60-f.morale)*.1;
+    npcGrow(f,rng,(f.canon&&f.camp==="rival"?dif(G).rival:1)*(f.id==="ploy"?(G.week>40?.07:G.week>30?.022:.012)+sg:f.id==="fah"?(G.week>40?.07:G.week>30?.03:G.week>10&&G.week<=24?.042:.026)+sg:f.camp==="rival"?.035:NPC_RATE(G.week)));f.morale+=(60-f.morale)*.1;
     // v1.15: rivals and NPCs level up too, so the opposition visibly gets stronger over the season
     if(f.camp==="rival"||f.camp==="npc"){f.xp=(f.xp||0)+(f.camp==="rival"?30:18)+Math.floor(rng()*10);
       while(f.lvl<10&&f.xp>=xpNeed(f.lvl)){f.xp-=xpNeed(f.lvl);f.lvl++;if(f.camp==="rival"){const ks=Object.keys(f.a).sort((x,y)=>f.a[y]-f.a[x]).slice(0,2);ks.forEach(k=>f.a[k]=Math.min(20,f.a[k]+.2));}

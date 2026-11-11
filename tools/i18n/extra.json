@@ -1411,5 +1411,9 @@
 " ยื่นท้าชิงเข็มขัดของ": " has challenged for the belt of ",
 "ศึกชิงเข็มขัดแชมป์เวทีท่าแพ รุ่น ": "Tha Phae Stadium title fight · Division ",
 "ป้องกันเข็มขัด รุ่น ": "Belt defense · Division ",
-"โปรโมเตอร์เวทีท่าแพ": "Tha Phae Stadium promoter"
+"โปรโมเตอร์เวทีท่าแพ": "Tha Phae Stadium promoter",
+"ยากมาก": "Very hard",
+"ใช้ครั้งเดียว: พานักมวยทุกคนขึ้นดอยสองสัปดาห์ ค่าพลังหลัก +0.4 กำลังใจ +15 ความล้าหายหมด": "One-time: take every fighter up the mountain for two weeks. Core stats +0.4, morale +15, fatigue fully cleared.",
+"แคมป์เก็บตัวที่เชียงดาว": "Chiang Dao training retreat",
+" · <span class=\"mutt\">ชนะคู่อ่อนได้ชื่อเสียงน้อย</span>": " · <span class=\"mutt\">Beating a weaker fighter earns little fame</span>"
 }

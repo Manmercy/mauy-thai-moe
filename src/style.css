@@ -1354,3 +1354,4 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 
 .beltb{display:inline-block;margin:3px 0 2px;padding:1px 8px;border:2px solid #b8860b;background:#3a2a08;color:#f7d24a;font:600 12px "Chakra Petch",sans-serif}.beltb.old{color:#c9b98a;border-color:#6a5a3a;background:#2a2418}
 .reltier{margin:2px 0 4px;line-height:1.25}.reltier b{display:block;color:var(--red);font:700 14px "Chakra Petch",sans-serif}.reltier small{color:var(--mut,#b9b0c9);font-size:12px}
+.pill.dtag{margin-left:4px}.pill.dtag.green{background:#1f4a2e;color:#8fe0a8}.pill.dtag.gold{background:#4a3d12;color:#f2d36b}.pill.dtag.red{background:#5a1f26;color:#ff9aa5}.pill.dtag.vhard{background:#7a1020;color:#fff}.mutt{color:var(--mut,#9a91ad)}
