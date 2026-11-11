@@ -388,7 +388,7 @@ const TIER={local:{name:"Subdistrict",win:4000,lose:2000,rep:1.5},district:{name
   semi:{name:"Provincial semi",win:18000,lose:8000,rep:4},final:{name:"Provincial final",win:50000,lose:20000,rep:8},exhibition:{name:"Temple fair fight",win:2500,lose:1500,rep:.5},special:{name:"Special cross-division bout",win:8000,lose:4000,rep:2},
   quest:{name:"Off-the-books fight",win:0,lose:0,rep:.4,off:1},dm:{name:"Death Match",win:0,lose:0,rep:.5,off:1},beast:{name:"Wild bout",win:7000,lose:2500,rep:1,off:1}};
 function stageOf(w){return w<=20?"local":w<=40?"district":w<=50?"final":"off";}
-const STAGE_NAME={local:"Subdistrict round",district:"District round",final:"Provincial final",off:"Season end"};
+const STAGE_NAME={local:"Subdistrict round",district:"District round",final:"Provincial final",off:"Year end"};
 
 function ployAura(w){return Math.max(0,.42*(1-(w-1)/27));} // v1.23: Ploy's early edge is gone by week 28
 function startLv(f){if(f.id==="ploy")f.aura=ployAura(1);if(f.id==="ploy")f.lvl=5;else if(f.id==="fah")f.lvl=3;else if(f.camp==="npc")f.lvl=clamp(Math.round(ovr(f.a)-7),1,6);}
@@ -726,7 +726,8 @@ function newSeason(G){
   const rng=mulberry32(G.seed+G.season*977);
   G.rank={A:{},B:{}};
   for(const f of Object.values(G.F)){f.form=[];f.injury=0;f.fatigue=Math.min(f.fatigue,20);
-    if(!f.canon)for(const k in f.a)f.a[k]=Math.min(20,f.a[k]+.3+rng()*.5);
+    // v1.50: the whole field trains through the off-season too, so year 2 is not a walkover
+    if(f.camp!=="player"){f.potential=Math.min(20,(f.potential||14)+1.5);for(const k in f.a)f.a[k]=Math.min(20,f.a[k]+(f.canon?.4:.6+rng()*.5));}
     if(f.camp!=="free")G.rank[f.div][f.id]={pts:0,w:0,l:0,d:0};}
   genOffers(G);return G;}
 // v1.7 late-game money sinks

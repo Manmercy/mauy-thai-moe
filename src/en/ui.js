@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.49";
+const VERSION="1.50";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -253,7 +253,7 @@ function hubHTML(){
   const dots={fights:G.offers.some(o=>!G.bookings.some(b=>b.a===o.a))||dmOfferOn(G),people:(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>!f.injury&&!trLocked(f))};
   return `<header class="hud"><div class="hud-in">
     <div class="brand">MUAY THAI <b>MOE</b></div>
-    <div class="wk"><strong class="num">Week ${Math.min(G.week,52)}<small>/52</small></strong><span>${typeof weekDateLabel==="function"?weekDateLabel(Math.min(G.week,52))+" · ":""}${G.season>1?`Year ${G.season} · `:""}${stageLabel()}</span></div>
+    <div class="wk"><strong class="num">Week ${Math.min(G.week,52)}<small> / Year ${G.season||1}</small></strong><span>${stageLabel()}</span></div>
     <div class="stats"><button class="stat cashbtn" data-act="cashflow"><span>Cash ▸</span><b class="num ${G.cash<0||weeksLeft()<=4?"neg":""}">${fmt(G.cash)}${weeksLeft()<=6?`<i class="cashwarn" title="Money runs out in about ${weeksLeft()} weeks">⚠</i>`:""}</b></button><button class="stat repbtn" data-act="repgraph"><span>Fame ▸</span><b class="num">${G.rep.toFixed(1)}</b></button></div>
     <div class="hbtns"><button class="iconbtn mailbtn ${mailBadge()?"has":""}" data-act="mail" aria-label="Mailbox ${mailBadge()?`, ${mailBadge()} new`:""}">${MAILBOX_PX}${mailBadge()?`<i class="mbadge">${mailBadge()}</i>`:""}</button><button class="iconbtn" data-act="settings" aria-label="Settings">${icon("gear")}</button></div>
     <button class="btn primary endweek ${weekTodo().length?"":"ready"}" data-act="endweek">${weekTodo().length?`End week ▸ <small>(${weekTodo().length} left)</small>`:"Ready · End week ▸"}</button>
@@ -494,12 +494,18 @@ function campLvHTML(){const lv=campLevel(G),t=facTotal(G),need=[0,0,5,13];
     <div class="clvh"><b>Lv.${L} ${CAMP_LV_NAME[L]}</b><span class="pill ${L<=lv?"green":""}">${L<lv?"Done":L===lv?"Right now ":`Needs ${need[L]} upgrades (${need[L]-t})`}</span></div>
     <ul><li>Class fees ${L>1?`+${(L-1)*20}%`:"Normal"}</li><li>People wanting to join +${L*2}</li><li>Assistant coach slots: ${1+L}</li>${L>1?"<li>Gym gets a makeover</li>":""}${u.length?`<li class="goldt">Unlocks: ${u.join(", ")}</li>`:""}</ul></div>`;}).join("")}</div>
    <button class="btn primary" data-act="gofac">Go to camp upgrades</button>`;}
+// v1.50: the camp's hall of fame — one row per finished year, plus belts held now
+function hallHTML(){const T=(G.titles||[]).slice().reverse(),belts=Object.entries(G.belt||{}).filter(([d,b])=>G.F[b.id]&&G.F[b.id].camp==="player");
+  const yr=t=>{const res=t.res||Object.entries(t.champ||{}).filter(([d,id])=>G.F[id]&&G.F[id].camp==="player").map(([d,id])=>({name:G.F[id].name,d,t:"Provincial champion",c:"gold"}));
+    return `<div class="hall-y"><b>Year ${t.season}</b>${res.length?res.map(r=>`<div class="kv-row"><span>${esc(r.name)} · Div ${r.d}</span><span class="pill ${r.c||""}">${r.t}</span></div>`).join(""):"<p class=\"meta\">That year nobody got past the subdistrict round, but the whole camp stayed together</p>"}</div>`;};
+  return `${belts.length?`<div class="hall-y"><b>Belts held</b>${belts.map(([d,b])=>`<div class="kv-row"><span>${esc(G.F[b.id].name)} · Div ${d}</span><span class="pill gold">🏆 Tha Phae Stadium champion · defended ${b.def} times</span></div>`).join("")}</div>`:""}
+   ${T.length?T.map(yr).join(""):`<p class="meta">The first year isn't over yet · when it ends, everyone's results land here, one row per year</p>`}`;}
 function campHTML(){const inc=classIncome(G),up=upkeep(G),wg=wages(G),lv=campLevel(G),cs=UI.csub||"money";
   const recs=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
   const dots=(n,m)=>`<span class="pips">${Array.from({length:m},(_,i)=>`<i class="${i<n?"on":""}"></i>`).join("")}</span>`;
   return `<section class="px card camphead" style="background-image:linear-gradient(90deg,rgba(20,16,32,.95),rgba(20,16,32,.6)),url(${ASSET}${gymBg()})"><div><button class="pill gold lvbtn" data-act="camplv">Camp Lv.${lv} ▸</button><h3>${CAMP_LV_NAME[lv]}</h3>
     <p class="meta">Total upgrades ${facTotal(G)} levels · ${lv<3?`${lv===1?5-facTotal(G):13-facTotal(G)} levels to reach Lv.${lv+1} · tap to see what you get`:"Max level for the demo"}</p></div></section>
-   <div class="seg subtabs csubs"><button data-act="csub" data-v="money" aria-pressed="${cs==="money"}">Finance</button><button data-act="csub" data-v="staff" aria-pressed="${cs==="staff"}">Coaches & fighters</button><button data-act="csub" data-v="fac" aria-pressed="${cs==="fac"}">Upgrades</button></div>
+   <div class="seg subtabs csubs"><button data-act="csub" data-v="money" aria-pressed="${cs==="money"}">Finance</button><button data-act="csub" data-v="staff" aria-pressed="${cs==="staff"}">Coaches & fighters</button><button data-act="csub" data-v="fac" aria-pressed="${cs==="fac"}">Upgrades</button><button data-act="csub" data-v="hall" aria-pressed="${cs==="hall"}">Hall of fame</button></div>
    ${recruitHTML(recs)}
    <div class="grid g2">
    <section class="px card cpane ${cs==="money"?"on":""}"><h3>Weekly income & expenses</h3>
@@ -521,6 +527,7 @@ function campHTML(){const inc=classIncome(G),up=upkeep(G),wg=wages(G),lv=campLev
     <div class="item nw"><div><div class="t">Invite an old-school master to teach</div><div class="meta">${fmt(18000)} · fighter gains +1 skill point and school stats · once per fighter per season · opens week 16</div></div><button class="btn sm gold" data-act="mastersOpen" ${G.week<16?"disabled":""}>Choose</button></div>
     <div class="item nw"><div><div class="t">Host a fight night at Sirichai</div><div class="meta">${fmt(SHOW_COST)} · fame +3, camp looks better, everyone's morale +8 · once per round</div></div><button class="btn sm gold" data-act="hostshow" ${G.cash<SHOW_COST||G.week<10||G.flags["show_"+stageOf(G.week)]?"disabled":""}>${G.flags["show_"+stageOf(G.week)]?"Hosted":"Host"}</button></div>
     <div class="item nw"><div><div class="t">Pay off Grandpa Chai's debt</div><div class="meta">${G.debt>0?`Remaining ${fmt(G.debt)} · paying it off gives fame +2 and a special scene`:"Debt fully paid"}</div></div>${G.debt>0?`<button class="btn sm gold" data-act="cleardebt" ${G.cash<G.debt?"disabled":""}>Pay off</button>`:"<span class=\"pill green\">Done</span>"}</div></section>
+   <section class="px card cpane ${cs==="hall"?"on":""}"><h3>Hall of fame</h3>${hallHTML()}</section>
 `;}
 
 // v1.18: hired trainers with their own pixel sprite
@@ -777,7 +784,7 @@ function goalText(){const st=stageOf(G.week),me=roster(G);const best=d=>{const r
   if(st==="district"){const inQ=[...G.qual.A,...G.qual.B].some(id=>G.F[id]&&G.F[id].camp==="player");return inQ?`Goal: district top 4 by week 40 to reach the provincial semis ${a?` · ${a.f.name} rank ${a.i}`:""}`:"Goal: missed the district round this year. Strengthen the camp and save money for next season";}
   if(st==="final"&&G.week<=44&&[...((G.semis||{}).A||[]),...((G.semis||{}).B||[])].some(id=>G.F[id]&&G.F[id].camp==="player")&&!G.finalists.A.concat(G.finalists.B).some(id=>G.F[id]&&G.F[id].camp==="player"))return "Goal: win the provincial semifinal, week 44";
   if(st==="final"){const inF=[...G.finalists.A,...G.finalists.B].some(id=>G.F[id]&&G.F[id].camp==="player");return inF?"Goal: the provincial final, week 49, five rounds":"Goal: look after the camp until the season ends";}
-  return "Season over · preparing for next year";}
+  return "Year end · preparing for next year";}
 
 // ---------- events / extras ----------
 // v1.49: annual events can play once per year
@@ -843,7 +850,7 @@ function montageDone(){const q=[...UI.montage.queue];UI.montage=null;const next=
 function finishWeek(){G.bookings=G.bookings.filter(b=>b.week!==G.week);weekFinish(G);G.campNote=null;save();
   if(G.ended){startEnding();return;}UI.modal={type:"report",after:afterWeekFlow};render();}
 function startEnding(){const E=endingScene(G);UI.modal=null;UI.fight=null;UI.montage=null;playScene(E.steps,()=>{UI.ending=E;if(G.ended==="bankrupt"||DEMO)clearSave();else save();render();},{bg:E.steps[0].bg||"camp",look:"casual"});}
-const DEMO=true; // demo ends after season 1 (season 2 code kept for later)
+const DEMO=false; // v1.50: the camp carries on into year 2+ (save is kept)
 function seasonResult(){const p=id=>G.F[id]&&G.F[id].camp==="player";const out=[];
   for(const d of ["A","B"]){const ids=new Set([...(G.qual[d]||[]),...((G.semis||{})[d]||[]),...G.finalists[d]]);
     for(const id of ids){if(!p(id))continue;const f=G.F[id];
@@ -851,15 +858,15 @@ function seasonResult(){const p=id=>G.F[id]&&G.F[id].camp==="player";const out=[
   return out;}
 function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
   return `<main class="endpage"><section class="px card end-hero"><img class="endlogo" src="${ASSET}logo.webp" alt="Muay Thai Moe">
-    <span class="pill gold">${G.ended==="bankrupt"?"Demo over · camp closed":"Demo over · season 1"}</span><h1>Ending: ${E.title}</h1>
-    <p class="lead">Thank you for playing the <b>Muay Thai Moe</b> demo! ${esc(G.player.name)} brought Sirichai Camp this far</p></section>
-   <section class="px card"><h3>This season's results</h3>${res.length?res.map(r=>`<div class="kv-row"><span>${faceImg(r.f,"sm")} ${esc(r.f.name)} · Div ${r.d}</span><span class="pill ${r.c}">${r.t}</span></div>`).join(""):"<p class=\"meta\">No fighter passed the subdistrict round this year</p>"}</section>
+    <span class="pill gold">${G.ended==="bankrupt"?"Camp closed":(G.season||1)>=2?`End of Year ${G.season}`:"End of Chapter 1 · Year 1"}</span><h1>${(G.season||1)>=2&&G.ended!=="bankrupt"?esc(E.title):`Ending: ${E.title}`}</h1>
+    <p class="lead">${(G.season||1)>=2&&G.ended!=="bankrupt"?`Year ${G.season} is over. ${esc(G.player.name)} and Sirichai Camp carry on`:`Thank you for playing <b>Muay Thai Moe</b>! ${esc(G.player.name)} brought Sirichai Camp this far`}</p></section>
+   <section class="px card"><h3>This year's results</h3>${res.length?res.map(r=>`<div class="kv-row"><span>${faceImg(r.f,"sm")} ${esc(r.f.name)} · Div ${r.d}</span><span class="pill ${r.c}">${r.t}</span></div>`).join(""):"<p class=\"meta\">No fighter passed the subdistrict round this year</p>"}</section>
    <div class="grid g3"><section class="px card"><h3>Camp</h3><div class="kv-row"><span>Camp level</span><b>Lv.${campLevel(G)} ${CAMP_LV_NAME[campLevel(G)]}</b></div><div class="kv-row"><span>Cash</span><b class="num">${fmt(G.cash)}</b></div><div class="kv-row"><span>Remaining debt</span><b class="num">${fmt(G.debt)}</b></div><div class="kv-row"><span>Students</span><b class="num">${students(G)}</b></div><div class="kv-row"><span>Fame</span><b class="num">${G.rep.toFixed(1)}</b></div></section>
    <section class="px card"><h3>Camp fighters</h3>${all.map(f=>`<div class="kv-row"><span>${esc(f.name)} Lv.${f.lvl}</span><span class="num">${rec(f)}</span></div>`).join("")}</section>
    <section class="px card"><h3>Relationships</h3>${CANON_IDS.map(id=>G.F[id]).filter(f=>f.met).map(f=>`<div class="kv-row"><span>${esc(f.name)}${G.romance===f.id?" ♥ Sweetheart":G.promise&&G.promise[f.id]!=null?" ♡ Promised":""}</span>${hearts(f.bond)}</div>`).join("")}</section></div>
-   <section class="px card teaser"><span class="pill red">Next season · coming soon</span><h3>The road to the regional stage</h3>
+   <section class="px card teaser"><span class="pill red">Next chapter · coming soon</span><h3>The road to the regional stage</h3>
     <ul><li>Golden Tiger poaches a Bangkok trainer, and Fah won't be the same anymore</li><li>New fighters from the Tha Sao and Korat styles are looking for a camp</li><li>Grandpa Chai's debt still hides a secret Kati hasn't told</li></ul></section>
-   <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · Season ${G.season||1}</p><div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">Continue · season ${(G.season||1)+1} ▸</button>`:""}<button class="btn primary" data-act="replay">Play again</button><button class="btn" data-act="restart">Back to title</button></div></main>`;}
+   <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · Year ${G.season||1}</p><div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">Continue to Year ${(G.season||1)+1} ▸</button><p class="meta center">The camp, fighters and relationships all carry over · the rivals trained harder too</p>`:""}<button class="btn primary" data-act="replay">Play again</button><button class="btn" data-act="restart">Back to title</button></div></main>`;}
 
 // ---------- FIGHT ----------
 function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.week)}`;
@@ -1238,7 +1245,7 @@ const ACT={
   withdraw:()=>{const U=UI.fight;G.bookings=G.bookings.filter(x=>x!==U.b);G.rep=Math.max(0,G.rep-1);add(G,U.b.a,"trust",3);
     G.log.push(`${G.F[U.b.a].name} withdraws due to injury`);const done=U.done;UI.fight=null;render();done();},
   fdone:()=>{const done=UI.fight.done;AU.startMusic("hub");UI.fight=null;render();done();},
-  newseason:()=>{newSeason(G);UI.ending=null;UI.tab="home";UI.advCache={};save();AU.startMusic("hub");
+  newseason:()=>{const res=seasonResult().map(r=>({id:r.f.id,name:r.f.name,d:r.d,t:r.t,c:r.c}));newSeason(G);const T=G.titles[G.titles.length-1];if(T)T.res=res;UI.ending=null;UI.tab="home";UI.advCache={};save();AU.startMusic("hub");
     playScene([{n:"coach",bg:"gym",t:`A new season is here, ${G.player.name}. Rankings reset for everyone, but our camp isn't starting from zero anymore`},
       {n:"kati",f:"happy",l:"train",with:"coach",t:"This year I won't let anyone pass me! Let's go!"}],()=>render(),{bg:"gym",look:"train"});},
   replay:()=>{const i=UI.slot;ACT.restart();ACT.beginNew(i);},

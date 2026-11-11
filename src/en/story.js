@@ -408,7 +408,17 @@ function dateScene(G,id,act){
 }
 
 // ---------- ENDINGS ----------
-function endingScene(G){
+// v1.50: from year 2 on, the year closes with a recap instead of the story ending
+function yearEndScene(G){const y=G.season||1,R=roster(G),pChamp=Object.entries(G.champ).filter(([d,id])=>G.F[id]&&G.F[id].camp==="player").map(([d,id])=>G.F[id]);
+  const top=R.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];
+  const steps=[{n:"nar",t:`Late May. Year ${y} at Sirichai Camp comes to a close. Everyone lines up in front of the camp sign for the yearly photo.`},
+    pChamp.length?{n:"coach",t:`${pChamp.map(f=>f.name).join(" and ")} won the provincial title this year. The new trophy sits in the hall of fame next to Grandpa Chai's photo.`}
+      :{n:"coach",t:"No trophy this year, but everyone is still here, still training together every morning… That's how you measure a camp."},
+    G.debt>0?{n:"nar",t:`Grandpa Chai's debt still has ${fmt(G.debt)} left. We'll keep paying it off, year by year.`}:{n:"nar",t:"Sirichai Camp is debt-free now. The sign belongs to all of us."}];
+  if(top)steps.push({n:top.id,f:"happy",l:"casual",t:`${CALL(G,top.id)}, let's stay together like this next year too.`});
+  steps.push({n:"nar",t:`The self-timer clicks. The photo for year ${y} is hung next to last year's on the camp wall.`});
+  return {key:"year",title:pChamp.length?`Year ${y} · Champions again`:`Year ${y} · The camp goes on`,steps,bg:"camp",look:"casual"};}
+function endingScene(G){if((G.season||1)>=2&&G.ended!=="bankrupt")return yearEndScene(G);
   const pChamp=Object.entries(G.champ).filter(([d,id])=>G.F[id]&&G.F[id].camp==="player").map(([d,id])=>G.F[id]);
   const pFinal=[...G.finalists.A,...G.finalists.B].some(id=>G.F[id].camp==="player");
   const pQual=[...G.qual.A,...G.qual.B].some(id=>G.F[id].camp==="player");
@@ -1253,3 +1263,17 @@ EVENTS.push(
   {n:"nar",t:"Songkran again. Training stops at noon, everyone pours scented water over Coach Daeng's hands, and the water war starts immediately."},
   {n:"coach",t:G=>`This camp has had ${yr(G)} years with this manager… I wish for next year, and the year after, and on and on.`},
   {fx:G=>R_ALL(G,f=>{f.morale=Math.min(100,f.morale+6);f.fatigue=Math.max(0,f.fatigue-8);})},{n:"nar",t:"(Everyone: morale +6 · fatigue −8)"}]});
+
+// v1.50: a new year opens — ties last year's result, the debt and the rivals into the fresh start
+function lastYear(G){const t=(G.titles||[]).slice(-1)[0];return t||null;}
+EVENTS.push({id:"year_open",annual:true,pri:1,look:"casual",bg:"camp",when:G=>(G.season||1)>=2&&G.week<=2,steps:[
+ {inject:G=>{const y=G.season,L=lastYear(G),res=(L&&L.res)||[],champ=res.filter(r=>r.c==="gold"),fin=res.filter(r=>r.c==="green"),k=inCamp(G,"kati")?"kati":(roster(G)[0]||{}).id;
+  const out=[{n:"nar",t:`The start of year ${y} at Sirichai Camp. The sign out front has been repainted again, and last year's photo still hangs by the entrance.`},
+   {n:"coach",t:champ.length?`Last year we won the provincial title. This year every camp is gunning for us, old faces and new. Don't take a single fight lightly.`
+     :fin.length?"Last year we made the final and missed by a hair. This year we go all the way.":"Last year we didn't reach our dream. The provincial championship is open again. We start over from the subdistrict round."},
+   {n:"coach",t:"One more thing. Word is the other camps trained hard all off-season. Every rival is better this year."}];
+  if(k)out.push({n:k,f:"happy",l:"casual",t:`${CALL(G,k)}, ${y===2?"it's been a whole year":`it's been ${y-1} years`} since you came here… I still remember the first day, when I thought you were from the bank, here to collect the debt.`});
+  if(G.F.ploy&&G.F.ploy.met&&!inCamp(G,"ploy"))out.push({n:"ploy",f:"angry",l:"fight",t:champ.length?"This year the provincial belt comes back to Golden Tiger. Remember that.":"A new year. Let's see if Sirichai Camp has improved at all."});
+  out.push({choice:[{t:"This year I just want nobody to get hurt (everyone: morale +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);})},
+   {t:"This year the goal is the title (everyone: morale +8 · fatigue +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+8);f.fatigue=Math.min(100,f.fatigue+5);})}]});
+  return out;}}]});

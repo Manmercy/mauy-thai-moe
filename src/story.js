@@ -408,7 +408,17 @@ function dateScene(G,id,act){
 }
 
 // ---------- ENDINGS ----------
-function endingScene(G){
+// v1.50: from year 2 on, the year closes with a recap instead of the story ending
+function yearEndScene(G){const y=G.season||1,R=roster(G),pChamp=Object.entries(G.champ).filter(([d,id])=>G.F[id]&&G.F[id].camp==="player").map(([d,id])=>G.F[id]);
+  const top=R.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];
+  const steps=[{n:"nar",t:`ปลายเดือนพฤษภาคม ปีที่ ${y} ของค่ายศิริชัยปิดฉากลง ทุกคนมายืนเรียงกันหน้าป้ายค่ายเพื่อถ่ายรูปประจำปี`},
+    pChamp.length?{n:"coach",t:`${pChamp.map(f=>f.name).join(" กับ ")} คว้าแชมป์จังหวัดปีนี้ ถ้วยใบใหม่ไปอยู่ในมุมเกียรติยศข้างรูปปู่ชัยแล้ว`}
+      :{n:"coach",t:"ปีนี้เรายังไม่ได้ถ้วย แต่ทุกคนยังอยู่ครบ ยังซ้อมด้วยกันทุกเช้า …ค่ายมวยวัดกันแบบนี้แหละ"},
+    G.debt>0?{n:"nar",t:`หนี้ของปู่ชัยยังเหลือ ${fmt(G.debt)} ค่อย ๆ จ่ายกันไปปีต่อปี`}:{n:"nar",t:"ค่ายศิริชัยไม่มีหนี้ติดตัวแล้ว ป้ายค่ายเป็นของทุกคนเต็มตัว"}];
+  if(top)steps.push({n:top.id,f:"happy",l:"casual",t:`${CALL(G,top.id)}คะ ปีหน้าก็อยู่ด้วยกันแบบนี้อีกนะคะ`});
+  steps.push({n:"nar",t:`กล้องตั้งเวลาดังแชะ รูปปีที่ ${y} ถูกแขวนต่อจากรูปปีที่แล้วบนผนังค่าย`});
+  return {key:"year",title:pChamp.length?`ปีที่ ${y} · แชมป์อีกครั้ง`:`ปีที่ ${y} · ค่ายยังเดินต่อ`,steps,bg:"camp",look:"casual"};}
+function endingScene(G){if((G.season||1)>=2&&G.ended!=="bankrupt")return yearEndScene(G);
   const pChamp=Object.entries(G.champ).filter(([d,id])=>G.F[id]&&G.F[id].camp==="player").map(([d,id])=>G.F[id]);
   const pFinal=[...G.finalists.A,...G.finalists.B].some(id=>G.F[id].camp==="player");
   const pQual=[...G.qual.A,...G.qual.B].some(id=>G.F[id].camp==="player");
@@ -1253,3 +1263,17 @@ EVENTS.push(
   {n:"nar",t:"สงกรานต์อีกปี ค่ายหยุดซ้อมครึ่งวัน ทุกคนรดน้ำดำหัวครูแดง แล้วสงครามน้ำก็เริ่มขึ้นทันที"},
   {n:"coach",t:G=>`ค่ายนี้อยู่มา ${yr(G)} ปีแล้วกับผู้จัดการคนนี้ …ครูขอให้มีปีหน้า ปีโน้น ต่อไปเรื่อย ๆ`},
   {fx:G=>R_ALL(G,f=>{f.morale=Math.min(100,f.morale+6);f.fatigue=Math.max(0,f.fatigue-8);})},{n:"nar",t:"(ทุกคนกำลังใจ +6 · ล้า −8)"}]});
+
+// v1.50: a new year opens — ties last year's result, the debt and the rivals into the fresh start
+function lastYear(G){const t=(G.titles||[]).slice(-1)[0];return t||null;}
+EVENTS.push({id:"year_open",annual:true,pri:1,look:"casual",bg:"camp",when:G=>(G.season||1)>=2&&G.week<=2,steps:[
+ {inject:G=>{const y=G.season,L=lastYear(G),res=(L&&L.res)||[],champ=res.filter(r=>r.c==="gold"),fin=res.filter(r=>r.c==="green"),k=inCamp(G,"kati")?"kati":(roster(G)[0]||{}).id;
+  const out=[{n:"nar",t:`ต้นปีที่ ${y} ของค่ายศิริชัย ป้ายหน้าค่ายถูกทาสีใหม่อีกรอบ รูปถ่ายปีที่แล้วยังแขวนอยู่ตรงทางเข้า`},
+   {n:"coach",t:champ.length?`ปีที่แล้วเราได้แชมป์จังหวัด ปีนี้ทุกค่ายจะเล็งมาที่เรา ทั้งเจ้าเก่าทั้งหน้าใหม่ ห้ามประมาทแม้แต่ไฟต์เดียว`
+     :fin.length?"ปีที่แล้วเราเข้าชิงแล้วพลาดไปนิดเดียว ปีนี้ต้องไปให้ถึง":"ปีที่แล้วเรายังไปไม่ถึงฝัน ศึกชิงแชมป์จังหวัดเปิดอีกครั้งแล้ว เริ่มกันใหม่จากรอบตำบล"},
+   {n:"coach",t:"อีกเรื่อง ข่าวว่าค่ายอื่นซ้อมกันหนักทั้งปิดฤดู คู่แข่งปีนี้เก่งขึ้นทุกคน"}];
+  if(k)out.push({n:k,f:"happy",l:"casual",t:`${CALL(G,k)}คะ ${y===2?"ครบรอบหนึ่งปีแล้วนะคะ":`ครบรอบ ${y-1} ปีแล้วนะคะ`}ที่คุณมาอยู่ที่นี่ …หนูยังจำวันแรกที่หนูนึกว่าคุณเป็นคนจากธนาคารมาทวงหนี้ได้อยู่เลย`});
+  if(G.F.ploy&&G.F.ploy.met&&!inCamp(G,"ploy"))out.push({n:"ploy",f:"angry",l:"fight",t:champ.length?"ปีนี้เข็มขัดจังหวัดต้องกลับมาที่พยัคฆ์ทอง จำไว้":"ปีใหม่แล้ว ค่ายศิริชัยจะพัฒนาขึ้นบ้างไหมนะ เดี๋ยวก็รู้"});
+  out.push({choice:[{t:"ปีนี้ขอแค่ทุกคนไม่เจ็บตัว (ทุกคนกำลังใจ +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);})},
+   {t:"ปีนี้เป้าหมายคือแชมป์ (ทุกคนกำลังใจ +8 · ล้า +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+8);f.fatigue=Math.min(100,f.fatigue+5);})}]});
+  return out;}}]});
