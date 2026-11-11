@@ -5,6 +5,14 @@ const recentRes=(G,id,res)=>{const c=lastFight(G,id);return !!(c&&c.res===res&&G
 const nearFinal=G=>G.week>=42&&G.week<=49;
 const CHAT={
  kati:[
+  {id:"k_student",need:G=>G.seen&&G.seen.first_student,x:[
+   ["Manager, Auntie Saeng's boy showed up at dawn. He was waiting at the gate at six",[["Just like someone I know as a kid",2,"…Did Grandpa tell you that!? I used to wait from five, actually"],["Hard worker",1,"Yes, harder than me at that age"],["Isn't that too early?",0,"Fighters get up early"]]],
+   ["He asked me 'Kati, were you ever scared?' I didn't know what to say",[["Tell him yes, and that you fight anyway",2,"…Okay. I'll say that. It's the truest answer"],["Well, were you?",1,"Every fight. Don't tell Coach Daeng"],["Say you weren't",0,"I'm bad at lying"]]],
+   ["It feels strange being called 'teacher'. Like I have to get even better",[["You can teach because you've fallen before",2,"…I'll remember that. Teacher Kati won't let her student down"],["Teacher Kati. Sounds good",1,"Don't call me that, it's embarrassing!"],["Don't get cocky",0,"Okaaay…"]]]]},
+  {id:"k_gang",need:G=>G.gang&&G.gang.st>=1,x:[
+   ["Auntie Sri brought a whole basket of vegetables to the camp. A thank-you for the helmet gang",[["Fitting. Grandpa Chai taught that Muay Thai is for protecting people",2,"Yes! Today it felt like Grandpa was watching"],["Stir-fried vegetables tonight, then",1,"Mali already claimed all the morning glory"],["Cash would've been better",0,"Manager! She's struggling too"]]],
+   ["I was scared at first, honestly. There were ten of them",[["But you stepped up before anyone",2,"…My legs just moved. I didn't even think"],["Who wouldn't be, they fight in helmets",1,"Haha, kicking a helmet really hurts"],["Next time, call the police",0,"The police are slower than the interest"]]],
+   ["If they come back, will we help again?",[["Every time, until the market is safe",2,"Yes! I'll practice helmet kicks"],["If you're not hurt",1,"I can handle it, I promise"],["Depends on the pay",0,"…Manager, really"]]]]},
   {id:"k_lost",need:G=>recentRes(G,"kati","L"),x:[
    ["Manager… I can't sleep. I let everyone down in yesterday's fight",[["Nobody's let down. We saw you fight to the last bell",2,"…Really? Then I'll keep that sentence for the hard training days"],["It's just one loss, go to sleep",1,"Okay… but I still keep thinking about that kick"],["You have to win next time",0,"Okay… (sends a bowing-cat sticker)"]]],
    ["If Grandpa were still here, what would he say?",[["Grandpa would say: fall down if you must, but don't stay down long",2,"Hngh… that's his voice exactly, like I can really hear him"],["He'd take you out for chicken rice",1,"Haha, yes, Grandpa always comforted with food"],["I don't know, I never met him",0,"Oh… right, true"]]],
@@ -30,6 +38,14 @@ const CHAT={
    ["I'm bad at resting. I feel guilty every time I don't train",[["Rest is a kind of training too",2,"Rest is training… I'll remember that"],["You'll get used to it",1,"Yeah, I hope so"],["Then go train",0,"Coach Daeng will scold you, Manager, haha"]]],
    ["Thanks for messaging me. I'm not lonely today",[["Message me anytime",2,"Then I'll message you a lot. No getting annoyed!"],["It's fine",1,"Okay, good night"],["Mm",0,"…Okay"]]]]}],
  mali:[
+  {id:"m_join",need:G=>G.F.mali&&G.F.mali.camp==="player",x:[
+   ["Manager~ Mali's room at camp has a window! At the last place Mali slept in the glove room",[["This is your home now. Decorate it however you like",2,"Then Mali's hanging frangipani everywhere!"],["It's a small window",1,"Small is still a window! Mali can see stars"],["Keep it tidy",0,"Okaaay… (hides the snack bags under the bed)"]]],
+   ["Kati gave Mali half a roll of hand wraps, even though hers are worn out",[["Kati's happy she's not training alone anymore",2,"Mali's happy too! Mali will be the best sparring partner"],["I'll buy you both new rolls",1,"Yay! Pink, please"],["Use them sparingly",0,"Okay, Mali will wrap thin"]]],
+   ["Mali still remembers the day you watched her at the temple fair. Nobody had ever asked Mali to join before",[["They looked at your height, not your kicks",2,"Sniff… Mali will make every centimeter count!"],["Our camp got lucky",1,"Mali's the lucky one~"],["We were short on fighters",0,"Oh… is that all"]]]]},
+  {id:"m_family",need:G=>G.seen&&G.seen.mali_family,x:[
+   ["Manager… about that call with Mom you overheard. Please don't tell anyone",[["I won't. But tell me first when something's wrong",2,"…Okay. Mali's not used to having someone to tell"],["Of course not",1,"Thank you"],["The camp should know",0,"No! Mali doesn't want pity"]]],
+   ["Mom asked what the manager's like. Mali said 'kind, but always frowning about money'",[["Right on both counts",2,"Haha, Mom says that's the trustworthy kind"],["I frown?",1,"Every time you open the account book!"],["Well, we are broke",0,"Mali will fight to earn it…"]]],
+   ["Mali's good at smiling. But with you, Mali doesn't have to force it, right?",[["Right. Smile or cry, either is fine",2,"…Then one crying sticker today, and a fresh smile tomorrow"],["Your smile is nice, though",1,"Hehe, here's a real one then"],["Is something wrong?",0,"No, just asking"]]]]},
   {id:"m_lost",need:G=>recentRes(G,"mali","L"),x:[
    ["Manager~ Mali lost, waaah, but she's not crying! (just a little)",[["Cry it all out, then smile again tomorrow",2,"Waah… okay. Five more minutes of crying, then I'll smile for the whole camp!"],["It's okay",1,"Okay… thank you"],["Didn't you say you weren't crying?",0,"I said just a little!"]]],
    ["Mom called asking about the fight, Mali told her she won… what do I do",[["Tell the truth. Your mom's already proud you fight",2,"…True. Mom always says as long as I'm not hurt she's happy. I'll call back"],["Win the next one and it'll be true",1,"Haha, yes! Turn the lie into truth in advance"],["Lying isn't good",0,"I know…"]]],
@@ -51,6 +67,14 @@ const CHAT={
    ["Mali secretly practices jumping high kicks every night, didn't tell anyone",[["Can I see?",2,"Sure! But don't laugh if Mali falls!"],["Don't train till you get hurt",1,"Yes, yes, Coach Daeng says that too"],["If it's a secret, why tell me?",0,"Because I'm only telling you!"]]],
    ["Thank you for taking Mali into the camp. Nowhere else would",[["We're lucky to have you",2,"…Waah, don't say that late at night, Mali's crying"],["Our camp welcomes everyone",1,"Yes, this camp is the best!"],["Don't forget to pay rent",0,"Haha, way to ruin the mood!"]]]]}],
  rin:[
+  {id:"r_join",need:G=>G.F.rin&&G.F.rin.camp==="player",x:[
+   ["Manager, I surveyed the camp and found 23 things to improve. I've sent the file",[["Let's start with the top three",2,"Prioritizing… good. My old camp never read a single one"],["Twenty-three?",1,"I removed the one about the orange cat. Otherwise 24"],["The camp is fine as it is",0,"…The data disagrees"]]],
+   ["At Golden Tiger I ate every meal alone. Today Mali dragged me to her table. It was very loud",[["Get used to it. We eat together here",2,"…Yes. I noted: 'loud, but the food tastes better'"],["Mali's loud with everyone",1,"Yes. 84 decibels. I measured"],["You can eat alone if you want",0,"…No. I don't want to"]]],
+   ["May I ask directly: why take me, when my fight record is average?",[["Because you see what others miss",2,"…I can't quantify that answer. But I'll keep it"],["Because you counted 14 missed counters",1,"Actually 15. I recounted"],["We needed bodies",0,"Understood. At least you're direct"]]]]},
+  {id:"r_plan",need:G=>G.seen&&G.seen.rin_plan,x:[
+   ["About my plan failing the other day. I reviewed it. The data wasn't wrong. I forgot people change their minds",[["That's what makes fighting interesting",2,"Interesting… I'll try using that word for uncertainty"],["You review fast",1,"I didn't sleep"],["So the data is useless",0,"No! It helps 70%"]]],
+   ["I tried training without my spreadsheet for a day. It felt like walking without glasses",[["Did you walk into anything?",2,"…No. Strange. My body remembered on its own"],["Take it slow",1,"Yes. One day a week, as an experiment"],["Go back to the spreadsheet",0,"Yes… it is more comfortable"]]],
+   ["Manager, if I miscalculate in an important fight someday, will you still listen to me?",[["Yes. Because you're willing to say when you're wrong",2,"…Saved. Private file. Same folder as before"],["Everyone gets it wrong sometimes",1,"Yes. Statistically, that's true"],["Just don't miscalculate",0,"…I'll try"]]]]},
   {id:"r_lost",need:G=>recentRes(G,"rin","L"),x:[
    ["I miscalculated. 62% chance to win, and we landed in the 38%",[["38% is still a reality that can happen. It's not your fault",2,"…Good reasoning. I accept it, and I feel strangely better"],["Recalculate",1,"Already doing it. Table number 14"],["Numbers don't matter",0,"They matter to me"]]],
    ["Should I rely on data less?",[["Keep using data, but listen to your body too",2,"Data plus body… an equation I've never tried. I'll try"],["No, you're great as you are",1,"Thank you, but I'll keep thinking about it"],["Yes, fighting with heart is better",0,"Heart can't be measured…"]]],
@@ -72,6 +96,14 @@ const CHAT={
    ["Ploy is actually kind. She just has no time for anyone",[["Want to invite Ploy to train with us someday?",2,"…A crazy idea. But I'll message her and see"],["The boss must pressure her",1,"Yes. Every day"],["A rival is a rival",0,"Yes, I understand"]]],
    ["If Kati meets Ploy in the final, who should I cheer for?",[["Cheer for both, and the winner buys dinner",2,"…An answer I hadn't considered. But the best one"],["Kati, obviously",1,"Of course. I'm with Sirichai now"],["No need to cheer",0,"Hard to stop myself"]]]]}],
  ploy:[
+  {id:"p_meet",need:G=>G.seen&&G.seen.rival_meet,x:[
+   ["Hello, this is Ploy from Golden Tiger. I apologize again for Fah at the night market",[["It's fine. Fah just talks fast",2,"Yes. Fast, but harmless. Thank you for seeing that"],["Does the captain apologize for everything?",1,"…Nearly everything"],["Tell her to apologize herself",0,"I'll try. No promises"]]],
+   ["I watched Grandpa Chai teach when I was little. He gave me a candy, even though I was from another camp",[["He probably saw your talent even then",2,"…I still have the wrapper. Don't tell anyone"],["He gave candy to everyone",1,"Yes. But mine was lime"],["Never heard that one",0,"It's a small thing"]]],
+   ["Your camp has only Kati. Yet she looks at me like she isn't afraid at all",[["She is. She just doesn't back down",2,"…That's scarier than fearless. I'll be waiting"],["You'd better watch out",1,"Heh. I watch everyone"],["She can't beat you yet",0,"A manager shouldn't say that"]]]]},
+  {id:"p_river",need:G=>G.seen&&G.seen.ploy_river,x:[
+   ["What I told you by the river. I'd never told anyone. I don't know why I told a rival",[["Sometimes a rival listens best",2,"…Maybe so. My camp sees a captain. You see Ploy"],["I won't tell anyone",1,"I know. Or I wouldn't have"],["I'll use it as intel",0,"…You're joking, right?"]]],
+   ["The juniors don't know the owner might cut their division. I can't bring myself to tell them",[["You don't have to carry it alone. Tell one of the coaches",2,"…I'll consider it. Thank you for not saying 'just win'"],["Win and it's solved",1,"Yes. Everyone says that"],["Your camp's problem, not mine",0,"Yes. Sorry to bother you"]]],
+   ["If I lose to Kati, my juniors lose their gym. But I don't want Kati holding back",[["If that day comes, Sirichai's door is open to your juniors",2,"…Do you mean that? …Then I can fight with everything"],["Kati never holds back",1,"Good. That's why I respect her"],["Then don't lose",0,"Yes. That's the plan"]]]]},
   {id:"p_beaten",need:G=>G.flags&&G.flags.beat_ploy>=1,x:[
    ["Manager, sorry for messaging so late. I can't sleep",[["It's okay, tell me",2,"…Thank you. My first loss in years. I feel strangely light"],["Thinking about the fight?",1,"Yes, every moment of it"],["It's late",0,"Sorry. Another time"]]],
    ["Kati's last kick… I saw it but couldn't dodge in time… strange that I feel happy",[["Happy to have a rival who makes you grow",2,"…Yes. That's exactly the word I searched for all night"],["Because you truly love Muay Thai",1,"I suppose so"],["A loss is a loss",0,"Yes. I won't argue"]]],
@@ -89,6 +121,14 @@ const CHAT={
    ["If I lose, the boss will be furious",[["Whatever the result, you're a fighter worth respecting",2,"…I'll carry that sentence into the ring"],["Then don't lose",1,"That's the plan"],["Forget the boss",0,"Easy to say…"]]],
    ["See you in the ring, manager of Sirichai",[["See you, Ploy",2,"…Yes (sends one small curled-up tiger sticker)"],["Don't hold back",1,"I never do"],["Bye",0,""]]]]}],
  fah:[
+  {id:"f_visit",need:G=>G.seen&&G.seen.fah_visit,x:[
+   ["Hey, your camp's heavy bag is rock hard. Fah's shin was purple for three days",[["Come train again. I'll have ice ready",2,"…Who said Fah's coming back! …Is Wednesday free?"],["It's new. Not broken in",1,"Then Fah'll kick it soft for you. Free"],["Who told you to kick that hard",0,"It's Muay Thai, you kick hard!"]]],
+   ["Tell Kati that Fah went easy in round six that day (Fah didn't, but say it anyway)",[["Kati said it was a blast. She wants a rematch",2,"…Really? Hmph. Well… Fah didn't say it wasn't fun"],["I'll pass it on word for word",1,"Hey, not the part in brackets!"],["You were gasping before she was",0,"Not true!! You saw wrong!"]]],
+   ["Nobody at Fah's camp spars like that. Everyone's scared of the owner yelling",[["Nobody yells here. Coach Daeng just grumbles",2,"…So jealous (delete this message)"],["What about Ploy?",1,"Ploy would, but she never has time"],["Then switch camps",0,"Easy for you to say! Fah's not leaving Ploy"]]]]},
+  {id:"f_night",need:G=>G.seen&&G.seen.fah_night,x:[
+   ["About that night at the convenience store. Forget it. Fah wasn't crying",[["All I remember is the cup noodles looked good",2,"…Hmph. Smart. Fah'll buy you a cup next time"],["Dust in your eye, right?",1,"Right! So much dust that night!"],["You were definitely crying",0,"Was NOT!! Blocking you!"]]],
+   ["…You were the first to ask how Fah was. Not why Fah lost",[["Because the first question matters more",2,"…There you go again. Fah's screenshotting this. Don't ask why"],["So how are you now?",1,"Better. A little. Just a little"],["So why did you lose?",0,"See!! Just like everyone else!"]]],
+   ["Next fight Fah's charging in like always. Not changing styles over one loss",[["Good. That recklessness is what makes you Fah",2,"Right!? …Wait, you're cheering for a rival. You know that?"],["A bit more guard wouldn't hurt",1,"My coach says that too. Boring! (But Fah'll try)"],["You'll lose again",0,"Will NOT!! Just watch!!"]]]]},
   {id:"f_beaten",need:G=>G.flags&&G.flags.beat_fah>=1,x:[
    ["Don't think Fah's messaging because she's sad!! Just… can't sleep, that's all",[["If you want to vent, vent. I won't tell anyone",2,"…Fine. Losing stings like hell, but… Mali's really good (don't tell Mali!)"],["I get it",1,"Get what, Fah hasn't said anything yet!"],["Go to sleep",0,"I said I can't sleep!!"]]],
    ["Everyone at camp went silent on Fah. Nobody asked if she's okay",[["Then I'll ask. Are you okay?",2,"…Not okay. But better, because someone asked (no teasing!)"],["They're probably giving you space",1,"They don't have to give that much!"],["Because you win so often, they don't worry",0,"Hmph…"]]],
@@ -114,7 +154,7 @@ const CHAT_X={
  fah:[["…Hey, if Fah said she's glad she met you, would you laugh?",[["I wouldn't laugh. I'm glad too",2,"…!! Enough, enough, stop talking, Fah's embarrassed!!"],["Depends on the face you make saying it",1,"A normal face! …probably"],["I'd definitely laugh",0,"Then Fah's not saying it!"]]],["Iron Fist (the cat) slept on the shirt you left behind all night",[["Then give the shirt to Iron Fist",2,"…Not giving it to Iron Fist, Fah's keeping it! Wait, no!"],["Wash it for me",1,"I'm not your maid!"],["Now it's covered in cat hair",0,"Mean!"]]]]};
 
 function chatTopic(G,id){const L=CHAT[id]||[];G.chatSeen=G.chatSeen||{};const seen=G.chatSeen[id]||[];
-  const ctx=L.filter(t=>t.need&&t.need(G)&&!seen.includes(t.id));if(ctx.length)return ctx[0];
+  const hot=t=>/_(lost|won|final|beaten)$/.test(t.id)?0:1;const ctx=L.filter(t=>t.need&&t.need(G)&&!seen.includes(t.id)).sort((p,q)=>hot(p)-hot(q));if(ctx.length)return ctx[0];
   const gen=L.filter(t=>!t.need&&!seen.includes(t.id));if(gen.length)return gen[(G.week+G.seed)%gen.length];
   const all=L.filter(t=>!t.need).sort((a,b)=>seen.indexOf(a.id)-seen.indexOf(b.id));return all[0];}
 // v1.27: she texts first, now and then, once you're close enough; an unread chat waits for you
