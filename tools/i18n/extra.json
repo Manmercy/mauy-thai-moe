@@ -1693,5 +1693,9 @@
 "\" autocomplete=\"off\"></div><p class=\"meta\">ชื่อนี้จะโผล่ในฉากต่าง ๆ ของค่าย</p><button class=\"btn primary\" data-act=\"petnamesave\" data-v=\"": "\" autocomplete=\"off\"></div><p class=\"meta\">This name will show up in camp scenes</p><button class=\"btn primary\" data-act=\"petnamesave\" data-v=\"",
 "<h2>ตั้งชื่อ": "<h2>Name the ",
 "เล่นด้วย": "Play",
-"เล่นแล้ว ✓": "Played ✓"
+"เล่นแล้ว ✓": "Played ✓",
+"ดีใจ แต่ช่วงนี้ได้ของชิ้นนี้บ่อยไปนิด ลองสลับของดูนะ": " is happy, but has been getting this a lot lately. Try mixing it up.",
+"ดีใจมาก · ความสนิทเต็มหลอดแล้ว": " is thrilled · Bond is already maxed",
+"รับไว้ด้วยรอยยิ้ม แต่อาจยังไม่ใช่ของโปรด · ความสนิทไม่เปลี่ยน": " accepts it with a smile, but it may not be a favorite · Bond unchanged",
+" · ได้บ่อยไปนิด เลยขึ้นน้อยลง": " · a bit too often, so it rises less"
 }
