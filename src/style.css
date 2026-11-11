@@ -1364,3 +1364,4 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .petchip span{display:flex;flex-direction:column;line-height:1.15;min-width:0;text-align:left}.petchip b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.petchip small{font-size:11px;color:var(--gold,#f2c94c)}
 .petchip.done{opacity:.6}.petchip.done small{color:var(--mut,#9a91ad)}.peti{width:34px;height:26px;image-rendering:pixelated;flex:none}.petnm{display:flex;gap:8px;align-items:center;margin:8px 0}.petnm input{flex:1;font:inherit;padding:8px;background:#1b1530;color:#fff;border:2px solid #4a3f6b}
 .petrow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.missb{margin:3px 0;padding:2px 6px;background:#3a2240;border:1px solid #7a3f6b;color:#ffb3d1;font-size:12px}

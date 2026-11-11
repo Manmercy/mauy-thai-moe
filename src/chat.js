@@ -188,14 +188,20 @@ function chatTopic(G,id){const L=CHAT[id]||[];G.chatSeen=G.chatSeen||{};const se
   const all=L.filter(t=>!t.need).sort((a,b)=>seen.indexOf(a.id)-seen.indexOf(b.id));return all[0];}
 // v1.27: she texts first, now and then, once you're close enough; an unread chat waits for you
 const CHAT_BOND=15;
-function chatWeekly(G){G.chatIn=G.chatIn||{};G.chatLast=G.chatLast||{};const rng=mulberry32(G.seed*31+G.week*7+3);
+// v1.52: bonds fade a little when you haven't seen someone for a month — never below a stage already reached
+const REL_FLOOR=[0,20,40,75];
+const missGap=(G,id)=>{const f=G.F[id];if(!f||f.lastTouch==null)return 0;return absWeek(G)-f.lastTouch;};
+function bondFade(G){G.relT=G.relT||{};for(const id of CANON_IDS){const f=G.F[id];if(!f||!f.met)continue;if(f.lastTouch==null){f.lastTouch=absWeek(G);continue;}
+  const gap=absWeek(G)-f.lastTouch;if(gap<4)continue;const mine=f.camp==="player",rate=mine?.5:.25,floor=REL_FLOOR[G.relT[id]||0]||0;
+  if(f.bond>floor)f.bond=Math.max(floor,Math.round((f.bond-rate)*100)/100);}}
+function chatWeekly(G){bondFade(G);G.chatIn=G.chatIn||{};G.chatLast=G.chatLast||{};const rng=mulberry32(G.seed*31+G.week*7+3);
   for(const id of CANON_IDS){const f=G.F[id];if(!f||!f.met||G.chatIn[id])continue;
-    {const L=CHAT[id]||[],seen=(G.chatSeen||{})[id]||[],W=G.chatWk||{};if((f.bond||0)>=8&&G.week-(G.chatLast[id]||-9)>=1&&L.some(t=>t.need&&/_(lost|won|dm|flood|loan)$/.test(t.id)&&t.need(G)&&(!seen.includes(t.id)||(t.rep&&G.week-(W[id+":"+t.id]||0)>=t.rep)))){G.chatIn[id]=G.week;continue;}}
+    {const L=CHAT[id]||[],seen=(G.chatSeen||{})[id]||[],W=G.chatWk||{};if((f.bond||0)>=8&&G.week-(G.chatLast[id]||-9)>=1&&L.some(t=>t.need&&/_(lost|won|dm|flood|loan|miss)$/.test(t.id)&&t.need(G)&&(!seen.includes(t.id)||(t.rep&&G.week-(W[id+":"+t.id]||0)>=t.rep)))){G.chatIn[id]=G.week;continue;}}
     if((f.bond||0)<CHAT_BOND)continue;
     if(G.week-(G.chatLast[id]||-9)<3)continue;if(rng()<.3+((f.bond||0)>=50?.1:0))G.chatIn[id]=G.week;}}
 const chatLen=f=>3+((f.bond||0)>=40?1:0)+((f.bond||0)>=70?1:0);
 const canChat=f=>!!(f&&f.met&&G.chatIn&&G.chatIn[f.id]);
-function chatOpen(id){const f=G.F[id];if(!f||!canChat(f))return;delete G.chatIn[id];G.chatLast=G.chatLast||{};G.chatLast[id]=G.week;const T=chatTopic(G,id);
+function chatOpen(id){const f=G.F[id];if(!f||!canChat(f))return;f.lastTouch=absWeek(G);delete G.chatIn[id];G.chatLast=G.chatLast||{};G.chatLast[id]=G.week;const T=chatTopic(G,id);
   G.chatSeen=G.chatSeen||{};G.chatSeen[id]=(G.chatSeen[id]||[]).filter(x=>x!==T.id).concat([T.id]);G.chatWk=G.chatWk||{};G.chatWk[id+":"+T.id]=G.week;
   const x=[...T.x];const ex=CHAT_X[id]||[];G.chatX=G.chatX||{};const xs=G.chatX[id]=G.chatX[id]||[];const extra=Math.min(1,chatLen(f)-3);for(let i=0;i<ex.length&&extra>0;i++)if(!xs.includes(i)&&(i===0||(f.bond||0)>=70)){x.push(ex[i]);xs.push(i);break;}
   const rng=mulberry32(G.seed+G.week*17+id.length);x.forEach(e=>{e.ord=[0,1,2].sort(()=>rng()-.5);});
@@ -217,3 +223,12 @@ function chatHTML(){const C=UI.chat;if(!C)return {body:"",foot:true};const f=G.F
 XMODAL.chat=()=>chatHTML();
 Object.assign(ACT,{chat:d=>chatOpen(d.id),chatpick:d=>chatPick(+d.v)});
 XMODAL.confirm=m=>({body:`<h2>${m.title}</h2><p>${m.text}</p><div class="mfoot"><button class="btn ghost" data-act="closeModal">ไม่</button><button class="btn primary" data-act="${m.yes}">ยืนยัน</button></div>`,foot:false});
+
+// v1.52: "haven't seen you in a while" texts — she reaches out before the bond starts to fade
+const MISS_X={
+ kati:[["ผู้จัดการคะ ช่วงนี้ยุ่งมากเลยเหรอ… หนูซ้อมเตะเพิ่มได้อีกสองชุดแล้วนะ ไม่มีใครมาดูเลย",[["ขอโทษนะ พรุ่งนี้ไปดูแน่นอน",2,"สัญญาแล้วนะคะ! หนูจะเตะให้ดูจนกระสอบขาดเลย!"],["งานค่ายเยอะจริง ๆ",1,"อื้อ… หนูเข้าใจค่ะ แต่ว่างเมื่อไหร่มาหาบ้างนะ"],["ซ้อมเก่งแล้วนี่",0,"…ก็ไม่ได้อยากให้ชมอย่างเดียวนี่คะ"]]]],
+ mali:[["คุณคะ~ ไม่ได้คุยกันนานเลยนะ หนูทำขนมครกไหม้ไปสามรอบ ไม่มีคนช่วยชิม",[["รอบหน้าเรียกด้วย จะกินให้หมด",2,"เย้! ไหม้ก็ต้องกินนะคะ ห้ามเกี่ยง~"],["ช่วงนี้ยุ่งนิดนึง",1,"อื้ม… หนูรอได้ค่ะ แต่อย่านานนะ"],["ไหม้สามรอบเลยเหรอ",0,"…ไม่ต้องตอกย้ำก็ได้ค่ะ"]]]],
+ rin:[["ข้อมูลระบุว่าเราไม่ได้คุยกันมา 21 วันแล้วค่ะ …ฉันแค่สังเกตเฉย ๆ ไม่ได้หมายความว่าอะไร",[["ขอโทษนะ ฉันก็คิดถึงเหมือนกัน",2,"…ค่านี้ไม่อยู่ในโมเดลฉันเลย ขอเวลาประมวลผลสักครู่ค่ะ"],["นับวันด้วยเหรอ",1,"นับทุกอย่างค่ะ …แต่อันนี้นับเป็นพิเศษ"],["ช่วงนี้งานเยอะ",0,"เข้าใจค่ะ บันทึกไว้แล้ว"]]]],
+ ploy:[["ไม่ได้มาวนแถวค่ายพยัคฆ์ทองนานแล้วนะ ผู้จัดการค่ายศิริชัย …ไม่ได้รอ แค่สังเกต",[["คิดถึงพลอยเหมือนกัน",2,"…พูดอะไรของนาย ไปซ้อมไป"],["ยุ่งกับการพาค่ายไปชนะเธอ",1,"ฮึ ก็ดี จะได้มีคนให้ล้มสนุก ๆ"],["มีอะไรรึเปล่า",0,"ไม่มีอะไร ลืมไปซะ"]]]],
+ fah:[["นี่! หายไปไหนมา! ฟ้าไม่ได้รอนะ! …แค่ส่งสติกเกอร์ไปสิบกว่าอันไม่มีใครอ่าน",[["ขอโทษ คิดถึงฟ้านะ",2,"ห-หา!? ไม่ได้ถามสักหน่อย! …แต่ก็โอเค ยกโทษให้"],["มัวแต่ยุ่งกับค่าย",1,"ฮึ่ย ค่ายสำคัญกว่าฟ้าเหรอ! …ก็จริงแหละ"],["อ่านแล้วนะ",0,"อ่านแล้วไม่ตอบแย่กว่าอีก!!"]]]]};
+for(const id in MISS_X){CHAT[id]=CHAT[id]||[];CHAT[id].push({id:id.slice(0,1)+"_miss",need:G=>missGap(G,id)>=3,rep:8,x:MISS_X[id]});}

@@ -12,7 +12,8 @@ const SPK={kati:{name:"กะทิ",color:"#e23b4e"},mali:{name:"มะลิ",
 const bondCap=G=>100;
 // v1.44: bond grows a bit faster, and the girls who join later catch up while still distant
 const BOND_MUL=.3,BOND_LATE=["mali","rin"];
-const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*BOND_MUL*(BOND_LATE.includes(id)&&(f.bond||0)<50?1.6:1)*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
+const absWeek=G=>((G.season||1)-1)*52+G.week;
+const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)f.lastTouch=absWeek(G);if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*BOND_MUL*(BOND_LATE.includes(id)&&(f.bond||0)<50?1.6:1)*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
 
 const EVENTS=[
  {id:"prologue",look:"fight",bg:"night",steps:[
