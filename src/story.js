@@ -212,6 +212,27 @@ const EVENTS=[
   {choice:[{t:"ขอบคุณที่ซ้อมรอฉันอยู่ตรงนี้",fx:G=>{for(const f of roster(G)){add(G,f.id,"morale",10);add(G,f.id,"bond",3);}},then:[{n:"kati",f:"happy",t:"พรุ่งนี้เราไปเอาเข็มขัดกันค่ะ!"}]}]}]},
  {id:"lover_final",look:"fight",when:G=>G.week>=48&&G.romance&&LOVER_FINAL[G.romance]&&G.bookings.some(b=>b.tier==="final"&&G.F[b.a].camp==="player"&&(b.a===G.romance||G.romance==="rin")),bg:"ring",
   steps:[{inject:G2=>{const b=G2.bookings.find(b=>b.tier==="final"&&G2.F[b.a].camp==="player"&&(b.a===G2.romance||G2.romance==="rin"));if(b)add(G2,b.a,"morale",8);return LOVER_FINAL[G2.romance]||[];}}]},
+ // v1.32 fame milestones: something visible happens when the camp's name grows
+ {id:"fame20",look:"casual",when:G=>G.rep>=20,bg:"camp",steps:[
+  {n:"nar",t:"หนังสือพิมพ์ประจำอำเภอวางอยู่บนโต๊ะหน้าค่าย หัวข่าวเล็ก ๆ: 'ค่ายมวยเก่าศิริชัย กลับมาหายใจอีกครั้ง'"},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${ME(G)}! เราอยู่หน้า 3 ข้าง ๆ โฆษณาปุ๋ยเลยค่ะ!`},
+  {n:"coach",t:"หน้า 3 ก็คือหน้า 3 คนอ่านเยอะกว่าที่คิดนะ"},
+  {inject:G=>{G.stu=Math.min(studentCap(G),(G.stu||1)+2);return [{n:"nar",t:"สัปดาห์นั้นมีผู้ปกครองพาเด็กมาสมัครเรียนเพิ่มสองคน"}];}}]},
+ {id:"fame36",look:"casual",when:G=>G.rep>=36,bg:"camp",steps:[
+  {n:"nar",t:"ทีมข่าวทีวีจังหวัดมาตั้งกล้องหน้าค่ายตั้งแต่เช้า ไฟสปอตไลต์ส่องจนแมวส้มหนีขึ้นหลังคา"},
+  {n:"nar",t:G=>`พิธีกรยื่นไมค์มาให้ "คุณ${ME(G)} ผู้จัดการรุ่นใหม่ของค่ายศิริชัย ฝากอะไรถึงแฟนมวยหน่อยครับ"`},
+  {choice:[{t:"ขอบคุณทุกคนที่ยังเชื่อในค่ายเล็ก ๆ ค่ายนี้",fx:G=>{G.rep+=1;roster(G).forEach(f=>f.morale=Math.min(100,f.morale+6));},then:[{n:"kati",f:"flustered",l:"casual",t:"…ผู้จัดการพูดดีจัง หนูเกือบร้องไห้ออกทีวีแล้ว"}]},
+   {t:"ใครอยากเจอค่ายศิริชัย มาเจอกันบนเวที!",fx:G=>{G.rep+=1.5;},then:[{n:"nar",t:"คลิปสัมภาษณ์ถูกแชร์ไปทั่วอำเภอ คอมเมนต์ครึ่งหนึ่งชม อีกครึ่งท้าชก"}]}]}]},
+ {id:"fame50",look:"casual",when:G=>G.rep>=50,bg:"camp",steps:[
+  {n:"nar",t:"รถตู้สีทองจอดหน้าค่าย ป้ายข้างรถเขียนว่า 'น้ำมันมวยตราช้างสามเศียร'"},
+  {n:"npc",who:"ผู้แทนบริษัท",t:G=>`คุณ${ME(G)} ครับ บริษัทอยากเป็นสปอนเซอร์ประจำค่าย สัปดาห์ละ 1,500 บาท ขอแค่ให้นักมวยทาน้ำมันมวยของเราตอนขึ้นชก`},
+  {n:"rin",f:"happy",l:"casual",t:"สัญญาดีค่ะ ฉันอ่านครบ 14 หน้าแล้ว ไม่มีข้อไหนแปลก ยกเว้นกลิ่นน้ำมัน"},
+  {inject:G=>{G.sponsorWk=1500;return [{n:"nar",t:"ค่ายได้สปอนเซอร์ประจำ ฿1,500 ทุกสัปดาห์"}];}}]},
+ {id:"fame60",look:"casual",when:G=>G.rep>=60,bg:"camp",steps:[
+  {n:"nar",t:"เช้าวันจันทร์ ป้ายไม้แกะสลักบานใหญ่มาถึง 'ค่ายมวยดีเด่นประจำจังหวัด' นายอำเภอมาตัดริบบิ้นเอง"},
+  {n:"coach",t:G=>`ปู่ชัยเคยฝันว่าจะได้ป้ายนี้ ${ME(G)} ทำให้ฝันนั้นเป็นจริงแล้ว`},
+  {n:"kati",f:"happy",l:"casual",t:"หนูจะเช็ดป้ายนี้ทุกเช้าเลยค่ะ! …ต่อจากเช็ดรูปปู่"},
+  {inject:G=>{roster(G).forEach(f=>{f.morale=Math.min(100,f.morale+10);f.trust=Math.min(100,(f.trust||0)+3);});G.camp.beauty=Math.min(10,(G.camp.beauty||0)+1);return [];}}]},
  {id:"ploy_prefinal",look:"fight",when:G=>G.week>=48&&G.bookings.some(b=>b.tier==="final"&&b.a==="kati"&&b.b==="ploy"),bg:"ring",steps:[
   {n:"nar",t:"ห้องพักนักมวยหลังเวทีจังหวัด กะทิกับพลอยเจอกันที่หน้ากระจกบานเดียวกัน"},
   {n:"ploy",f:"happy",l:"fight",t:"กะทิ ปีนี้เธอเปลี่ยนไปเยอะ… ฉันดูเทปเธอทุกไฟต์เลยรู้ไหม"},
@@ -409,7 +430,7 @@ const DILEMMAS=[
   {n:"nar",t:"\"ไฟต์หน้าให้นักมวยคุณแพ้ยกสาม ผมจ่ายสองหมื่น ไม่มีใครรู้\""},
   {choice:[{t:"ไล่ออกไปจากค่าย (ชื่อเสียง +1)",fx:G=>{G.rep+=1;roster(G).forEach(f=>add(G,f.id,"trust",5));},then:[{n:"coach",t:"ปู่ชัยเคยไล่คนแบบนี้ไปมาแล้วสามคน ครูดีใจที่เราเหมือนท่าน"}]},
    {t:"รับเงิน (+฿20,000 · ชื่อเสียง -4 · ความเชื่อใจลดหนัก)",fx:G=>{G.cash+=20000;G.rep=Math.max(0,G.rep-4);roster(G).forEach(f=>{add(G,f.id,"trust",-15);add(G,f.id,"morale",-10);});G.flags.tookBribe=true;},then:[{n:"kati",f:"sad",l:"fight",t:"…หนูได้ยินหมดแล้วนะคะ หนูไม่คิดเลยว่าค่ายของคุณปู่จะ…"}]}]}]},
- {id:"d_tv",from:14,to:42,need:G=>G.rep>=8,bg:"camp",look:"train",steps:[
+ {id:"d_tv",from:14,to:42,need:G=>G.rep>=14,bg:"camp",look:"train",steps:[
   {n:"nar",t:"ทีมงานรายการสารคดีท้องถิ่นโทรมา ขอมาถ่ายชีวิตในค่ายมวยหญิงสามวัน"},
   {choice:[{t:"ให้ถ่าย (ชื่อเสียง +1.5 · ทุกคนล้า +6)",fx:G=>{G.rep+=1.5;roster(G).forEach(f=>f.fatigue=Math.min(100,f.fatigue+6));},then:[{n:"kati",f:"flustered",l:"train",t:"ตะ… ต้องยิ้มให้กล้องด้วยเหรอคะ หนูยิ้มไม่เป็น!"}]},
    {t:"ปฏิเสธ อยากให้ซ้อมเงียบ ๆ",fx:G=>{roster(G).forEach(f=>f.morale=Math.min(100,f.morale+2));},then:[{n:"coach",t:"ก็ดี ค่อยให้เขามาถ่ายตอนเราเป็นแชมป์"}]}]}]},

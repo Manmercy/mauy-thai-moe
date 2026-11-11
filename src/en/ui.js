@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.31.0";
+const VERSION="1.32.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -228,7 +228,7 @@ function newsItems(){const N=[...(G.lvNews||[]).slice(0,1)],st=standings(G,"A").
 function weekTodo(){const R=roster(G),todo=[];if(R.some(f=>!f.injury&&!trLocked(f)))todo.push("Some training programs aren't confirmed yet");if(!G.campUsed)todo.push("No camp activity chosen yet");
   if(!G.freeUsed)todo.push("Free time with a fighter not used yet");if(G.offers.length&&!G.bookings.some(b=>G.F[b.a].camp==="player"))todo.push("No fights scheduled yet");return todo;}
 // v1.15: what reputation actually does, and what it unlocks next
-function repSteps(){const L=Object.values(CAMP_ACTIONS).filter(a=>a.rep&&!a.fac).map(a=>[a.rep,"Activity: "+a.name]);L.push([8,"Local TV asks to film the camp (event)"],[20,"Fight offers up to 3 per fighter"]);return L.sort((a,b)=>a[0]-b[0]);}
+function repSteps(){const L=Object.values(CAMP_ACTIONS).filter(a=>a.rep&&!a.fac).map(a=>[a.rep,"Activity: "+a.name]);L.push([14,"Local TV asks to film the camp (event)"],[20,"District paper covers the camp · more students"],[30,"Fight offers rise to 3 per fighter"],[36,"Provincial TV interviews the manager"],[50,"Regular sponsor ฿1,500/week"],[60,"Province's famous-camp sign"]);return L.sort((a,b)=>a[0]-b[0]);}
 function repInfoHTML(){const r=G.rep;
   return `<h2>Camp fame ${r.toFixed(1)}</h2><ul class="fp-list"><li>Higher fame brings more students (steady income)</li><li>Higher fight purses (up to +20%)</li><li>The camp looks better on the camp screen</li></ul>
    <h3>Earned from</h3><p class="meta">Winning fights (higher rounds give more) · camp activities · hosting fight nights · some events (bad choices can lower it)</p>
@@ -321,14 +321,14 @@ function fighterChip(f){const c=condition(f);const nb=G.bookings.find(b=>b.a===f
     <div class="minis"><span>Ready</span>${mini(c,condColor(c))}<span>Fatigue</span>${mini(f.fatigue,f.fatigue>=52?"var(--red)":"var(--warn)")}</div>
     <div class="meta">${nb?`Fight wk ${nb.week} vs ${esc(G.F[nb.b].name)}`:"No fight yet"}</div></div></button>`;}
 
-function projFatigue(f){const p=PRESETS[f.plan.preset],it=INTENSITY[f.plan.intensity];return clamp(f.fatigue+p.load*it.l*7-(10+G.fac.recovery*5+G.fac.kitchen*2)-(f.plan.preset==="rest"?22:0),0,100);}
+function projFatigue(f){return fatigueAfter(G,f,f.plan.preset,f.plan.intensity);}
 function attrsHTML(f,showGain){return `<div class="attrs">${ATTR_GROUPS.map(([g,ks])=>`<h4>${g}</h4>`+ks.map(k=>{const v=f.a[k],gn=f.gains&&f.gains[k];
   return `<div class="attr"><span>${ATTR_LABEL[k]}</span><i style="--v:${v/20*100}%"></i><b class="num">${v.toFixed(1)}${showGain&&gn>=.05?`<span class="up">+${gn.toFixed(1)}</span>`:""}</b></div>`;}).join("")).join("")}</div>`;}
 function presetPicker(f){return `<div class="tgrid">${Object.entries(PRESETS).map(([k,p])=>`<button data-act="preset" data-f="${f.id}" data-v="${k}" ${trLocked(f)?"disabled":""} aria-pressed="${f.plan.preset===k}" title="${p.desc}">${p.name}</button>`).join("")}</div>
   <div class="tgrid three" role="group" aria-label="Intensity">${Object.entries(INTENSITY).map(([k,i])=>`<button data-act="intensity" data-f="${f.id}" data-v="${k}" aria-pressed="${f.plan.intensity===k}">${i.name}</button>`).join("")}</div>`;}
 const AX_PRESET={"Punch":"punch","Kick":"kick","Knee-Elbow":"knee","Defense":"defense","Body":"cond","Mind":"defense"};
 // v1.14: advice follows the engine's real bonuses (prep in fight week, counter preset before it) and picks a safe intensity
-function projF(f,p,i){const P=PRESETS[p],I=INTENSITY[i];return clamp(f.fatigue+P.load*I.l*7-(10+G.fac.recovery*5+G.fac.kitchen*2)-(p==="rest"?22:0),0,100);}
+function projF(f,p,i){return fatigueAfter(G,f,p,i);}
 function safeInt(f,p,cap){for(const i of ["heavy","normal","light"])if(INTENSITY[i]&&projF(f,p,i)<=cap)return i;return "light";}
 function trainAdvice(f){const b=nextBooking(f);const wk=b?b.week-G.week:99;const op=b?G.F[b.b]:null;const W={punch:"Punch",kick:"Kick",knee:"Knee",elbow:"Elbow"};
   if(f.injury)return {p:"rest",i:"light",why:`Still injured for ${f.injury} weeks. Rest first`};
@@ -422,7 +422,8 @@ function fightsHTML(){
   return `<div class="seg subtabs"><button data-act="fsub" data-v="offers" aria-pressed="${sub==="offers"}">Offers & schedule</button><button data-act="fsub" data-v="rank" aria-pressed="${sub==="rank"}">Rankings</button></div>`+(sub==="rank"?rankHTML():offersHTML());}
 // v1.7 scouting: watch tape to see the opponent's tendencies (free when Rin is in the camp)
 // v1.21: tape is always a deliberate step again — Rin (or the analyst) just makes it free
-const SCOUT_COST=400;const rinIn=()=>G.F.rin.camp==="player";const scoutCost=()=>rinIn()||(G.staff||[]).includes("wit")?0:(G.fac.video||0)>=1?200:SCOUT_COST;
+const SCOUT_COST=400;const rinIn=()=>G.F.rin.camp==="player";const rinFree=()=>rinIn()&&G.rinTapeWk!==G.week; // v1.32: Rin studies one tape a week for free
+const scoutCost=()=>rinFree()||(G.staff||[]).includes("wit")?0:(G.fac.video||0)>=1?200:SCOUT_COST;
 const scoutLabel=()=>rinIn()?"Let Rin scout (free)":scoutCost()?`Scout ${fmt(scoutCost())}`:"Scout (free)";
 const scouted=id=>G.scout&&G.scout[id]!=null&&G.week-G.scout[id]<=8;
 function oppIntel(op){const a=op.a;const wp=[["Punch",a.punch],["Kick",a.kick],["Knee",a.knee],["Elbow",a.elbow]].sort((x,y)=>y[1]-x[1]);
@@ -852,7 +853,7 @@ function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
     if(U.stage==="done")mid+=resultHTML();
     mid+=`<details class="logd"><summary>Full fight log</summary><div class="flog">${U.shown.map(l=>l.rd?`<div class="rd">${l.rd}</div>`:`<div class="${l.s}">${esc(l.t||"")}</div>`).join("")}</div></details>`;}
   const tw=UI.confirmTowel?`<div class="tconfirm" role="alertdialog"><div class="px"><h3>🏳️ Throw in the towel?</h3><p>This fight counts as a loss immediately, but your fighter won't get hurt any worse</p><div class="ctrl"><button class="btn" data-act="towelno">Keep fighting</button><button class="btn primary" data-act="towelyes">Surrender</button></div></div></div>`:"";
-  return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":U.stage==="done"?"isdone":""}" data-sk="fight" role="dialog" aria-label="Fight"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b><span class="meta">${b.rounds} rounds</span></div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
+  return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":U.stage==="done"?"isdone":""}" data-sk="fight" role="dialog" aria-label="Fight"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b>${U.F&&U.F.round&&U.stage==="playing"?(()=>{const s=Math.max(0,Math.round(180*(1-Math.min(U.F.ex||0,EX_PER_ROUND)/EX_PER_ROUND)));return `<span class="meta">Rd ${U.F.round}/${b.rounds}</span><span class="rclock num">${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}</span><i class="rcbar" style="--v:${Math.round(s/1.8)}%"></i>`;})():`<span class="meta">${b.rounds} rds</span>`}</div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
 function liveStats(){const U=UI.fight,F=U.F;if(!F)return "";let la=0,lb=0;
   for(const e of U.shown){if(!e.ev)continue;const sd=sideOf(e,F);if(e.ev==="hit"||e.ev==="counter"){if(sd==="A")la++;else lb++;}}
   const ctl=la+lb?Math.round(la/(la+lb)*100):50;
@@ -894,7 +895,13 @@ function cornerRate(F){const A=F.A,B=F.B,fa=A.f.a,fb=B.f.a,left=F.rounds-F.round
   R.defend=tired?["g","Recover energy first, then push next round"]:ahead&&last?["g","Ahead in the last round, close it out"]:behind?["r","Behind, defending alone will surely lose"]:["y","Safe, but no more points"];
   R.none=behind&&last?["r","Behind, the current plan may not be enough"]:!behind&&!tired?["g","The current plan is still working"]:["y","Change nothing"];
   return R;}
-function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x+c[0]-c[1],0),left=F.rounds-F.round;const R=cornerRate(F);
+// v1.32: the coach also guesses a win chance per order; how close the guess is depends on his training level
+const ODDS_ERR=[0,14,8,3];
+function cornerPct(F){const U=UI.fight;U.odds=U.odds||{};if(!U.odds[F.round]){const o=typeof cornerOdds==="function"?cornerOdds(F):null;if(!o)return null;
+    const err=ODDS_ERR[G.fac.daeng||1]||14,r=mulberry32((F.seed||1)+F.round*101);U.odds[F.round]=Object.fromEntries(Object.entries(o).map(([k,v])=>[k,clamp(Math.round(v*100+(r()*2-1)*err),1,99)]));}
+  return U.odds[F.round];}
+function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x+c[0]-c[1],0),left=F.rounds-F.round;const R=cornerRate(F);const P=cornerPct(F),err=ODDS_ERR[G.fac.daeng||1]||14;
+  const first=!(G.flags&&G.flags.pctSeen);if(first){G.flags=G.flags||{};G.flags.pctSeen=true;}
   const read=diff>1?"Coach thinks we're ahead":diff<-1?"Coach thinks we're behind":"Coach thinks it's even";
   const W={punch:"Punch",kick:"Kick",knee:"Knee",elbow:"Elbow"};const top=o=>{const e=Object.entries(o).sort((x,y)=>y[1]-x[1])[0];return e&&e[1]?e:null;};const bt=top(B.wl),at=top(A.wl);const T=[];
   T.push(diff>1?`Listen, we scored well last round. ${left<=1?"One round left, think carefully whether the risk is worth it":"But don't relax yet"}`:diff<-1?`Deep breath… we're behind right now. ${left<=1?"Final round. If nothing changes, it ends like this":`Still ${left} rounds left, still time to turn it around`}`:"Still even, the judges aren't leaning either way");
@@ -902,8 +909,9 @@ function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x
   T.push(A.sta<40?`You're under half energy, ${Math.round(A.sta)}%. Coach can see the guard dropping`:B.sta<45?`Look at her, she's gasping, about ${Math.round(B.sta)}% energy left, but we still have ${Math.round(A.sta)}%`:at?`${W[at[0]]} is landing well for you, ${at[1]} times`:"Nothing is landing cleanly yet");
   return `<div class="fpop" role="dialog" aria-label="Coach's tip"><div class="fpop-in px"><div class="fp-h"><img src="${faceSrc("coach")}" alt=""><div><b>Coach Daeng</b><div class="meta">${read} · ${left} rounds left · energy ${Math.round(A.sta)}% / ${Math.round(B.sta)}%</div></div></div>
    <div class="ctalk">${T.map(t=>`<p>“${t}”</p>`).join("")}</div>
-   <div class="rate">${Object.entries(CORNER).map(([k,o])=>`<div class="rt ${R[k][0]}"><i></i><b>${o.name}</b><small>${R[k][1]}</small></div>`).join("")}</div>
-   <p class="meta">Green = good now · Yellow = okay · Red = not recommended</p>
+   ${first?`<p class="pctintro">The coach estimates how likely we are to win with each order. It's only a guess from experience; send him to training and he'll guess better.</p>`:""}
+   <div class="rate">${Object.entries(CORNER).map(([k,o])=>`<div class="rt ${R[k][0]}"><i></i><b>${o.name}</b>${P?`<span class="pct num">~${P[k]}%</span>`:""}<small>${R[k][1]}</small></div>`).join("")}</div>
+   <p class="meta">Green = good now · Yellow = okay · Red = not advised ${P?` · % = coach's estimated win chance (±${err}%${(G.fac.daeng||1)<3?" · Send the coach to training for better guesses":""})`:""}</p>
    <button class="btn primary" data-act="chint">Got it</button></div></div>`;}
 function roundReport(F){const A=F.A,B=F.B,c=F.cards[F.cards.length-1]||[10,10];const W={punch:"Punch",kick:"Kick",knee:"Knee",elbow:"Elbow"};
   const top=s=>{const e=Object.entries(s.rw||{}).sort((a,b)=>b[1]-a[1])[0];return e&&e[1]?`${W[e[0]]} ${e[1]} times`:"None";};
@@ -1125,7 +1133,7 @@ const ACT={
   fpok:d=>{const b=G.bookings.find(x=>x.id===d.id);if(b){b.plan=UI.fpDraft.plan;b.tac={...(b.tac||{}),target:UI.fpDraft.target};b.planSet=true;save();}UI.modal=null;render();},
   bplanb:d=>{const b=G.bookings.find(x=>x.id===d.id);if(!b)return;b.plan=d.v;save();render();},
   btgt:d=>{const b=G.bookings.find(x=>x.id===d.id);if(!b)return;b.tac={...(b.tac||{}),target:d.v};save();render();},ctac:d=>{UI.fight.F.A.tac[d.k]=d.v;render();},
-  scout:d=>{if(G.cash<scoutCost()||scouted(d.v))return;G.cash-=scoutCost();G.scout=G.scout||{};G.scout[d.v]=G.week;save();if(rinIn()){toast(`Rin scouted ${G.F[d.v].name}, and noted every weakness`);render();return;}toast("Tape scouted, Coach has noted the weak spots");render();},
+  scout:d=>{if(G.cash<scoutCost()||scouted(d.v))return;const free=rinFree();G.cash-=scoutCost();G.scout=G.scout||{};G.scout[d.v]=G.week;if(free)G.rinTapeWk=G.week;save();if(free){toast(`Rin scouted ${G.F[d.v].name} (1 tape per week)`);render();return;}toast("Tape scouted, Coach has noted the weak spots");render();},
   corner:d=>{AU.sfx("ui");UI.fight.F.A.instr=d.v;playRound();},
   chint:()=>{UI.fight.hint=!UI.fight.hint;render();},
   repinfo:()=>{UI.modal={type:"repinfo"};render();},

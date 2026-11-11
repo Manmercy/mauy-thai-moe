@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.31.0";
+const VERSION="1.32.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -228,7 +228,7 @@ function newsItems(){const N=[...(G.lvNews||[]).slice(0,1)],st=standings(G,"A").
 function weekTodo(){const R=roster(G),todo=[];if(R.some(f=>!f.injury&&!trLocked(f)))todo.push("ยังไม่ได้ยืนยันโปรแกรมฝึกบางคน");if(!G.campUsed)todo.push("ยังไม่ได้เลือกกิจกรรมค่าย");
   if(!G.freeUsed)todo.push("ยังไม่ได้ใช้เวลาว่างกับนักมวย");if(G.offers.length&&!G.bookings.some(b=>G.F[b.a].camp==="player"))todo.push("ยังไม่มีไฟต์ในตาราง");return todo;}
 // v1.15: what reputation actually does, and what it unlocks next
-function repSteps(){const L=Object.values(CAMP_ACTIONS).filter(a=>a.rep&&!a.fac).map(a=>[a.rep,"กิจกรรม: "+a.name]);L.push([8,"ทีวีท้องถิ่นขอมาถ่ายทำค่าย (เหตุการณ์)"],[20,"ข้อเสนอไฟต์เพิ่มเป็น 3 คู่ต่อคน"]);return L.sort((a,b)=>a[0]-b[0]);}
+function repSteps(){const L=Object.values(CAMP_ACTIONS).filter(a=>a.rep&&!a.fac).map(a=>[a.rep,"กิจกรรม: "+a.name]);L.push([14,"ทีวีท้องถิ่นขอมาถ่ายทำค่าย (เหตุการณ์)"],[20,"หนังสือพิมพ์อำเภอลงข่าวค่าย · นักเรียนเพิ่ม"],[30,"ข้อเสนอไฟต์เพิ่มเป็น 3 คู่ต่อคน"],[36,"ทีวีจังหวัดสัมภาษณ์ผู้จัดการ"],[50,"สปอนเซอร์ประจำ ฿1,500/สัปดาห์"],[60,"ป้ายค่ายมวยดังประจำจังหวัด"]);return L.sort((a,b)=>a[0]-b[0]);}
 function repInfoHTML(){const r=G.rep;
   return `<h2>ชื่อเสียงค่าย ${r.toFixed(1)}</h2><ul class="fp-list"><li>ยิ่งสูง คนมาเรียนยิ่งเยอะ (รายได้ประจำ)</li><li>ค่าตัวไฟต์สูงขึ้น (ถึง +20%)</li><li>ค่ายดูดีขึ้นในฉากหน้าค่าย</li></ul>
    <h3>ได้มาจาก</h3><p class="meta">ชนะไฟต์ (รอบสูงได้มาก) · กิจกรรมค่าย · จัดศึกที่ค่าย · บางเหตุการณ์ (ทางเลือกที่ไม่ดีทำให้ลดได้)</p>
@@ -321,14 +321,14 @@ function fighterChip(f){const c=condition(f);const nb=G.bookings.find(b=>b.a===f
     <div class="minis"><span>พร้อม</span>${mini(c,condColor(c))}<span>ล้า</span>${mini(f.fatigue,f.fatigue>=52?"var(--red)":"var(--warn)")}</div>
     <div class="meta">${nb?`ไฟต์ สด.${nb.week} vs ${esc(G.F[nb.b].name)}`:"ยังไม่มีไฟต์"}</div></div></button>`;}
 
-function projFatigue(f){const p=PRESETS[f.plan.preset],it=INTENSITY[f.plan.intensity];return clamp(f.fatigue+p.load*it.l*7-(10+G.fac.recovery*5+G.fac.kitchen*2)-(f.plan.preset==="rest"?22:0),0,100);}
+function projFatigue(f){return fatigueAfter(G,f,f.plan.preset,f.plan.intensity);}
 function attrsHTML(f,showGain){return `<div class="attrs">${ATTR_GROUPS.map(([g,ks])=>`<h4>${g}</h4>`+ks.map(k=>{const v=f.a[k],gn=f.gains&&f.gains[k];
   return `<div class="attr"><span>${ATTR_LABEL[k]}</span><i style="--v:${v/20*100}%"></i><b class="num">${v.toFixed(1)}${showGain&&gn>=.05?`<span class="up">+${gn.toFixed(1)}</span>`:""}</b></div>`;}).join("")).join("")}</div>`;}
 function presetPicker(f){return `<div class="tgrid">${Object.entries(PRESETS).map(([k,p])=>`<button data-act="preset" data-f="${f.id}" data-v="${k}" ${trLocked(f)?"disabled":""} aria-pressed="${f.plan.preset===k}" title="${p.desc}">${p.name}</button>`).join("")}</div>
   <div class="tgrid three" role="group" aria-label="ความหนัก">${Object.entries(INTENSITY).map(([k,i])=>`<button data-act="intensity" data-f="${f.id}" data-v="${k}" aria-pressed="${f.plan.intensity===k}">${i.name}</button>`).join("")}</div>`;}
 const AX_PRESET={"หมัด":"punch","เตะ":"kick","เข่า-ศอก":"knee","ป้องกัน":"defense","ร่างกาย":"cond","จิตใจ":"defense"};
 // v1.14: advice follows the engine's real bonuses (prep in fight week, counter preset before it) and picks a safe intensity
-function projF(f,p,i){const P=PRESETS[p],I=INTENSITY[i];return clamp(f.fatigue+P.load*I.l*7-(10+G.fac.recovery*5+G.fac.kitchen*2)-(p==="rest"?22:0),0,100);}
+function projF(f,p,i){return fatigueAfter(G,f,p,i);}
 function safeInt(f,p,cap){for(const i of ["heavy","normal","light"])if(INTENSITY[i]&&projF(f,p,i)<=cap)return i;return "light";}
 function trainAdvice(f){const b=nextBooking(f);const wk=b?b.week-G.week:99;const op=b?G.F[b.b]:null;const W={punch:"หมัด",kick:"เตะ",knee:"เข่า",elbow:"ศอก"};
   if(f.injury)return {p:"rest",i:"light",why:`ยังเจ็บอีก ${f.injury} สัปดาห์ พักก่อน`};
@@ -422,7 +422,8 @@ function fightsHTML(){
   return `<div class="seg subtabs"><button data-act="fsub" data-v="offers" aria-pressed="${sub==="offers"}">ข้อเสนอ & ตาราง</button><button data-act="fsub" data-v="rank" aria-pressed="${sub==="rank"}">อันดับ</button></div>`+(sub==="rank"?rankHTML():offersHTML());}
 // v1.7 scouting: watch tape to see the opponent's tendencies (free when Rin is in the camp)
 // v1.21: tape is always a deliberate step again — Rin (or the analyst) just makes it free
-const SCOUT_COST=400;const rinIn=()=>G.F.rin.camp==="player";const scoutCost=()=>rinIn()||(G.staff||[]).includes("wit")?0:(G.fac.video||0)>=1?200:SCOUT_COST;
+const SCOUT_COST=400;const rinIn=()=>G.F.rin.camp==="player";const rinFree=()=>rinIn()&&G.rinTapeWk!==G.week; // v1.32: Rin studies one tape a week for free
+const scoutCost=()=>rinFree()||(G.staff||[]).includes("wit")?0:(G.fac.video||0)>=1?200:SCOUT_COST;
 const scoutLabel=()=>rinIn()?"ให้รินดูเทป (ฟรี)":scoutCost()?`ดูเทป ${fmt(scoutCost())}`:"ดูเทป (ฟรี)";
 const scouted=id=>G.scout&&G.scout[id]!=null&&G.week-G.scout[id]<=8;
 function oppIntel(op){const a=op.a;const wp=[["หมัด",a.punch],["เตะ",a.kick],["เข่า",a.knee],["ศอก",a.elbow]].sort((x,y)=>y[1]-x[1]);
@@ -852,7 +853,7 @@ function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
     if(U.stage==="done")mid+=resultHTML();
     mid+=`<details class="logd"><summary>บันทึกการชกทั้งหมด</summary><div class="flog">${U.shown.map(l=>l.rd?`<div class="rd">${l.rd}</div>`:`<div class="${l.s}">${esc(l.t||"")}</div>`).join("")}</div></details>`;}
   const tw=UI.confirmTowel?`<div class="tconfirm" role="alertdialog"><div class="px"><h3>🏳️ โยนผ้ายอมแพ้?</h3><p>ไฟต์นี้จะนับเป็นแพ้ทันที แต่นักมวยจะไม่เจ็บหนักกว่านี้</p><div class="ctrl"><button class="btn" data-act="towelno">ชกต่อ</button><button class="btn primary" data-act="towelyes">ยอมแพ้</button></div></div></div>`:"";
-  return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":U.stage==="done"?"isdone":""}" data-sk="fight" role="dialog" aria-label="การชก"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b><span class="meta">${b.rounds} ยก</span></div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
+  return `${tw}${fpopHTML()}<div class="fight pxscroll ${U.stage==="corner"?"incorner":U.stage==="done"?"isdone":""}" data-sk="fight" role="dialog" aria-label="การชก"><div class="fight-in"><div class="fhead">${side(me,"a",hpA,stA)}<div class="vsmid"><b>${TIER[b.tier].name}</b>${U.F&&U.F.round&&U.stage==="playing"?(()=>{const s=Math.max(0,Math.round(180*(1-Math.min(U.F.ex||0,EX_PER_ROUND)/EX_PER_ROUND)));return `<span class="meta">ยก ${U.F.round}/${b.rounds}</span><span class="rclock num">${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}</span><i class="rcbar" style="--v:${Math.round(s/1.8)}%"></i>`;})():`<span class="meta">${b.rounds} ยก</span>`}</div>${side(op,"b",hpB,stB)}</div>${mid}</div></div>`;}
 function liveStats(){const U=UI.fight,F=U.F;if(!F)return "";let la=0,lb=0;
   for(const e of U.shown){if(!e.ev)continue;const sd=sideOf(e,F);if(e.ev==="hit"||e.ev==="counter"){if(sd==="A")la++;else lb++;}}
   const ctl=la+lb?Math.round(la/(la+lb)*100):50;
@@ -894,7 +895,13 @@ function cornerRate(F){const A=F.A,B=F.B,fa=A.f.a,fb=B.f.a,left=F.rounds-F.round
   R.defend=tired?["g","ฟื้นแรงก่อน ค่อยไปต่อยกหน้า"]:ahead&&last?["g","นำอยู่ ยกสุดท้าย เก็บให้จบ"]:behind?["r","ตามอยู่ ป้องกันอย่างเดียวแพ้แน่"]:["y","ปลอดภัย แต่แต้มไม่เพิ่ม"];
   R.none=behind&&last?["r","ตามอยู่ แผนเดิมอาจไม่พอ"]:!behind&&!tired?["g","แผนเดิมยังได้ผล"]:["y","ไม่เปลี่ยนอะไร"];
   return R;}
-function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x+c[0]-c[1],0),left=F.rounds-F.round;const R=cornerRate(F);
+// v1.32: the coach also guesses a win chance per order; how close the guess is depends on his training level
+const ODDS_ERR=[0,14,8,3];
+function cornerPct(F){const U=UI.fight;U.odds=U.odds||{};if(!U.odds[F.round]){const o=typeof cornerOdds==="function"?cornerOdds(F):null;if(!o)return null;
+    const err=ODDS_ERR[G.fac.daeng||1]||14,r=mulberry32((F.seed||1)+F.round*101);U.odds[F.round]=Object.fromEntries(Object.entries(o).map(([k,v])=>[k,clamp(Math.round(v*100+(r()*2-1)*err),1,99)]));}
+  return U.odds[F.round];}
+function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x+c[0]-c[1],0),left=F.rounds-F.round;const R=cornerRate(F);const P=cornerPct(F),err=ODDS_ERR[G.fac.daeng||1]||14;
+  const first=!(G.flags&&G.flags.pctSeen);if(first){G.flags=G.flags||{};G.flags.pctSeen=true;}
   const read=diff>1?"ครูว่าเรานำอยู่":diff<-1?"ครูว่าเราตามอยู่":"ครูว่ายังสูสี";
   const W={punch:"หมัด",kick:"เตะ",knee:"เข่า",elbow:"ศอก"};const top=o=>{const e=Object.entries(o).sort((x,y)=>y[1]-x[1])[0];return e&&e[1]?e:null;};const bt=top(B.wl),at=top(A.wl);const T=[];
   T.push(diff>1?`ฟังนะ ยกที่ผ่านมาเราเก็บคะแนนได้ดี ${left<=1?"เหลือยกเดียวแล้ว คิดดี ๆ ว่าคุ้มจะเสี่ยงไหม":"แต่อย่าเพิ่งวางใจ"}`:diff<-1?`หายใจลึก ๆ… ตอนนี้เราเป็นรอง ${left<=1?"ยกสุดท้ายแล้ว ถ้าไม่เปลี่ยนอะไรก็จบแบบนี้":`ยังเหลือ ${left} ยก ยังพลิกได้`}`:"ยังสูสีอยู่ กรรมการยังไม่เอียงไปทางไหน");
@@ -902,8 +909,9 @@ function cornerThinkHTML(F){const A=F.A,B=F.B;const diff=F.cards.reduce((x,c)=>x
   T.push(A.sta<40?`แรงเธอเหลือไม่ถึงครึ่ง ${Math.round(A.sta)}% ครูเห็นการ์ดเริ่มตกแล้ว`:B.sta<45?`ดูเขาสิ หอบแล้ว แรงเหลือราว ${Math.round(B.sta)}% แต่เรายังมี ${Math.round(A.sta)}%`:at?`${W[at[0]]}ของเธอเข้าเป้าดี ${at[1]} ครั้ง`:"ยังไม่มีอาวุธไหนเข้าเป้าชัด ๆ");
   return `<div class="fpop" role="dialog" aria-label="คำแนะนำครู"><div class="fpop-in px"><div class="fp-h"><img src="${faceSrc("coach")}" alt=""><div><b>ครูแดง</b><div class="meta">${read} · เหลือ ${left} ยก · แรง ${Math.round(A.sta)}% / ${Math.round(B.sta)}%</div></div></div>
    <div class="ctalk">${T.map(t=>`<p>“${t}”</p>`).join("")}</div>
-   <div class="rate">${Object.entries(CORNER).map(([k,o])=>`<div class="rt ${R[k][0]}"><i></i><b>${o.name}</b><small>${R[k][1]}</small></div>`).join("")}</div>
-   <p class="meta">เขียว = เหมาะตอนนี้ · เหลือง = พอได้ · แดง = ไม่แนะนำ</p>
+   ${first?`<p class="pctintro">ครูลองคิดล่วงหน้าว่าถ้าสั่งแต่ละแบบ เราน่าจะชนะกี่เปอร์เซ็นต์ เป็นแค่การเดาจากประสบการณ์ ส่งครูไปอบรมแล้วจะเดาแม่นขึ้น</p>`:""}
+   <div class="rate">${Object.entries(CORNER).map(([k,o])=>`<div class="rt ${R[k][0]}"><i></i><b>${o.name}</b>${P?`<span class="pct num">~${P[k]}%</span>`:""}<small>${R[k][1]}</small></div>`).join("")}</div>
+   <p class="meta">เขียว = เหมาะตอนนี้ · เหลือง = พอได้ · แดง = ไม่แนะนำ${P?` · % = โอกาสชนะที่ครูประเมิน (คลาดเคลื่อน ±${err}%${(G.fac.daeng||1)<3?" · ส่งครูอบรมให้แม่นขึ้น":""})`:""}</p>
    <button class="btn primary" data-act="chint">เข้าใจแล้ว</button></div></div>`;}
 function roundReport(F){const A=F.A,B=F.B,c=F.cards[F.cards.length-1]||[10,10];const W={punch:"หมัด",kick:"เตะ",knee:"เข่า",elbow:"ศอก"};
   const top=s=>{const e=Object.entries(s.rw||{}).sort((a,b)=>b[1]-a[1])[0];return e&&e[1]?`${W[e[0]]} ${e[1]} ครั้ง`:"ไม่มี";};
@@ -1125,7 +1133,7 @@ const ACT={
   fpok:d=>{const b=G.bookings.find(x=>x.id===d.id);if(b){b.plan=UI.fpDraft.plan;b.tac={...(b.tac||{}),target:UI.fpDraft.target};b.planSet=true;save();}UI.modal=null;render();},
   bplanb:d=>{const b=G.bookings.find(x=>x.id===d.id);if(!b)return;b.plan=d.v;save();render();},
   btgt:d=>{const b=G.bookings.find(x=>x.id===d.id);if(!b)return;b.tac={...(b.tac||{}),target:d.v};save();render();},ctac:d=>{UI.fight.F.A.tac[d.k]=d.v;render();},
-  scout:d=>{if(G.cash<scoutCost()||scouted(d.v))return;G.cash-=scoutCost();G.scout=G.scout||{};G.scout[d.v]=G.week;save();if(rinIn()){toast(`รินดูเทป${G.F[d.v].name}แล้ว จดจุดอ่อนไว้ให้ครบ`);render();return;}toast("ดูเทปคู่ชกแล้ว ครูจดจุดอ่อนไว้ให้");render();},
+  scout:d=>{if(G.cash<scoutCost()||scouted(d.v))return;const free=rinFree();G.cash-=scoutCost();G.scout=G.scout||{};G.scout[d.v]=G.week;if(free)G.rinTapeWk=G.week;save();if(free){toast(`รินดูเทป${G.F[d.v].name}แล้ว (สัปดาห์ละ 1 เทป)`);render();return;}toast("ดูเทปคู่ชกแล้ว ครูจดจุดอ่อนไว้ให้");render();},
   corner:d=>{AU.sfx("ui");UI.fight.F.A.instr=d.v;playRound();},
   chint:()=>{UI.fight.hint=!UI.fight.hint;render();},
   repinfo:()=>{UI.modal={type:"repinfo"};render();},

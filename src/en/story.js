@@ -212,6 +212,27 @@ const EVENTS=[
   {choice:[{t:"Thank you for waiting here for me, training",fx:G=>{for(const f of roster(G)){add(G,f.id,"morale",10);add(G,f.id,"bond",3);}},then:[{n:"kati",f:"happy",t:"Tomorrow we go get that belt!"}]}]}]},
  {id:"lover_final",look:"fight",when:G=>G.week>=48&&G.romance&&LOVER_FINAL[G.romance]&&G.bookings.some(b=>b.tier==="final"&&G.F[b.a].camp==="player"&&(b.a===G.romance||G.romance==="rin")),bg:"ring",
   steps:[{inject:G2=>{const b=G2.bookings.find(b=>b.tier==="final"&&G2.F[b.a].camp==="player"&&(b.a===G2.romance||G2.romance==="rin"));if(b)add(G2,b.a,"morale",8);return LOVER_FINAL[G2.romance]||[];}}]},
+ // v1.32 fame milestones: something visible happens when the camp's name grows
+ {id:"fame20",look:"casual",when:G=>G.rep>=20,bg:"camp",steps:[
+  {n:"nar",t:"The district paper is on the camp table. A small headline: 'Old Sirichai Camp Breathes Again'"},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${ME(G)}! We're on page 3, right next to the fertilizer ad!`},
+  {n:"coach",t:"Page three is still page three. More people read it than you'd think"},
+  {inject:G=>{G.stu=Math.min(studentCap(G),(G.stu||1)+2);return [{n:"nar",t:"That week, parents bring two more kids to sign up"}];}}]},
+ {id:"fame36",look:"casual",when:G=>G.rep>=36,bg:"camp",steps:[
+  {n:"nar",t:"A provincial TV crew sets up outside the camp at dawn. The lights are so bright the orange cat flees to the roof"},
+  {n:"nar",t:G=>`The host holds out the mic: "${ME(G)}, the new manager of Sirichai Camp, any message for the fight fans?"`},
+  {choice:[{t:"Thank you to everyone who still believes in this little camp",fx:G=>{G.rep+=1;roster(G).forEach(f=>f.morale=Math.min(100,f.morale+6));},then:[{n:"kati",f:"flustered",l:"casual",t:"…That was beautiful. I almost cried on live TV"}]},
+   {t:"Anyone who wants Sirichai, see you in the ring!",fx:G=>{G.rep+=1.5;},then:[{n:"nar",t:"The clip spreads across the district. Half the comments praise you, the other half want a fight"}]}]}]},
+ {id:"fame50",look:"casual",when:G=>G.rep>=50,bg:"camp",steps:[
+  {n:"nar",t:"A gold van parks outside. The side reads 'Three-Headed Elephant Muay Oil'"},
+  {n:"npc",who:"Company rep",t:G=>`${ME(G)}, our company would like to be the camp's regular sponsor, 1,500 baht a week. All we ask is that your fighters use our boxing liniment before they fight`},
+  {n:"rin",f:"happy",l:"casual",t:"The contract is good. I read all 14 pages. Nothing odd, except the smell of the oil"},
+  {inject:G=>{G.sponsorWk=1500;return [{n:"nar",t:"The camp gains a regular sponsor: ฿1,500 every week"}];}}]},
+ {id:"fame60",look:"casual",when:G=>G.rep>=60,bg:"camp",steps:[
+  {n:"nar",t:"Monday morning, a big carved sign arrives: 'Outstanding Muay Thai Camp of the Province'. The district chief cuts the ribbon himself"},
+  {n:"coach",t:G=>`Grandpa Chai always dreamed of this sign. ${ME(G)} made that dream come true`},
+  {n:"kati",f:"happy",l:"casual",t:"I'll polish this sign every morning! …Right after Grandpa's photo"},
+  {inject:G=>{roster(G).forEach(f=>{f.morale=Math.min(100,f.morale+10);f.trust=Math.min(100,(f.trust||0)+3);});G.camp.beauty=Math.min(10,(G.camp.beauty||0)+1);return [];}}]},
  {id:"ploy_prefinal",look:"fight",when:G=>G.week>=48&&G.bookings.some(b=>b.tier==="final"&&b.a==="kati"&&b.b==="ploy"),bg:"ring",steps:[
   {n:"nar",t:"In the fighters' room behind the provincial ring, Kati and Ploy meet at the same mirror"},
   {n:"ploy",f:"happy",l:"fight",t:"Kati, you've changed a lot this year… I watched the tape of every one of your fights, you know"},
@@ -409,7 +430,7 @@ const DILEMMAS=[
   {n:"nar",t:"\"Have your fighter lose in round three next fight. I'll pay twenty thousand. Nobody will know\""},
   {choice:[{t:"Throw him out of the camp (fame +1)",fx:G=>{G.rep+=1;roster(G).forEach(f=>add(G,f.id,"trust",5));},then:[{n:"coach",t:"Grandpa Chai threw out three men like that. I'm glad we're like him"}]},
    {t:"Take the money (+฿20,000 · fame −4 · trust drops hard)",fx:G=>{G.cash+=20000;G.rep=Math.max(0,G.rep-4);roster(G).forEach(f=>{add(G,f.id,"trust",-15);add(G,f.id,"morale",-10);});G.flags.tookBribe=true;},then:[{n:"kati",f:"sad",l:"fight",t:"…I heard everything. I never thought Grandpa's camp would…"}]}]}]},
- {id:"d_tv",from:14,to:42,need:G=>G.rep>=8,bg:"camp",look:"train",steps:[
+ {id:"d_tv",from:14,to:42,need:G=>G.rep>=14,bg:"camp",look:"train",steps:[
   {n:"nar",t:"A local documentary crew calls, asking to film three days of life in a women's Muay Thai camp"},
   {choice:[{t:"Let them film (fame +1.5 · everyone fatigue +6)",fx:G=>{G.rep+=1.5;roster(G).forEach(f=>f.fatigue=Math.min(100,f.fatigue+6));},then:[{n:"kati",f:"flustered",l:"train",t:"D-do I have to smile at the camera? I don't know how to smile!"}]},
    {t:"Decline, let us train in peace",fx:G=>{roster(G).forEach(f=>f.morale=Math.min(100,f.morale+2));},then:[{n:"coach",t:"Fine. Let them film when we're champions"}]}]}]},

@@ -155,6 +155,13 @@ const PRESETS={
 };
 const INTENSITY={light:{name:"Light",g:.6,l:.6},normal:{name:"Normal",g:1,l:1},heavy:{name:"Hard",g:1.4,l:1.5}};
 
+// v1.32: one formula for "fatigue after this week", used by both the engine and the UI (training card, coach advice)
+function fatigueAfter(G,f,preset,intensity){const fx=G.fac,clin=fx.clinic||0,hill=fx.hill||0,st=G.staff||[];let v=f.fatigue;
+  if(st.includes("jan"))v-=4;if(fx.sauna)v-=3*fx.sauna;v=clamp(v,0,100);
+  if(f.injury>0)return clamp(v-15-fx.recovery*5-fx.kitchen*2-clin*3,0,100);
+  const p=PRESETS[preset],it=INTENSITY[intensity]||INTENSITY.normal;let load=p.load*it.l*7*(preset==="cond"?1-hill*.08-(st.includes("tong")?.1:0):1);
+  {const pm=passiveMods(f);load*=clamp(1-pm.fatAll-(preset==="kick"?pm.fatKick:0),.4,1);}
+  return clamp(v+load-(10+fx.recovery*5+fx.kitchen*2+clin*3)-(preset==="rest"?22:0),0,100);}
 function trainWeek(G,f,rng){
   const p=PRESETS[f.plan.preset],it=INTENSITY[f.plan.intensity];f.gains={};
   f.xpGain=0;
@@ -325,13 +332,19 @@ function fightEx(F){const rng=F.rng,log=[],ex=F.ex,mA=F.mA,mB=F.mB;
       const crit=rng()<(at.rage?.35:.07);const q=crit?1.6:.6+rng()*.6;if(at.rage)at.rage--;
       let dmg=1.35*W_INFO[wpn].imp*q*(.6+a.power/25)*(1-d.guard/70)*(1.25-d.dur/40)*(1+(at.sk.dmg[wpn]||0))*(bA&&bA.w===wpn?1+.3*bA.pw:1);const tg=at.tac.target;
       if(tg==="head")dmg*=1.1;if(tg==="body"){dmg*=.9;df.sta=clamp(df.sta-dmg*.9,0,100);}if(tg==="legs"&&(wpn==="kick"||wpn==="knee")){dmg*=.85;df.legs=Math.min(60,df.legs+dmg*.8);}
+      // v1.32 "flash knockout": a clean crit to the head can drop anyone early — rarer for durable/guarded fighters, likelier when the attacker clearly outclasses
+      if(crit&&tg!=="body"&&(wpn!=="punch"||a.power>=10)&&rng()<clamp(.16+(ovr(a)-ovr(d))*.06-(d.dur-8)*.012,.05,.4)){dmg+=10+rng()*8;at.flash=1;}
       at.rw[wpn]++;at.rdmg+=dmg;at.rlanded++;
       df.hp-=dmg;at.landed++;at.wl[wpn]++;at.dmgDealt+=dmg;const p=W_INFO[wpn].pts*q*(1+(at.sk.pts[wpn]||0));at.pts+=p;at.rpts+=p;
       log.push({ha:F.A.hp,hb:F.B.hp,sa:F.A.sta,sb:F.B.sta,s:at===F.A?"A":"B",t:`${at.name} ${tx}${crit?" — clean hit!":""}`,k:crit?"big":"hit",ev:"hit",w:wpn,cl:clinch,crit,an:at.name,dn:df.name});
       if(wpn==="elbow"&&q>1.3&&rng()<.25){df.cuts++;log.push({ha:F.A.hp,hb:F.B.hp,sa:F.A.sta,sb:F.B.sta,s:"x",t:`${df.name} is cut by an elbow, bleeding over the eyebrow`,k:"warn",ev:"cut",an:at.name,dn:df.name});
         if(df.cuts>=2&&rng()<.5){F.over=true;F.result={win:at===F.A?"A":"B",type:"TKO (doctor stoppage)",round:F.round};}}
-      if(!F.over&&df.hp<=0){F.over=true;F.result={win:at===F.A?"A":"B",type:rng()<.5?"KO":"TKO",round:F.round};
+      if(!F.over&&df.hp<=0){at.flash=0;F.over=true;F.result={win:at===F.A?"A":"B",type:rng()<.5?"KO":"TKO",round:F.round};
         log.push({ha:F.A.hp,hb:F.B.hp,sa:F.A.sta,sb:F.B.sta,s:at===F.A?"A":"B",t:`${df.name} goes down and can't get up! The referee waves it off`,k:"big",ev:"ko",an:at.name,dn:df.name});}
+      else if(!F.over&&at.flash){at.flash=0;df.kd++;at.pts+=3;at.rpts+=3;
+        if(df.hp<62||df.kd>=2||rng()<.18){F.over=true;F.result={win:at===F.A?"A":"B",type:"KO",round:F.round};
+          log.push({ha:F.A.hp,hb:F.B.hp,sa:F.A.sta,sb:F.B.sta,s:at===F.A?"A":"B",t:`${df.name} drops instantly! The referee counts to ten, knockout in round ${F.round}!`,k:"big",ev:"ko",an:at.name,dn:df.name});}
+        else log.push({ha:F.A.hp,hb:F.B.hp,sa:F.A.sta,sb:F.B.sta,s:at===F.A?"A":"B",t:`${df.name} goes down! Back up before the count of ten`,k:"big",ev:"kd",an:at.name,dn:df.name});}
       else if(!F.over&&df.hp<40&&dmg>6&&rng()<.35){df.kd++;df.hp+=8;at.pts+=3;at.rpts+=3;
         log.push({ha:F.A.hp,hb:F.B.hp,sa:F.A.sta,sb:F.B.sta,s:at===F.A?"A":"B",t:`${df.name} goes down! The referee starts the count… back on her feet`,k:"big",ev:"kd",an:at.name,dn:df.name});
         if(df.kd>=3){F.over=true;F.result={win:at===F.A?"A":"B",type:"TKO (3 knockdowns)",round:F.round};}}
@@ -386,7 +399,7 @@ function newGame(opts){
   for(const f of Object.values(G.F))if(f.camp!=="player"&&f.camp!=="free")G.rank[f.div][f.id]={pts:0,w:0,l:0,d:0};
   G.rank.A.kati={pts:0,w:0,l:0,d:0};
   // v1.22 difficulty also moves where the two stars start
-  {const d=G.diff;for(const id of ["ploy","fah"]){const adj=(d==="easy"?-.7:d==="hard"?.35:0)+(id==="ploy"?-.8:-.35);/* v1.23: stars start lower, grow when beaten */const f=G.F[id];if(!f)continue;for(const [k] of ATTRS)f.a[k]=clamp(f.a[k]+adj,1,20);f.potential+=adj*.8;}}
+  {const d=G.diff;for(const id of ["ploy","fah"]){const adj=(d==="easy"?-.7:d==="hard"?.35:0)+(id==="ploy"?-.8:-.8);/* v1.23: stars start lower, grow when beaten */const f=G.F[id];if(!f)continue;for(const [k] of ATTRS)f.a[k]=clamp(f.a[k]+adj,1,20);f.potential+=adj*.8;}}
   return G;
 }
 const roster=G=>Object.values(G.F).filter(f=>f.camp==="player");
@@ -453,11 +466,11 @@ const CAMP_ACTIONS={
   repair:{name:"Fix up the camp together",desc:"Camp looks better, morale +3",cost:1500},
   merit:{name:"Morning alms offering",desc:"Everyone's morale +5, trust +1",cost:300},
   // v1.13: more activities unlock as the camp's name grows
-  clip:{name:"Post training clips on social",desc:"Fame +0.9 · fatigue +3",cost:500,rep:8},
-  spar:{name:"In-camp sparring night",desc:"Everyone EXP +25 · fatigue +8",cost:0,rep:12},
-  ladies:{name:"Women's Muay Thai fitness class",desc:"+฿2,500 · fatigue +5",cost:0,rep:16},
-  massage:{name:"Invite a Thai masseuse to camp",desc:"Fatigue −12 · morale +3",cost:2500,rep:20},
-  media:{name:"Host a press feature",desc:"Fame +2 · morale +4",cost:0,rep:28},
+  clip:{name:"Post training clips on social",desc:"Fame +0.9 · fatigue +3",cost:500,rep:10},
+  spar:{name:"In-camp sparring night",desc:"Everyone EXP +25 · fatigue +8",cost:0,rep:16},
+  ladies:{name:"Women's Muay Thai fitness class",desc:"+฿2,500 · fatigue +5",cost:0,rep:24},
+  massage:{name:"Invite a Thai masseuse to camp",desc:"Fatigue −12 · morale +3",cost:2500,rep:32},
+  media:{name:"Host a press feature",desc:"Fame +2 · morale +4",cost:0,rep:44},
   // v1.21: building the camp opens more things to do
   kids:{name:"Kids' Muay Thai class",desc:"+฿1,800 · fame +0.4 · fatigue +3",cost:0,fac:["classroom",2]},
   stall:{name:"Khanom khrok stall at the market",desc:"+฿1,500 · fame +0.3 · morale +2",cost:300,fac:["kitchen",1]},
@@ -490,6 +503,15 @@ function doCampAction(G,k){const A=CAMP_ACTIONS[k];if(!A||G.campUsed||G.cash<A.c
   if(k==="waikhru"){G.rep+=1;R.forEach(f=>{f.morale=clamp(f.morale+8,0,100);f.trust=clamp(f.trust+2,0,100);});note="A powerful wai khru ceremony, everyone's fired up";}
   return note;}
 // advisor: estimate win chance per plan
+// v1.32 corner odds: replay the rest of the fight from this break with each order, many times — the coach's "win chance" estimate
+function cloneFight(F,seed){const side=s=>{const f=s.f;const c=structuredClone({...s,f:null});c.f=f;return c;};
+  return {...F,rng:mulberry32(seed),A:side(F.A),B:side(F.B),cards:F.cards.map(c=>c.slice()),logs:[],rlog:[],result:null,kd0:F.kd0?{...F.kd0}:F.kd0};}
+function cornerOdds(F,n=14){const out={};for(const k of Object.keys(CORNER)){let w=0;
+    for(let i=0;i<n;i++){let C;try{C=cloneFight(F,(F.seed||1)*31+F.round*977+i*13);}catch(e){return null;}
+      C.A.instr=k;C.B.instr=aiCorner(C,C.B,C.A);let first=true;
+      while(!C.over){if(!first){C.A.instr=aiCorner(C,C.A,C.B);C.B.instr=aiCorner(C,C.B,C.A);}first=false;fightRound(C);}
+      if(C.result.win==="A")w++;else if(C.result.win==="D")w+=.5;}
+    out[k]=w/n;}return out;}
 function advise(G,a,b,rounds,n=40){const fa=G.F[a],fb=G.F[b];const res={};
   for(const plan of Object.keys(PLANS)){let w=0;for(let i=0;i<n;i++){const F=newFight(fa,fb,{seed:9001+i*7,rounds,planA:plan});
     while(!F.over){F.A.instr=aiCorner(F,F.A,F.B);F.B.instr=aiCorner(F,F.B,F.A);fightRound(F);}if(F.result.win==="A")w++;else if(F.result.win==="D")w+=.5;}res[plan]=w/n;}
@@ -502,33 +524,33 @@ function eligible(G,f){const st=stageOf(G.week);
 function isBooked(G,id,week){return G.bookings.some(b=>(b.a===id||b.b===id)&&(week==null||b.week===week));}
 
 const CROSS_OF={kati:"fah",mali:"ploy",rin:"fah"},SPECIAL_WEEKS=[8,13,18,23,28,33,38,42];
-const RIVAL_OF={kati:"ploy",mali:"fah"},RIVAL_WEEKS=[25,29,33,36];
+const RIVAL_OF={kati:"ploy",mali:"fah"},RIVAL_WEEKS=[25,29,33,36],RIVAL_EARLY={mali:[7,12,17,21]};
 // v1.21: promoters keep calling even when a fight is booked (further out), more calls with fame,
 // and each batch mixes an easier bout, an even one and (with fame) a step up — a real challenge curve
 const OFFER_BANDS=[-.7,.45,1.4,.9];
 function genOffers(G){
   const rng=mulberry32(G.seed+G.week*7919+11);G.snub=G.snub||{};for(const o of G.offers||[])if(!o.beast)G.snub[o.b]=(G.snub[o.b]||0)+1;G.offers=[];const st=stageOf(G.week);
-  const stageEnd=st==="local"?20:st==="district"?40:0;const nOff=2+(G.rep>=12?1:0)+(G.rep>=25?1:0);
+  const stageEnd=st==="local"?20:st==="district"?40:0;const nOff=G.week<=8?1:(2+(G.rep>=30?1:0)); // v1.32: one offer per fighter early, a third only once the camp is famous
   for(const f of roster(G)){
     if(f.injury>0)continue;
     const ranked=(st==="local"||st==="district")&&eligible(G,f);
     const myB=G.bookings.filter(b=>b.a===f.id).map(b=>b.week);
     const weeks=[];for(let wk=G.week+2;wk<=Math.min(48,G.week+5);wk++)if(!myB.some(x=>Math.abs(x-wk)<=1))weeks.push(wk);
     if(!weeks.length)continue;
-    const n=myB.length?Math.max(1,nOff-2):nOff;const used=new Set(G.bookings.filter(b=>b.a===f.id).map(b=>b.b));
+    const n=myB.length?1:nOff;const used=new Set(G.bookings.filter(b=>b.a===f.id).map(b=>b.b));
     for(let i=0;i<n;i++){
       const wk=myB.length?weeks[weeks.length-1-(i%weeks.length)]:weeks[Math.min(i*2,weeks.length-1)-(i===3&&weeks.length>2?1:0)];
       const tier=ranked&&wk<=stageEnd?st:"exhibition";
       const pool=Object.values(G.F).filter(o=>o.div===f.div&&o.camp!=="player"&&o.camp!=="free"&&o.injury===0&&!used.has(o.id)&&!isBooked(G,o.id,wk)&&(tier==="exhibition"||eligible(G,o)));
       if(!pool.length)continue;
-      const c=OFFER_BANDS[i%OFFER_BANDS.length]+(i>=3?(rng()-.5)*1.6:0);
+      const c=(G.week<=14?[.4,.8,.5][i%3]:OFFER_BANDS[i%OFFER_BANDS.length])+(i>=3?(rng()-.5)*1.6:0); // early weeks: even fights, losses happen
       const o=pickW(rng,pool.map(x=>{const d=ovr(x.a)-ovr(f.a)+((x.lvl||1)-(f.lvl||1))*.15;return [x,Math.exp(-((d-c)**2)/(2*.45*.45))+.01];}));used.add(o.id);
       // v1.15: purse = fee (paid win or lose) + win bonus; a better opponent, a crowd-drawing name or our own fame raise it
       const mult=clamp(1+(ovr(o.a)-ovr(f.a))*.12,.7,1.6)*(o.canon?1.35:1)*(1+(f.lvl-1)*.04)*(1+Math.min(G.rep,40)/200);
       G.offers.push({id:`o${G.week}_${f.id}_${i}`,a:f.id,b:o.id,week:wk,tier,win:Math.round(TIER[tier].win*mult/100)*100,lose:Math.round(TIER[tier].lose*mult/100)*100});
     }
     // v1.26: every 3 weeks a promoter offers a clearly stronger opponent for a bigger purse
-    if(G.week>=6&&G.week<=42&&G.week%3===0){const wk=weeks[weeks.length-1],tier=ranked&&wk<=stageEnd?st:"exhibition";
+    if(G.week>=9&&G.week<=42&&G.week%3===0){const wk=weeks[weeks.length-1],tier=ranked&&wk<=stageEnd?st:"exhibition";
       const hp=Object.values(G.F).filter(o=>o.div===f.div&&o.camp!=="player"&&o.camp!=="free"&&!o.canon&&o.injury===0&&!used.has(o.id)&&!isBooked(G,o.id,wk)&&(tier==="exhibition"||eligible(G,o)))
         .map(o=>[o,ovr(o.a)-ovr(f.a)+((o.lvl||1)-(f.lvl||1))*.15]).filter(x=>x[1]>=.8&&x[1]<=2.1).sort((a,b)=>Math.abs(a[1]-1.4)-Math.abs(b[1]-1.4));
       if(hp.length){const o=hp[0][0];used.add(o.id);const mult=1.5*clamp(1+(ovr(o.a)-ovr(f.a))*.12,.7,1.6)*(1+(f.lvl-1)*.04)*(1+Math.min(G.rep,40)/200);
@@ -537,7 +559,7 @@ function genOffers(G){
     const X=CROSS_OF[f.id];if(X&&SPECIAL_WEEKS.includes(G.week)){const o=G.F[X],wk=G.week+3;
       if(o&&o.camp==="rival"&&!o.injury&&!isBooked(G,o.id,wk)&&!myB.some(x=>Math.abs(x-wk)<=1)&&wk<=47)G.offers.push({id:`o${G.week}_${f.id}_sp`,a:f.id,b:o.id,week:wk,tier:"special",win:TIER.special.win,lose:TIER.special.lose});}
     // v1.23: grudge match — in the district round the promoter keeps asking for the rivalry everyone wants to see
-    const RV=RIVAL_OF[f.id];if(RV&&RIVAL_WEEKS.includes(G.week)){const o=G.F[RV],wk=G.week+3;
+    const RV=RIVAL_OF[f.id];if(RV&&(RIVAL_WEEKS.includes(G.week)||(RIVAL_EARLY[f.id]||[]).includes(G.week))){const o=G.F[RV],wk=G.week+3;
       if(o&&o.camp==="rival"&&!o.injury&&!isBooked(G,o.id,wk)&&!myB.some(x=>Math.abs(x-wk)<=1)&&!G.offers.some(x=>x.b===RV&&x.a===f.id)){const tier=eligible(G,f)&&eligible(G,o)&&wk<=40?"district":"special";
         G.offers.push({id:`o${G.week}_${f.id}_rv`,a:f.id,b:o.id,week:wk,tier,rv:1,win:Math.round(TIER[tier].win*1.6/100)*100,lose:Math.round(TIER[tier].lose*1.4/100)*100});}}
   }
@@ -641,7 +663,7 @@ function weekTrain(G){
     if(f.injury>0){f.injury--;}f.fatigue=clamp(f.fatigue-8,0,100);
     // v1.23: the two stars coast until someone beats them — a loss lights a fire (surge) that carries them to the final
     const sg=f.surge>0?(f.surge--,f.id==="ploy"?.16:.13):0;
-    npcGrow(f,rng,(f.canon&&f.camp==="rival"?dif(G).rival:1)*(f.id==="ploy"?(G.week>40?.07:G.week>30?.022:.012)+sg:f.id==="fah"?(G.week>40?.07:G.week>30?.03:.026)+sg:f.camp==="rival"?.035:f.camp==="free"?.025:.02));f.morale+=(60-f.morale)*.1;
+    npcGrow(f,rng,(f.canon&&f.camp==="rival"?dif(G).rival:1)*(f.id==="ploy"?(G.week>40?.07:G.week>30?.022:.012)+sg:f.id==="fah"?(G.week>40?.07:G.week>30?.03:G.week>10&&G.week<=24?.042:.026)+sg:f.camp==="rival"?.035:f.camp==="free"?.025:.02));f.morale+=(60-f.morale)*.1;
     // v1.15: rivals and NPCs level up too, so the opposition visibly gets stronger over the season
     if(f.camp==="rival"||f.camp==="npc"){f.xp=(f.xp||0)+(f.camp==="rival"?30:18)+Math.floor(rng()*10);
       while(f.lvl<10&&f.xp>=xpNeed(f.lvl)){f.xp-=xpNeed(f.lvl);f.lvl++;if(f.camp==="rival"){const ks=Object.keys(f.a).sort((x,y)=>f.a[y]-f.a[x]).slice(0,2);ks.forEach(k=>f.a[k]=Math.min(20,f.a[k]+.2));}
@@ -649,7 +671,7 @@ function weekTrain(G){
 }
 // week phase 3: npc sim, economy, transitions, advance
 function rankSnapshot(G){const o={};for(const d of ["A","B"]){o[d]={};standings(G,d).forEach((r,i)=>o[d][r.id]=i+1);}return o;}
-function weekFinish(G){if(G.rep>40)G.rep=40+(G.rep-40)*(.96+(G.fac.hall||0)*.01);growStudents(G); // v1.22.1: fame above 40 needs upkeep
+function weekFinish(G){if(G.rep>55)G.rep=55+(G.rep-55)*(.96+(G.fac.hall||0)*.01);if(G.sponsorWk)G.cash+=G.sponsorWk;growStudents(G); // v1.22.1: fame above 40 needs upkeep
 
   const before=rankSnapshot(G);
   simNPCWeek(G);
@@ -695,4 +717,4 @@ const SHOW_COST=25000;
 function hostShow(G){const st=stageOf(G.week);if(G.cash<SHOW_COST||G.week<10||G.flags["show_"+st])return false;G.cash-=SHOW_COST;G.flags["show_"+st]=true;
   G.rep+=3;G.camp.beauty=Math.min(10,G.camp.beauty+1);roster(G).forEach(f=>f.morale=Math.min(100,f.morale+8));return true;}
 function clearDebt(G){if(G.debt<=0||G.cash<G.debt)return false;G.cash-=G.debt;G.debt=0;G.flags.debtCleared=true;G.rep+=2;return true;}
-if(typeof module!=="undefined")module.exports={trainWeek,passiveMods,skillReqs,skillBlock,hasTree,DIFF,studentCap,studentDemand,studentFee,growStudents,storyTop4,RIVAL_OF,LEADS,upkeep,campActLocked,equipped,toggleEquip,MAX_EQUIP,roundBegin,fightEx,roundDone,roundFinish,useSkill,fightSkills,SKILL_KIND_NAME,fixSave,STAFF,hireStaff,fireStaff,staffSlots,staffLocked,facLocked,mainStyle,mastery,styleVal,STYLE_NAME,STYLE_ATTRS,MASTERY_AT,aiCorner,FACILITIES,SIGNATURE,hasSignature,counterPreset,oppTop,careNeeds,applyCare,throwTowel,CARE,MASTERS,hireMaster,hostShow,clearDebt,SHOW_COST,TAC,setTactics,finishBracket,mulberry32,newGame,weekTrain,weekFinish,genOffers,acceptOffer,buyFacility,upgradeDaeng,students,campLevel,newFight,fightRound,quickFight,applyResult,standings,roster,ovr,styleOf,stageOf,finishFinal,condition,ATTRS,isBooked,PRESETS,CANON,advise,doCampAction,learnSkill,SKILLS,SCHOOLS,campLook,newSeason};
+if(typeof module!=="undefined")module.exports={cornerOdds,cloneFight,trainWeek,passiveMods,skillReqs,skillBlock,hasTree,DIFF,studentCap,studentDemand,studentFee,growStudents,storyTop4,RIVAL_OF,LEADS,upkeep,campActLocked,equipped,toggleEquip,MAX_EQUIP,roundBegin,fightEx,roundDone,roundFinish,useSkill,fightSkills,SKILL_KIND_NAME,fixSave,STAFF,hireStaff,fireStaff,staffSlots,staffLocked,facLocked,mainStyle,mastery,styleVal,STYLE_NAME,STYLE_ATTRS,MASTERY_AT,aiCorner,FACILITIES,SIGNATURE,hasSignature,counterPreset,oppTop,careNeeds,applyCare,throwTowel,CARE,MASTERS,hireMaster,hostShow,clearDebt,SHOW_COST,TAC,setTactics,finishBracket,mulberry32,newGame,weekTrain,weekFinish,genOffers,acceptOffer,buyFacility,upgradeDaeng,students,campLevel,newFight,fightRound,quickFight,applyResult,standings,roster,ovr,styleOf,stageOf,finishFinal,condition,ATTRS,isBooked,PRESETS,CANON,advise,doCampAction,learnSkill,SKILLS,SCHOOLS,campLook,newSeason};
