@@ -1345,3 +1345,9 @@ body.hasnews .rinnote+.homegrid{margin-top:0}
 .dmpick span{display:grid}.dmpick small{color:var(--muted)}.dmpick.on{box-shadow:inset 0 0 0 2px var(--gold)}.dmpick i{font-style:normal;color:var(--gold);font-weight:700}
 
 .tchip.gk-love{box-shadow:inset 0 0 0 1px var(--red)}.tchip.gk-like{box-shadow:inset 0 0 0 1px var(--gold)}.tchip.gk-dislike{opacity:.6}
+
+/* v1.40.1: page locked under scenes (iOS), action choices readable */
+html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100%}
+
+.vn{height:auto;touch-action:manipulation;background:#0d0a18}
+.choices button.cact{font-style:italic;color:var(--gold)}

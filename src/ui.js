@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.40.0";
+const VERSION="1.40.1";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -23,7 +23,7 @@ const stand=(id,look,mood)=>{if(id==="coach")return `${ASSET}coach.webp`;
 const faceSrc=(id,mood,look)=>id==="coach"?`${ASSET}coach_face.webp`:look&&look!=="fight"?`${ASSET}${id}_${look}_face.webp`:`${ASSET}${id}_${["happy","sad","flustered"].includes(mood)?mood:"happy"}_face.webp`;
 const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp",market:"bg_market.webp",rooster:"bg_rooster.webp",farm:"bg_farm.webp"};
 // v1.34: portraits for the market and helmet-gang side characters (matched by speaker name, or st.img)
-const NPC_IMG=[[/แม่ค้า|ป้าศรี|Auntie Sri|vendor/,"vendor_green"],[/ป้าแต๋ว|เจ๊หมวย|ป้าขาย|Auntie Taew|Jae Muay/,"vendor_red"],[/เสี่ยหมวก|หัวหน้าหมวก|รองหัวหน้า|Helmet Boss|Golden Helmet|Lieutenant/,"gang_boss"],[/หมวก|แจ็กเก็ต|Helmet|Jacket/,"gang_group"],[/ยาย|Grandma/,"grandma"]];
+const NPC_IMG=[[/แม่ค้า|ป้าศรี|Auntie Sri|vendor/,"vendor_green"],[/ป้าแต๋ว|เจ๊หมวย|ป้าขาย|Auntie Taew|Jae Muay/,"vendor_red"],[/เสี่ยหมวกทองคำ|Big Boss Golden Helmet/,"gang_boss"],[/หมวก|แจ็กเก็ต|Helmet|Jacket/,"gang_group"],[/ยาย|Grandma/,"grandma"]];
 const npcImg=st=>st.img||(st.who&&(NPC_IMG.find(([r])=>r.test(st.who))||[])[1])||null;
 const TIER_BG={semi:"bg_hall.webp",local:"bg_local.webp",district:"bg_district.webp",final:"bg_final.webp",exhibition:"bg_fair.webp",special:"bg_district.webp",quest:"bg_food.webp",beast:"bg_fair.webp",dm:"bg_hall.webp"};
 const gymBg=()=>`gym${G?campLevel(G):1}.webp`;
@@ -109,6 +109,7 @@ const moveIcon=m=>!m?'<span class="mv eq">–</span>':m>0?`<span class="mv up">�
 
 // ---------- root render ----------
 function render(){
+  document.documentElement.classList.toggle("vnopen",!!(UI&&UI.scene));
   let h="";
   if(!G)h=UI.creator?creatorHTML():titleHTML();
   else if(UI.ending)h=endingHTML();
@@ -740,7 +741,7 @@ function sceneHTML(){const S=UI.scene,c=S.cur||{};const sp=c.n==="coach"?{name:"
    <div class="cast ${(S.cast||[]).length>1?"duo":""}">${cast}</div>
    ${c.choice?"":`<button class="vtap" data-act="vnext" aria-label="ไปต่อ"></button>`}
    <div class="vbox px" data-act="${c.choice?"":"vnext"}" style="--c:${sp.color||"var(--gold)"}">
-    ${c.choice?`<div class="choices">${(UI._ck!==c?(UI._ck=c,UI._ct=Date.now()):0,"")}${c.choice.map((o,i)=>{const t=val(o.t),m=t.match(/^(.*?)\s*\(([^()]*)\)\s*$/);return `<button data-act="vchoose" data-v="${i}">${esc(m?m[1]:t)}${m?`<small class="cfx">${esc(m[2])}</small>`:""}</button>`;}).join("")}</div>`:
+    ${c.choice?`<div class="choices">${(UI._ck!==c?(UI._ck=c,UI._ct=Date.now()):0,"")}${c.choice.map((o,i)=>{const t=val(o.t),m0=t.match(/^(.*?)\s*\(([^()]*)\)\s*$/),m=m0&&m0[1].trim()?m0:null,act=m0&&!m0[1].trim();return `<button data-act="vchoose" data-v="${i}" ${act?'class="cact"':""}>${esc(act?m0[2]:m?m[1]:t)}${m?`<small class="cfx">${esc(m[2])}</small>`:""}</button>`;}).join("")}</div>`:
      `${who?`<div class="who">${tag}<b>${who}</b></div>`:""}<div class="txt ${c.n==="nar"?"nar":""}">${esc(c.t||"")}</div><div class="nextc">แตะเพื่อไปต่อ ▸</div>`}
    </div><button class="btn sm vskip" data-act="vskip">ข้ามฉาก</button></div>`;}
 function sceneSkip(){let g=0;while(UI.scene&&g++<300){const s=UI.scene;if(s.cur&&s.cur.choice)sceneChoose(0);else sceneNext();}}
