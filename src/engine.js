@@ -143,7 +143,7 @@ function baseFighter(id,d){return {id,name:d.name,full:d.full,div:d.div,camp:d.c
 
 // ---------- TRAINING ----------
 const PRESETS={
-  balanced:{name:"สมดุล",w:Object.fromEntries(ATTRS.map(([k])=>[k,.35])),load:2,desc:"พัฒนาทุกด้านเท่า ๆ กัน"},
+  balanced:{name:"สมดุล",w:Object.fromEntries(ATTRS.map(([k])=>[k,.22])),load:2,desc:"พัฒนาทุกด้านเท่า ๆ กัน แต่ช้ากว่าโปรแกรมเน้น"},
   punch:{name:"เน้นหมัด",w:{punch:1,power:.5,counter:.5,speed:.3},load:2,desc:"สายมวยหมัด: หมัด พลัง สวนกลับ"},
   kick:{name:"เน้นเตะ",w:{kick:1,foot:.6,speed:.4},load:2,desc:"สายมวยเตะ: เตะ ฟุตเวิร์ก ความเร็ว"},
   knee:{name:"เข่า-คลินช์",w:{knee:1,clinch:1,stamina:.4},load:2.5,desc:"สายมวยเข่า: ล็อกคอ ตีเข่า ความอึด"},

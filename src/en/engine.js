@@ -143,7 +143,7 @@ function baseFighter(id,d){return {id,name:d.name,full:d.full,div:d.div,camp:d.c
 
 // ---------- TRAINING ----------
 const PRESETS={
-  balanced:{name:"Balanced",w:Object.fromEntries(ATTRS.map(([k])=>[k,.35])),load:2,desc:"Develop everything evenly"},
+  balanced:{name:"Balanced",w:Object.fromEntries(ATTRS.map(([k])=>[k,.22])),load:2,desc:"Improves everything evenly, but slower than a focused program"},
   punch:{name:"Punch focus",w:{punch:1,power:.5,counter:.5,speed:.3},load:2,desc:"Puncher: punches, power, counters"},
   kick:{name:"Kick focus",w:{kick:1,foot:.6,speed:.4},load:2,desc:"Kicker: kicks, footwork, speed"},
   knee:{name:"Knee-Clinch",w:{knee:1,clinch:1,stamina:.4},load:2.5,desc:"Knee fighter: neck lock, knees, stamina"},
