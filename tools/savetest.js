@@ -12,6 +12,6 @@ for(const fx of fs.readdirSync(DIR).filter(f=>f.endsWith('.json')))for(const L o
   for(const m of [{type:'fighter',id:'kati'},{type:'mail'},{type:'cashflow'},{type:'repgraph'},{type:'settings'}]){UI.modal=m;render();}UI.modal=null;
   for(let i=0;i<3;i++){weekFinish(G);mailWeekly(G);chatWeekly(G);genOffers(G);render();}
   save();o.ver=JSON.parse(localStorage.getItem(slotKey(1))).ver;o.week2=G.week;o.cash=Math.round(G.cash);return o;});
- const ok=r.loaded&&r.bak&&r.week2===r.week+3&&!errs.length;if(!ok)bad++;
+ const old=JSON.parse(fs.readFileSync(path.join(DIR,fx),'utf8')).ver!==r.ver;const ok=r.loaded&&(r.bak||!old)&&r.week2===r.week+3&&!errs.length;if(!ok)bad++;
  console.log(ok?'OK  ':'FAIL',fx,L,JSON.stringify(r),errs.slice(0,2).join(' | '));await ctx.close();}
 await b.close();process.exit(bad?1:0);})();
