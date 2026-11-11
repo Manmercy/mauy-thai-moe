@@ -159,6 +159,22 @@ const CHAT={
    ["Ploy wins at everything. Fah's always just 'the other one' at camp",[["You're not the other one. You're Fah, with a style like no one else",2,"…Yeah, right! Fah is Fah! Fah's gonna make the whole province know!"],["Ploy respects you, you know",1,"I know… but sometimes Fah wants to beat Ploy just once"],["That's true",0,"You're no help at all!"]]],
    ["Come practice kicks with Fah sometime? (not inviting, just asking)",[["Sure, but I'll stand far away",2,"Ha! Scared, huh! …Saturday, 3 p.m. No flaking!"],["I can't fight, you know",1,"Then Fah'll teach you, so impatient"],["I'm busy",0,"Wasn't inviting you anyway!!"]]]]}]};
 // extra lines once she trusts you more (bond 40 / 70): one more exchange each
+// v1.39: things that just happened make her text you (results can come up again after a while)
+const dmJust=G=>!!(G.dm&&G.dm.done&&G.week-G.dm.wk<=2);
+const evJust=(G,id,n=3)=>!!(G.seen&&G.seen[id]&&(G.seenWk||{})[id]!=null&&G.week-G.seenWk[id]<=n);
+const CHAT_EV={
+ kati:[{id:"k_dm",need:G=>dmJust(G)&&G.dm.mine.includes("kati"),x:[["My legs are still shaking! Fighting back to back like that nearly killed me!",[["You never backed down",2,"…Grandpa taught me: you can step back, but never turn your back"],["Rest your legs first",1,"Yes! I'm soaking them in ice. Want a photo? My feet are red as shrimp"],["Next time you have to win",0,"I know… you don't have to say it"]]]]},
+  {id:"k_flood",need:G=>evJust(G,"dis_flood"),x:[["Manager, the training room mats are still damp, but I found Grandpa's gloves stuck in the mango tree and got them back!",[["Great job, that's the most important thing",2,"Right?! I set them in the sun next to Grandpa's shrine"],["Watch out for electric shocks",1,"Coach Daeng cut the power. The camp's as dark as a haunted house"],["Those gloves are old, toss them",0,"Not throwing them out! Those are Grandpa's gloves!"]]]]},
+  {id:"k_loan",need:G=>G.loan>0,x:[["I saw the Gold Helmets circling the camp this morning. Did you borrow money from them…?",[["Yes, but I'll pay it back as fast as I can",2,"…Then I'll win lots of fights so the money comes faster"],["Don't worry about it",1,"I do worry. Grandpa got burned by them before"],["I had to",0,"…Okay. I understand"]]]]}],
+ mali:[{id:"m_dm",need:G=>dmJust(G)&&G.dm.mine.includes("mali"),x:[["After yesterday's Death Match, Mali slept fourteen hours~ my cheek still hurts",[["Your kicks were beautiful",2,"Really~? Then Mali's sending the clip to Mom!"],["Let's go eat moo kratha",1,"Yay~! Mali already booked a table"],["That's a lot of sleep",0,"Mali was tired~"]]]]},
+  {id:"m_flood",need:G=>evJust(G,"dis_flood"),x:[["Mali caught three fish in the training room! Coach Daeng says we're making tom yum tonight~",[["Save me some",2,"Mali saved you the fish head~ the tastiest part!"],["Are you safe?",1,"Safe! Just one shoe floated away"],["Why were you catching fish?",0,"It swam in by itself~"]]]]}],
+ rin:[{id:"r_dm",need:G=>dmJust(G)&&G.dm.mine.includes("rin"),x:[["I've finished my Death Match summary. Fatigue built up between rounds 18% faster than I estimated",[["And how are you doing?",2,"…Nobody has ever asked that before the numbers. I'm okay. Thank you"],["Send me the file",1,"Sent. 14 pages, with color charts"],["Too many numbers",0,"There's never too many numbers"]]]]},
+  {id:"r_loan",need:G=>G.loan>0,x:[["I calculated the Gold Helmet loan interest. If it's not repaid within three months, it swells to 1.33 times",[["Thanks for working it out",2,"…I made you a repayment schedule. It's on the fridge"],["I know, I know",1,"Good. I'm just reminding you again, per the system"],["Don't worry",0,"Numbers don't worry. Numbers just grow"]]]]}],
+ ploy:[{id:"p_dm",need:G=>dmJust(G),x:[["This Death Match, your camp was exhausted but never backed down. I saw",[["Hearing that from you makes me happy",2,"…Don't tell the boss I praised you"],["Next time we'll win",1,"I'll be watching"],["You watched too?",0,"I watch every fight. Not on purpose"]]]]}],
+ fah:[{id:"f_dm",need:G=>dmJust(G),x:[["See that?! A Death Match, Fah's gonna be in the news for sure! …Did you watch Fah fight?",[["I watched. You get scarier when you're hurt",2,"Ha! That's Fah's secret weapon! The more it hurts the more fun it is!"],["A little",1,"A little?! You have to watch all of it!"],["Didn't watch",0,"…You! Not talking to you anymore!"]]]]},
+  {id:"f_flood",need:G=>evJust(G,"dis_flood"),x:[["Heard your camp flooded… Iron Fist is safe at Fah's camp. Not asking how YOU are",[["We're safe, thanks for worrying",2,"Not worried! …Just asking. Fah'll bring you sandbags"],["You said you weren't asking, but you texted",1,"Forget it!! Just forget it!"],["It's fine",0,"Good, then"]]]]}]};
+for(const id in CHAT_EV)CHAT[id].unshift(...CHAT_EV[id]);
+for(const id in CHAT)for(const t of CHAT[id])if(/_(lost|won)$/.test(t.id))t.rep=6;
 const CHAT_X={
  kati:[["…Manager, if someday I stop fighting, will you still message me?",[["Every day. Nothing to do with Muay Thai",2,"…I'll remember that. Every word"],["No need to think about that yet",1,"Okay, I just wanted to know"],["Why would you quit?",0,"I'm not quitting, just asking"]]],["Talking with you like this is my favorite part of the week",[["Mine too",2,"…(sends three blushing stickers)"],["Glad to hear it",1,""],["Chatting is cheaper than dinner too",0,"Haha, Manager!"]]]],
  mali:[["Psst, a secret: Mali thinks you're the kindest person in the world, after Mom",[["After Mom counts as the top",2,"Right! Number two in the world, be proud!"],["Then where's Thongkham?",1,"Thongkham's number three, don't tell him!"],["Oh, not number one?",0,"Mom's always number one!"]]],["So many stars tonight. Mali secretly named one after you",[["Then I'll name the one next to it Mali",2,"Kyaa! Twin stars! Mali will look every night!"],["Which one?",1,"The one that blinks fast like someone panicking, haha"],["That's a plane",0,"…Eh, oh, it is!"]]]],
@@ -167,18 +183,20 @@ const CHAT_X={
  fah:[["…Hey, if Fah said she's glad she met you, would you laugh?",[["I wouldn't laugh. I'm glad too",2,"…!! Enough, enough, stop talking, Fah's embarrassed!!"],["Depends on the face you make saying it",1,"A normal face! …probably"],["I'd definitely laugh",0,"Then Fah's not saying it!"]]],["Iron Fist (the cat) slept on the shirt you left behind all night",[["Then give the shirt to Iron Fist",2,"…Not giving it to Iron Fist, Fah's keeping it! Wait, no!"],["Wash it for me",1,"I'm not your maid!"],["Now it's covered in cat hair",0,"Mean!"]]]]};
 
 function chatTopic(G,id){const L=CHAT[id]||[];G.chatSeen=G.chatSeen||{};const seen=G.chatSeen[id]||[];
-  const hot=t=>/_(lost|won|final|beaten)$/.test(t.id)?0:1;const ctx=L.filter(t=>t.need&&t.need(G)&&!seen.includes(t.id)).sort((p,q)=>hot(p)-hot(q));if(ctx.length)return ctx[0];
+  const hot=t=>/_(lost|won|final|beaten)$/.test(t.id)?0:1;const W=G.chatWk||{};const ctx=L.filter(t=>t.need&&t.need(G)&&(!seen.includes(t.id)||(t.rep&&G.week-(W[id+":"+t.id]||0)>=t.rep))).sort((p,q)=>hot(p)-hot(q));if(ctx.length)return ctx[0];
   const gen=L.filter(t=>!t.need&&!seen.includes(t.id));if(gen.length)return gen[(G.week+G.seed)%gen.length];
   const all=L.filter(t=>!t.need).sort((a,b)=>seen.indexOf(a.id)-seen.indexOf(b.id));return all[0];}
 // v1.27: she texts first, now and then, once you're close enough; an unread chat waits for you
 const CHAT_BOND=15;
 function chatWeekly(G){G.chatIn=G.chatIn||{};G.chatLast=G.chatLast||{};const rng=mulberry32(G.seed*31+G.week*7+3);
-  for(const id of CANON_IDS){const f=G.F[id];if(!f||!f.met||(f.bond||0)<CHAT_BOND||G.chatIn[id])continue;
+  for(const id of CANON_IDS){const f=G.F[id];if(!f||!f.met||G.chatIn[id])continue;
+    {const L=CHAT[id]||[],seen=(G.chatSeen||{})[id]||[],W=G.chatWk||{};if((f.bond||0)>=8&&G.week-(G.chatLast[id]||-9)>=1&&L.some(t=>t.need&&/_(lost|won|dm|flood|loan)$/.test(t.id)&&t.need(G)&&(!seen.includes(t.id)||(t.rep&&G.week-(W[id+":"+t.id]||0)>=t.rep)))){G.chatIn[id]=G.week;continue;}}
+    if((f.bond||0)<CHAT_BOND)continue;
     if(G.week-(G.chatLast[id]||-9)<3)continue;if(rng()<.3+((f.bond||0)>=50?.1:0))G.chatIn[id]=G.week;}}
 const chatLen=f=>3+((f.bond||0)>=40?1:0)+((f.bond||0)>=70?1:0);
 const canChat=f=>!!(f&&f.met&&G.chatIn&&G.chatIn[f.id]);
 function chatOpen(id){const f=G.F[id];if(!f||!canChat(f))return;delete G.chatIn[id];G.chatLast=G.chatLast||{};G.chatLast[id]=G.week;const T=chatTopic(G,id);
-  G.chatSeen=G.chatSeen||{};G.chatSeen[id]=(G.chatSeen[id]||[]).filter(x=>x!==T.id).concat([T.id]);
+  G.chatSeen=G.chatSeen||{};G.chatSeen[id]=(G.chatSeen[id]||[]).filter(x=>x!==T.id).concat([T.id]);G.chatWk=G.chatWk||{};G.chatWk[id+":"+T.id]=G.week;
   const x=[...T.x];const ex=CHAT_X[id]||[];G.chatX=G.chatX||{};const xs=G.chatX[id]=G.chatX[id]||[];const extra=Math.min(1,chatLen(f)-3);for(let i=0;i<ex.length&&extra>0;i++)if(!xs.includes(i)&&(i===0||(f.bond||0)>=70)){x.push(ex[i]);xs.push(i);break;}
   const rng=mulberry32(G.seed+G.week*17+id.length);x.forEach(e=>{e.ord=[0,1,2].sort(()=>rng()-.5);});
   UI.chat={id,x,i:0,log:[{w:"them",t:x[0][0]}],gain:0,typing:false};UI.modal={type:"chat"};save();render();}

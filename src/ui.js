@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.38.2";
+const VERSION="1.39.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -313,6 +313,9 @@ function homeHTML(){const R=roster(G);
     guide=`<section class="px guide"><img class="gface" src="${faceSrc("coach")}" alt="ครูแดง"><div class="gtxt"><b>ครูแดง</b><p>${esc(t.t)}</p>
       <div class="gact">${t.act?`<button class="btn sm gold" data-act="tipact" data-k="${t.act.k}" data-id="${t.act.id||""}" data-v="${t.act.v||""}">${t.act.label}</button>`:""}${T.length>1?`<button class="btn sm" data-act="tipnext">ถัดไป ${i+1}/${T.length} ▸</button>`:""}</div></div>
       <button class="xbtn" data-act="hideguide" aria-label="ปิดคำแนะนำสัปดาห์นี้">✕</button></section>`;}
+  // v1.39: while Kru Daeng is on leave, Kati "runs" the camp and it shows
+  if(G.coachAway&&G.week<G.coachAway&&G.guideHidden!==G.week){const KS=["ครูแดงไม่อยู่ หนูให้ทุกคนวิ่งเพิ่มคนละสามรอบค่ะ …หนูก็วิ่งด้วยนะ","หนูลองเป่านกหวีดแบบครูแดงแล้ว เสียงออกมาเหมือนเป็ดเลยค่ะ","ครูแดงโทรมาถามว่าทุกคนกินข้าวหรือยัง วันละสี่รอบแล้วค่ะ","มะลิแอบเปลี่ยนเพลงในห้องซ้อมเป็นเพลงลูกทุ่ง หนูไม่ได้ห้าม… เพราะมันมันส์ดี","ตารางซ้อมของครูแดงติดอยู่ที่ผนัง แต่ลายมือครูอ่านไม่ออกเลยค่ะ"];
+    guide=`<section class="px guide away"><img class="gface" src="${faceSrc("kati","happy")}" alt="กะทิ"><div class="gtxt"><b>กะทิ (รักษาการครูแดง · ครูกลับสัปดาห์ ${G.coachAway})</b><p>${esc(KS[G.week%KS.length])}</p><p class="meta">ช่วงนี้ไม่มีคำแนะนำจากครู ต้องตัดสินใจเองทั้งหมด</p></div><button class="xbtn" data-act="hideguide" aria-label="ปิด">✕</button></section>`;}
   const lv=campLevel(G);
   return `${rinNoteHTML()}<div class="homegrid">${(()=>{const r=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
      return r.length?`<button class="px newfighter" data-act="tab" data-v="camp" data-sub="staff"><span class="newb">NEW!</span>${r.map(([id])=>`<img src="${faceSrc(id,"happy")}" alt="">`).join("")}<span><b>${r.map(([id])=>esc(G.F[id].name)).join(" และ ")} อยากเข้าค่าย</b><small>แตะเพื่อดูสัญญา</small></span><span class="chev">▸</span></button>`:"";})()}<section class="px camp-wrap"><div class="cvbox"><canvas class="campcv" width="640" height="360" data-camp="1" aria-label="ภาพรวมค่ายมวยศิริชัย"></canvas>
@@ -767,7 +770,7 @@ function goalText(){const st=stageOf(G.week),me=roster(G);const best=d=>{const r
 function pendingEvents(){return EVENTS.filter(e=>e.when&&!G.seen[e.id]&&e.when(G));}
 function runEvents(done){const list=pendingEvents();let played=0;
   const step=()=>{const e=list.shift();if(!e||G.ended){done&&done(played);return;}if(G.seen[e.id]||!e.when(G)){step();return;}
-    G.seen[e.id]=true;played++;playScene(e.steps,step,{bg:e.bg,look:e.look});};step();}
+    G.seen[e.id]=true;G.seenWk=G.seenWk||{};G.seenWk[e.id]=G.week;played++;playScene(e.steps,step,{bg:e.bg,look:e.look});};step();}
 function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);if(typeof questExtra==="function"&&questExtra(done,mulberry32(G.seed+G.week*59)))return;
   const dil=(typeof DILEMMAS!=="undefined"?DILEMMAS:[]).filter(d=>!G.seen[d.id]&&G.week>=d.from&&G.week<=d.to&&d.need(G));
   const sinceD=G.week-(G.lastDilemma||0);

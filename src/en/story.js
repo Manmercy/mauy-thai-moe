@@ -11,13 +11,17 @@ const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.ma
 
 const EVENTS=[
  {id:"prologue",look:"fight",bg:"night",steps:[
+  {n:"nar",t:"As a kid, every summer you were sent to stay with Grandpa Chai and Grandma at a small Muay Thai camp up north. You woke to the thud of kicks and fell asleep to the smell of boxing liniment"},
+  {n:"nar",t:"You grew up, moved to Bangkok for school, and stayed. Now you're a marketing manager at a private company, with a good salary and a condo near the BTS"},
+  {n:"nar",t:"But every day is the same: morning meetings, sales numbers, evening traffic. Only rarely do you remember the sound of sandbags in the morning"},
   {n:"nar",t:"That rainy season, a letter reached your hands. The handwriting was shaky but still neat"},
   {n:"nar",t:"\"To my dear grandchild. If this letter reaches you, it means Grandpa has gone to rest. Sirichai Muay Thai Camp, which I spent my whole life building, I leave in your hands.\""},
   {n:"nar",t:"\"The camp has just one fighter left, Kati. She has a fighter's heart. Please look after her. — Grandpa Chai\""},
   {n:"nar",bg:"camp",t:G=>`After Grandpa's funeral, ${ME(G)} arrives at Sirichai Camp. The tin roof is rusted, the heavy bags torn, the sign so faded it's barely legible`},
   {n:"nar",t:"But inside, footsteps still slap the floor and fists still thud into pads. Someone is still training"},
   {n:"kati",f:"surprised",t:"…Who's there! Oh, sorry, I thought the bank people came to collect again"},
-  {n:"kati",f:"happy",t:"Could it be… you're Grandpa Chai's grandchild?"},
+  {n:"kati",f:"happy",t:"Or… are you Grandpa Chai's real grandchild? The one who spent every summer here as a kid?"},
+  {n:"kati",f:"flustered",t:"It's me, Kati! Grandpa took me in when I was eight, so I call him Grandpa too. That summer you taught me to ride a bike and we both crashed into the ditch, remember?"},
   {choice:[
    {t:G=>`Yes. Grandpa left this camp to me ${PR(G)}`,fx:G=>add(G,"kati","bond",4),then:[{n:"kati",f:"happy",t:"Grandpa talked about you so often! He said someday you'd come back"}]},
    {t:G=>`${PR(G)} I came to see whether this camp can keep going`,fx:G=>add(G,"kati","trust",4),then:[{n:"kati",f:"flustered",t:"Of course it can! If just one more person believes in it, I'll prove it myself"}]}]},
@@ -674,10 +678,33 @@ EVENTS.push(
   {n:"fah",f:"surprised",l:"casual",t:"Fah was just passing by! Not spying on training! …And this post is hollow, termites ate all of it!"},
   {n:"coach",t:"Termites ate the camp's whole timber frame. It has to be rebuilt, ฿18,000. During the work, only half the students can come for two weeks"},{fx:G=>{G.cash-=18000;G.disaster={name:"Termite repairs",until:G.week+2,inc:.5};}},
   {n:"fah",f:"happy",l:"casual",t:G=>`Serves you right! …Kidding, ${ME(G)}. Golden Tiger has a great termite guy, Fah'll get you his number. No need to thank me!`},{fx:G=>add(G,"fah","bond",2)}]});
+// v1.39: the player's own story: grandpa's real grandchild who left a good office job in Bangkok
+EVENTS.push(
+ {id:"me_photo",look:"casual",when:G=>G.week>=5,bg:"night",steps:[
+  {n:"nar",t:"Clearing out Grandpa's room, you find an old shoebox full of faded photos"},
+  {n:"nar",t:"One photo shows a small kid in gloves too big for their hands, standing next to Grandpa Chai by the ring, a little girl with pigtails flashing a peace sign behind them"},
+  {n:"kati",f:"surprised",l:"casual",t:G=>`That's me! And that's ${ME(G)}! Back then you were barely as tall as a ring post`},
+  {n:"kati",f:"happy",l:"casual",t:"Grandma was still with us then. She made mango sticky rice every evening, and Grandpa always snuck some of ours"},
+  {choice:[{t:"I never thought I'd be living here again",fx:G=>{add(G,"kati","bond",4);add(G,"kati","trust",3);},then:[{n:"kati",f:"flustered",l:"casual",t:"I did… I always thought you'd come back someday, like Grandpa said"}]},
+   {t:"Who won the bike race back then?",fx:G=>{add(G,"kati","bond",3);},then:[{n:"kati",f:"pout",l:"casual",t:"A tie! We fell in the ditch together, and Grandma spanked us both"}]}]},
+  {n:"nar",t:"That night the photo goes up on the shrine shelf, next to Grandpa Chai's picture"}]},
+ {id:"me_office",look:"casual",when:G=>G.week>=11,bg:"camp",steps:[
+  {n:"nar",t:"A Bangkok number calls while you're watching the kids practice kicks. The screen says 'Boss (don't answer on weekends)'"},
+  {n:"npc",who:"Your old boss in Bangkok",t:G=>`${ME(G)}, nobody has run a campaign as well as you this quarter. Come back. The company is offering a 30 percent raise and a company car`},
+  {n:"nar",t:"On the line you can hear the meeting room AC, keyboards, and someone complaining about KPIs"},
+  {n:"nar",t:"Out front, Kati shouts the kick count, Mali laughs, and Coach Daeng's whistle cracks"},
+  {choice:[{t:G=>`Thank you ${PA(G)}, but this is my real job now`,fx:G=>{roster(G).forEach(f=>{f.trust=Math.min(100,f.trust+3);f.morale=Math.min(100,f.morale+4);});},then:[{n:"kati",f:"flustered",l:"casual",t:"…I heard that! I wasn't eavesdropping, I just happened to be standing here!"}]},
+   {t:G=>`Let me think about it ${PA(G)} (hang up)`,fx:G=>{add(G,"kati","morale",-3);},then:[{n:"coach",t:"No need to answer now. But you should know the kids look at the camp gate every morning, afraid that one day you won't be there"}]}]},
+  {n:"nar",t:"(Your Bangkok marketing know-how brings in more people. Fame +1)"},{fx:G=>{G.rep+=1;}}]},
+ {id:"me_grave",look:"casual",when:G=>G.week>=40,bg:"temple",steps:[
+  {n:"nar",t:"On the holy day morning, you and Kati go to pay respects to Grandpa Chai and Grandma at the stupa behind the temple, leaving a garland and Grandpa's very first pair of gloves"},
+  {n:"kati",f:"sad",l:"casual",t:G=>`Grandpa, Grandma, ${ME(G)} is back, and not just for the summer this time`},
+  {choice:[{t:G=>`Grandpa, ${PA(G)} I'll take the best care of the camp and Kati`,fx:G=>{add(G,"kati","trust",6);add(G,"kati","bond",3);},then:[{n:"nar",t:"A breeze passes through the bodhi tree; one leaf falls right onto the gloves"},{n:"kati",f:"happy",l:"casual",t:"Grandpa heard you. I believe that"}]},
+   {t:"(Say nothing, just sit down beside Kati)",fx:G=>{add(G,"kati","bond",5);},then:[{n:"nar",t:"The two of you sit in silence for a long time, until the noon temple bell rings"}]}]}]});
 EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29,bg:"camp",steps:[
   {n:"coach",t:"Boss, I'm taking two weeks' leave to go home to Surin. My niece is getting married"},
   {n:"coach",t:"I've written the training schedule on the wall. For now you make all the calls. I trust you"},
-  {n:"kati",f:"surprised",t:"Huh! Two whole weeks! …It's fine, I'll keep everyone training myself!"},{inject:G=>{G.coachAway=G.week+2;return [];}},
+  {n:"kati",f:"surprised",t:"Huh! Two whole weeks! …It's fine, I'll keep everyone training myself!"},{inject:G=>{G.coachAway=G.week+2;if(typeof addMail==="function")addMail(G,{kind:"letter",from:"Coach Daeng (Surin)",title:"A postcard from Surin",body:"To the kids of Sirichai Camp: my grandniece's wedding was great fun. I did a Muay Thai dance for the guests and threw my back out. Always wrap your hands before training, don't let Kati order more than ten laps a day, and don't let Mali play luk thung too loud. — Coach Daeng (P.S. please water the mango tree)"});return [];}},
   {n:"nar",t:"Coach Daeng on leave for 2 weeks · his advice disappears until he returns"}]});
 
 // ================= v1.13.1 longer outings: a small shared moment at each place =================
