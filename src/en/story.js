@@ -392,7 +392,11 @@ function dateScene(G,id,act){
         {n:"nar",t:`Bond with ${f.name} ${(real>=0?"+":"")+real}${pref==="like"?" · it's an activity she likes!":pref==="dislike"?" · she doesn't seem to like it here":""}${D.facts.length?" · new profile info: "+D.facts.join(" / "):D.missed?" · she seems to have more she wants to share, if you say the right thing":""}`}];
       if(typeof hasSignature!=="undefined"&&hasSignature(f)&&!G2.seen["sig_"+id]){G2.seen["sig_"+id]=true;out.push({n:"nar",t:`✦ The bond unlocked the signature move of ${f.name}: "${SIGNATURE[id].name}" — ${SIGNATURE[id].desc}`});}
       if(f.bond>=40&&!G2.seen["b1_"+id]){G2.seen["b1_"+id]=true;out.push(...BOND_EVENTS[id].lv1.map(x=>({l:look,...x})));}
-      if(f.bond>=75&&f.trust>=40&&RIVAL_LOVE.includes(id)&&f.camp==="rival"&&!G2.seen["love_"+id]){G2.seen["love_"+id]=true;out.push(...lvSteps(PROMISE_EVENTS[id],null,G2,id,true).map(x=>x.choice?x:{l:"casual",...x}),{n:"nar",t:`Relationship with ${f.name}: Promised ♡ · this story continues in season two`});}
+      if(f.bond>=75&&f.trust>=40&&RIVAL_LOVE.includes(id)&&f.camp==="player"&&(G2.season||1)>=2&&!G2.romance&&!G2.seen["love2_"+id]){G2.seen["love2_"+id]=true;
+        out.push(...LOVE_EVENTS[id].map(x=>({l:"casual",...x})),{choice:[
+          {t:"I feel the same way",fx:G3=>{G3.romance=id;G3.romWk=G3.week;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
+          {t:"Thank you, but I want to keep being the one beside you like this",fx:G3=>{add(G3,id,"trust",5);},then:[{n:id,f:"sad",l:"casual",t:LOVE_NO[id]||"…Got it."}]}]});}
+      else if(f.bond>=75&&f.trust>=40&&RIVAL_LOVE.includes(id)&&f.camp==="rival"&&!G2.seen["love_"+id]){G2.seen["love_"+id]=true;out.push(...lvSteps(PROMISE_EVENTS[id],null,G2,id,true).map(x=>x.choice?x:{l:"casual",...x}),{n:"nar",t:`Relationship with ${f.name}: Promised ♡ · this story continues in season two`});}
       else if(f.bond>=75&&f.trust>=40&&!G2.romance&&!RIVAL_LOVE.includes(id)&&!G2.seen["love_"+id]){G2.seen["love_"+id]=true;
         out.push(...LOVE_EVENTS[id].map(x=>({l:"casual",...x})),{choice:[
           {t:"I feel the same way",fx:G3=>{G3.romance=id;G3.romWk=G3.week;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
@@ -1333,4 +1337,38 @@ EVENTS.push(
   {n:"fah",f:"surprised",l:"casual",t:"I'm not here to see the turtle! I'm spying on the enemy camp! …But the way it eats morning glory is sooo cute."},
   {choice:[{t:"Come visit any time.",fx:G=>{add(G,"fah","bond",5);},then:[{n:"fah",f:"flustered",l:"casual",t:G=>`…I'll come visit ${petName(G,"turtle")}! Not visiting anyone else! Remember that!`}]},
    {t:"Caught you, spy.",fx:G=>{add(G,"fah","bond",3);},then:[{n:"fah",f:"angry",l:"casual",t:"I didn't get caught! I let you see me on purpose! …Bye-bye!"}]}]}]}
+);
+
+// ===== v1.53: year 2 — Fah, Golden Tiger's new Bangkok coach, and the prodigy who replaces her =====
+const fahRival=G=>G.F.fah&&G.F.fah.camp==="rival";
+EVENTS.push(
+ {id:"fah_trainer",look:"casual",bg:"night",when:G=>(G.season||1)>=2&&G.week>=4&&fahRival(G)&&G.F.fah.met,steps:[
+  {n:"nar",t:"9 p.m., by the river behind the camp. Someone is hurling stones into the water. Familiar messy blond hair."},
+  {n:"fah",f:"angry",l:"casual",t:"Golden Tiger hired a new coach from Bangkok, Coach Kraingkrai! No smiling in the ring, no showboating, no dancing when I win, no being Fah!"},
+  {n:"fah",f:"sad",l:"casual",t:"He says I fight like a kid playing around… If I don't change, he'll replace me with the new kid he's been grooming."},
+  {choice:[{t:"Your style is your strength. Don't throw it away.",fx:G=>{add(G,"fah","bond",5);add(G,"fah","trust",3);},then:[{n:"fah",f:"flustered",l:"casual",t:"…You're the first person to say that. And you're from a different camp."}]},
+   {t:"(Sit and listen quietly until she's let it all out)",fx:G=>{add(G,"fah","trust",6);add(G,"fah","bond",2);},then:[{n:"fah",f:"happy",l:"casual",t:"…Thanks for not lecturing me. I've been lectured all day."}]}]},
+  {inject:G=>G.F.fah.bond<40?[{n:"nar",t:"(If you were closer with Fah, this might go further)"}]:[]}]},
+ {id:"fah_join",look:"casual",bg:"camp",when:G=>(G.season||1)>=2&&G.week>=10&&G.seen.fah_trainer&&fahRival(G)&&(G.F.fah.bond||0)>=40&&absWeek(G)>=((G.flags||{}).fahRetry||0),steps:[
+  {n:"nar",t:"Monday morning, the rain has just stopped. A big canvas bag sits outside the gate, its owner crouched beside it, pretending to look at the sky."},
+  {n:"fah",f:"flustered",l:"casual",t:"I don't WANT to switch camps! It's just… if there's room here… I can train hard, wake up early, I'll even wash dishes!"},
+  {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"surprised",l:"casual",t:"Fah!? The one who kicked me out of the ring last year!?"},{n:"fah",f:"happy",l:"casual",t:"And then you got up and punched me back till my eye went purple! Call it even!"}]:[]},
+  {choice:[
+   {t:"Welcome aboard (contract buyout ฿15,000 · wage ฿1,800/week)",fx:G=>{if(G.cash>=15000){G.cash-=15000;joinCamp(G,"fah",1800);makeProdigy(G,"B","fah");add(G,"fah","trust",8);G.flags.fahJoined=G.week;}else{G.flags.fahRetry=absWeek(G)+4;G.seen.fah_join=false;}},
+    then:[{inject:G=>G.F.fah.camp==="player"?[{n:"fah",f:"happy",l:"casual",t:"Really!? …No take-backs! I get to be the old Fah here. Smile in the ring, dance when I win!"},{n:"nar",t:"(Fah has joined Sirichai Camp)"}]
+      :[{n:"nar",t:"The camp doesn't have enough for the contract buyout yet. Fah says she'll wait, and ask again."},{n:"fah",f:"pout",l:"casual",t:"…It's okay. I can wait. Just not too long!"}]}]},
+   {t:"Give me time to get the camp ready first.",fx:G=>{G.flags.fahRetry=absWeek(G)+6;G.seen.fah_join=false;add(G,"fah","trust",2);},then:[{n:"fah",f:"pout",l:"casual",t:"Fine! I'm not in a hurry anyway! …I'll ask again in a month."}]}]}]},
+ {id:"prodigy_intro",look:"fight",bg:"ring",when:G=>!!(G.prodigy&&G.prodigy.B)&&G.flags.fahJoined!=null&&G.week>G.flags.fahJoined,steps:[
+  {n:"nar",t:"At the district stadium, Golden Tiger unveils a new fighter: buzz-cut hair, expressionless face, kicking the bag so hard the chain rattles."},
+  {n:"npc",who:"Coach Kraingkrai",t:"Baiyok, Golden Tiger disciple. Trains ten hours a day. Doesn't smile, doesn't show off, doesn't lose. …Those who left the camp will see what they gave up."},
+  {n:"fah",f:"sad",l:"casual",t:"Baiyok… When I was there, she never got a day off. Nobody ever asked her to eat with them."},
+  {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"angry",l:"train",t:"My new rival, huh… Good. I won't lose to someone who fights without joy!"}]:[]},
+  {n:"nar",t:"(Baiyok becomes the top rival in Division B, taking Fah's place)"}]},
+ {id:"fah_settle",look:"casual",bg:"camp",when:G=>inCamp(G,"fah")&&G.flags.fahJoined!=null&&G.week>=G.flags.fahJoined+2,steps:[
+  {n:"nar",t:"Fah's first week at Sirichai Camp. The camp is twice as loud."},
+  {inject:G=>{const o=[];if(inCamp(G,"mali"))o.push({n:"mali",f:"angry",l:"train",t:"Fah! That's my towel!"},{n:"fah",f:"happy",l:"train",t:"First come, first served! Golden Tiger rules!"},{n:"kati",f:"pout",l:"train",t:"This is Sirichai Camp!"});
+   if(hasPet(G,"turtle"))o.push({n:"fah",f:"happy",l:"casual",t:`${petName(G,"turtle")}! I live here now, so no more sneaking morning glory over!`});
+   o.push({n:"fah",f:"flustered",l:"casual",t:"…Nobody here tells me to stop smiling. Feels weird."});return o;}},
+  {choice:[{t:"Smile all you want. This is your home now.",fx:G=>{add(G,"fah","bond",5);add(G,"fah","morale",10);},then:[{n:"fah",f:"happy",l:"casual",t:"Then I'll smile till everyone's sick of it!"}]},
+   {t:"Just don't steal Mali's towel.",fx:G=>{add(G,"fah","bond",3);if(G.F.mali)add(G,"mali","bond",2);},then:[{n:"fah",f:"pout",l:"casual",t:"Fine~ I'll steal Kati's instead!"}]}]}]}
 );

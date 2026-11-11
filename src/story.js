@@ -392,7 +392,11 @@ function dateScene(G,id,act){
         {n:"nar",t:`ความสนิทกับ${f.name} ${(real>=0?"+":"")+real}${pref==="like"?" · เป็นกิจกรรมที่เธอชอบ!":pref==="dislike"?" · ดูเหมือนเธอจะไม่ค่อยชอบที่นี่":""}${D.facts.length?" · ข้อมูลใหม่ในโปรไฟล์: "+D.facts.join(" / "):D.missed?" · ดูเหมือนเธอยังมีเรื่องอยากเล่ามากกว่านี้ ถ้าตอบให้ตรงใจ":""}`}];
       if(typeof hasSignature!=="undefined"&&hasSignature(f)&&!G2.seen["sig_"+id]){G2.seen["sig_"+id]=true;out.push({n:"nar",t:`✦ ความผูกพันปลดล็อกท่าไม้ตายของ${f.name}: "${SIGNATURE[id].name}" — ${SIGNATURE[id].desc}`});}
       if(f.bond>=40&&!G2.seen["b1_"+id]){G2.seen["b1_"+id]=true;out.push(...BOND_EVENTS[id].lv1.map(x=>({l:look,...x})));}
-      if(f.bond>=75&&f.trust>=40&&RIVAL_LOVE.includes(id)&&f.camp==="rival"&&!G2.seen["love_"+id]){G2.seen["love_"+id]=true;out.push(...lvSteps(PROMISE_EVENTS[id],null,G2,id,true).map(x=>x.choice?x:{l:"casual",...x}),{n:"nar",t:`ความสัมพันธ์กับ${f.name}: สัญญาไว้ ♡ · เรื่องนี้จะไปต่อในฤดูกาลที่สอง`});}
+      if(f.bond>=75&&f.trust>=40&&RIVAL_LOVE.includes(id)&&f.camp==="player"&&(G2.season||1)>=2&&!G2.romance&&!G2.seen["love2_"+id]){G2.seen["love2_"+id]=true;
+        out.push(...LOVE_EVENTS[id].map(x=>({l:"casual",...x})),{choice:[
+          {t:"ฉันก็รู้สึกแบบเดียวกัน",fx:G3=>{G3.romance=id;G3.romWk=G3.week;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
+          {t:"ขอบคุณ แต่ฉันอยากเป็นคนที่คอยอยู่ข้าง ๆ แบบนี้ต่อไป",fx:G3=>{add(G3,id,"trust",5);},then:[{n:id,f:"sad",l:"casual",t:LOVE_NO[id]||"…เข้าใจแล้ว"}]}]});}
+      else if(f.bond>=75&&f.trust>=40&&RIVAL_LOVE.includes(id)&&f.camp==="rival"&&!G2.seen["love_"+id]){G2.seen["love_"+id]=true;out.push(...lvSteps(PROMISE_EVENTS[id],null,G2,id,true).map(x=>x.choice?x:{l:"casual",...x}),{n:"nar",t:`ความสัมพันธ์กับ${f.name}: สัญญาไว้ ♡ · เรื่องนี้จะไปต่อในฤดูกาลที่สอง`});}
       else if(f.bond>=75&&f.trust>=40&&!G2.romance&&!RIVAL_LOVE.includes(id)&&!G2.seen["love_"+id]){G2.seen["love_"+id]=true;
         out.push(...LOVE_EVENTS[id].map(x=>({l:"casual",...x})),{choice:[
           {t:"ฉันก็รู้สึกแบบเดียวกัน",fx:G3=>{G3.romance=id;G3.romWk=G3.week;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
@@ -1333,4 +1337,38 @@ EVENTS.push(
   {n:"fah",f:"surprised",l:"casual",t:"ฟ้าไม่ได้มาดูเต่านะ! ฟ้ามาสอดแนมค่ายศัตรู! …แต่เต่ามันกินผักบุ้งน่ารักมากเลยอ่ะ"},
   {choice:[{t:"มาเยี่ยมได้ทุกเมื่อนะ",fx:G=>{add(G,"fah","bond",5);},then:[{n:"fah",f:"flustered",l:"casual",t:G=>`…ฟ้าจะมาเยี่ยม${petName(G,"turtle")} ไม่ได้มาเยี่ยมใครทั้งนั้น! จำไว้!`}]},
    {t:"จับได้แล้วนะ สายลับ",fx:G=>{add(G,"fah","bond",3);},then:[{n:"fah",f:"angry",l:"casual",t:"ไม่ได้โดนจับ! ฟ้าตั้งใจให้เห็นต่างหาก! …บ๊ายบาย!"}]}]}]}
+);
+
+// ===== v1.53: year 2 — Fah, Golden Tiger's new Bangkok coach, and the prodigy who replaces her =====
+const fahRival=G=>G.F.fah&&G.F.fah.camp==="rival";
+EVENTS.push(
+ {id:"fah_trainer",look:"casual",bg:"night",when:G=>(G.season||1)>=2&&G.week>=4&&fahRival(G)&&G.F.fah.met,steps:[
+  {n:"nar",t:"สามทุ่ม ริมแม่น้ำหลังค่าย มีคนนั่งปาก้อนหินลงน้ำแรงจนน้ำกระเซ็น ผมทองยุ่งเหยิงที่คุ้นตา"},
+  {n:"fah",f:"angry",l:"casual",t:"ค่ายพยัคฆ์ทองจ้างโค้ชใหม่จากกรุงเทพฯ ชื่อโค้ชเกรียงไกร! ห้ามยิ้มบนเวที ห้ามโชว์ ห้ามเต้นตอนชนะ ห้ามเป็นฟ้า!"},
+  {n:"fah",f:"sad",l:"casual",t:"เขาบอกว่าฟ้าชกแบบเด็กเล่น …ถ้าไม่เปลี่ยน จะเอาเด็กใหม่ที่เขาปั้นมาขึ้นแทน"},
+  {choice:[{t:"สไตล์ของฟ้าคือจุดแข็ง อย่าทิ้งมัน",fx:G=>{add(G,"fah","bond",5);add(G,"fah","trust",3);},then:[{n:"fah",f:"flustered",l:"casual",t:"…นายเป็นคนแรกที่พูดแบบนี้เลยนะ ทั้งที่อยู่คนละค่ายแท้ ๆ"}]},
+   {t:"(นั่งฟังเงียบ ๆ จนเธอระบายหมด)",fx:G=>{add(G,"fah","trust",6);add(G,"fah","bond",2);},then:[{n:"fah",f:"happy",l:"casual",t:"…ขอบใจนะที่ไม่สั่งสอน ฟ้าโดนสั่งสอนมาทั้งวันแล้ว"}]}]},
+  {inject:G=>G.F.fah.bond<40?[{n:"nar",t:"(ถ้าสนิทกับฟ้ามากกว่านี้ เรื่องนี้อาจไปต่อได้)"}]:[]}]},
+ {id:"fah_join",look:"casual",bg:"camp",when:G=>(G.season||1)>=2&&G.week>=10&&G.seen.fah_trainer&&fahRival(G)&&(G.F.fah.bond||0)>=40&&absWeek(G)>=((G.flags||{}).fahRetry||0),steps:[
+  {n:"nar",t:"เช้าวันจันทร์ ฝนเพิ่งหยุด มีกระเป๋าผ้าใบใหญ่วางอยู่หน้าประตูค่าย เจ้าของนั่งยอง ๆ อยู่ข้าง ๆ ทำเป็นมองฟ้า"},
+  {n:"fah",f:"flustered",l:"casual",t:"ฟ้าไม่ได้อยากย้ายนะ! แค่… ถ้าที่นี่มีที่ว่าง …ฟ้าซ้อมหนักได้ ตื่นเช้าได้ ล้างจานก็ได้!"},
+  {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"surprised",l:"casual",t:"พี่ฟ้า!? คนที่เตะหนูตกเวทีเมื่อปีที่แล้วน่ะเหรอ!"},{n:"fah",f:"happy",l:"casual",t:"แล้วเธอก็ลุกขึ้นมาต่อยฟ้าคืนจนตาเขียวไง! ถือว่าเจ๊ากัน!"}]:[]},
+  {choice:[
+   {t:"ยินดีต้อนรับ (ค่าไถ่สัญญา ฿15,000 · ค่าจ้าง ฿1,800/สัปดาห์)",fx:G=>{if(G.cash>=15000){G.cash-=15000;joinCamp(G,"fah",1800);makeProdigy(G,"B","fah");add(G,"fah","trust",8);G.flags.fahJoined=G.week;}else{G.flags.fahRetry=absWeek(G)+4;G.seen.fah_join=false;}},
+    then:[{inject:G=>G.F.fah.camp==="player"?[{n:"fah",f:"happy",l:"casual",t:"จริงนะ!? …ห้ามเปลี่ยนใจแล้วนะ! ฟ้าจะเป็นฟ้าแบบเดิมที่นี่ ยิ้มบนเวทีได้ เต้นตอนชนะได้!"},{n:"nar",t:"(ฟ้าเข้าค่ายศิริชัยแล้ว)"}]
+      :[{n:"nar",t:"เงินในค่ายยังไม่พอค่าไถ่สัญญา ฟ้าบอกว่าจะรอ แล้วจะกลับมาถามใหม่อีกครั้ง"},{n:"fah",f:"pout",l:"casual",t:"…ไม่เป็นไร ฟ้ารอได้ แต่อย่านานนะ!"}]}]},
+   {t:"ขอเวลาเตรียมค่ายก่อน",fx:G=>{G.flags.fahRetry=absWeek(G)+6;G.seen.fah_join=false;add(G,"fah","trust",2);},then:[{n:"fah",f:"pout",l:"casual",t:"ก็ได้! ฟ้าไม่ได้รีบสักหน่อย! …อีกเดือนนึงฟ้ามาถามใหม่นะ"}]}]}]},
+ {id:"prodigy_intro",look:"fight",bg:"ring",when:G=>!!(G.prodigy&&G.prodigy.B)&&G.flags.fahJoined!=null&&G.week>G.flags.fahJoined,steps:[
+  {n:"nar",t:"เวทีมวยอำเภอ ค่ายพยัคฆ์ทองเปิดตัวนักมวยใหม่ ผู้หญิงผมสั้นเกรียน หน้านิ่งไม่มีอารมณ์ เตะกระสอบโชว์จนโซ่สั่น"},
+  {n:"npc",who:"โค้ชเกรียงไกร",t:"ใบหยก ศิษย์พยัคฆ์ทอง ซ้อมวันละสิบชั่วโมง ไม่ยิ้ม ไม่โชว์ ไม่แพ้ …คนที่ทิ้งค่ายไป จะได้รู้ว่าเสียอะไรไป"},
+  {n:"fah",f:"sad",l:"casual",t:"ใบหยก… ตอนฟ้าอยู่ที่นั่น เขาไม่เคยได้พักเลย ไม่เคยมีใครชวนเขาไปกินข้าวด้วย"},
+  {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"angry",l:"train",t:"คู่ปรับใหม่ของหนูสินะ …ดีเลย หนูจะไม่แพ้คนที่ชกโดยไม่มีความสุขหรอก!"}]:[]},
+  {n:"nar",t:"(ใบหยกขึ้นเป็นคู่ปรับตัวท็อปของรุ่น B แทนฟ้า)"}]},
+ {id:"fah_settle",look:"casual",bg:"camp",when:G=>inCamp(G,"fah")&&G.flags.fahJoined!=null&&G.week>=G.flags.fahJoined+2,steps:[
+  {n:"nar",t:"สัปดาห์แรกของฟ้าที่ค่ายศิริชัย เสียงในค่ายดังขึ้นสองเท่า"},
+  {inject:G=>{const o=[];if(inCamp(G,"mali"))o.push({n:"mali",f:"angry",l:"train",t:"พี่ฟ้า! นั่นผ้าเช็ดตัวหนู!"},{n:"fah",f:"happy",l:"train",t:"ของใครหยิบก่อนได้ก่อน! กฎค่ายพยัคฆ์ทอง!"},{n:"kati",f:"pout",l:"train",t:"ที่นี่ค่ายศิริชัยค่ะ!"});
+   if(hasPet(G,"turtle"))o.push({n:"fah",f:"happy",l:"casual",t:`${petName(G,"turtle")}! ฟ้ามาอยู่ด้วยแล้วนะ ทีนี้ไม่ต้องแอบเอาผักบุ้งมาให้แล้ว!`});
+   o.push({n:"fah",f:"flustered",l:"casual",t:"…ที่นี่ไม่มีใครบอกให้ฟ้าเลิกยิ้มเลย แปลกดีนะ"});return o;}},
+  {choice:[{t:"ยิ้มให้เต็มที่ ที่นี่บ้านเธอแล้ว",fx:G=>{add(G,"fah","bond",5);add(G,"fah","morale",10);},then:[{n:"fah",f:"happy",l:"casual",t:"งั้นฟ้าจะยิ้มจนทุกคนรำคาญเลย!"}]},
+   {t:"แต่ห้ามแย่งผ้าเช็ดตัวมะลินะ",fx:G=>{add(G,"fah","bond",3);if(G.F.mali)add(G,"mali","bond",2);},then:[{n:"fah",f:"pout",l:"casual",t:"ก็ได้~ ฟ้าจะแย่งของกะทิแทน!"}]}]}]}
 );

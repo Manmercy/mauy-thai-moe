@@ -580,7 +580,7 @@ function genOffers(G){
     const X=CROSS_OF[f.id];if(X&&SPECIAL_WEEKS.includes(G.week)){const o=G.F[X],wk=G.week+3;
       if(o&&o.camp==="rival"&&!o.injury&&!isBooked(G,o.id,wk)&&!myB.some(x=>Math.abs(x-wk)<=1)&&wk<=47)G.offers.push({id:`o${G.week}_${f.id}_sp`,a:f.id,b:o.id,week:wk,tier:"special",win:TIER.special.win,lose:TIER.special.lose});}
     // v1.23: grudge match — in the district round the promoter keeps asking for the rivalry everyone wants to see
-    const RV=RIVAL_OF[f.id];if(RV&&(RIVAL_WEEKS.includes(G.week)||(RIVAL_EARLY[f.id]||[]).includes(G.week))){const o=G.F[RV],wk=G.week+3;
+    const RV0=RIVAL_OF[f.id],RV=RV0&&G.F[RV0]&&G.F[RV0].camp!=="rival"&&G.prodigy&&G.prodigy[G.F[RV0].div]?G.prodigy[G.F[RV0].div]:RV0;if(RV&&(RIVAL_WEEKS.includes(G.week)||(RIVAL_EARLY[f.id]||[]).includes(G.week))){const o=G.F[RV],wk=G.week+3;
       if(o&&o.camp==="rival"&&!o.injury&&!isBooked(G,o.id,wk)&&!myB.some(x=>Math.abs(x-wk)<=1)&&!G.offers.some(x=>x.b===RV&&x.a===f.id)){const tier=eligible(G,f)&&eligible(G,o)&&wk<=40?"district":"special";
         G.offers.push({id:`o${G.week}_${f.id}_rv`,a:f.id,b:o.id,week:wk,tier,rv:1,win:Math.round(TIER[tier].win*1.6/100)*100,lose:Math.round(TIER[tier].lose*1.4/100)*100});}}
   }
@@ -661,9 +661,18 @@ function stageTransition(G){ // called after week's results, before week++
 // v1.23: the story needs its final — our lead heroine and her rival always make the cut (wildcard if needed)
 // and are seeded on opposite halves, so they can only meet in the final
 const LEADS={A:["kati","ploy"],B:["mali","fah"]};
-function storyTop4(G,div){let t=standings(G,div).slice(0,4).map(s=>s.id);const [me,rv]=LEADS[div];G.wild=G.wild||{};
+// v1.53: when a Golden Tiger star joins us, their camp's new prodigy takes over as the division's top rival
+const leadRival=(G,div)=>{const rv=LEADS[div][1];if(G.F[rv]&&G.F[rv].camp==="rival")return rv;const p=G.prodigy&&G.prodigy[div];return p&&G.F[p]&&G.F[p].camp==="rival"?p:rv;};
+function makeProdigy(G,div,from){G.prodigy=G.prodigy||{};if(G.prodigy[div])return G.F[G.prodigy[div]];const id="prod_"+div,src=G.F[from];
+  const names={A:["Petcha, Golden Tiger disciple","Petcha"],B:["Baiyok, Golden Tiger disciple","Baiyok"]};
+  const f=baseFighter(id,{name:names[div][1],full:names[div][0],div,camp:"rival",color:"#3b3f8f",potential:Math.min(20,(src?src.potential:17)+2),a:{}});
+  for(const k in src.a)f.a[k]=Math.min(20,src.a[k]+.8);f.lvl=Math.max(1,(src.lvl||5));f.xp=0;f.canon=false;f.prodigy=true;f.met=true;f.skills={...(src.skills||{})};
+  G.F[id]=f;G.prodigy[div]=id;G.rank=G.rank||{A:{},B:{}};G.rank[div][id]={pts:0,w:0,l:0,d:0};return f;}
+function joinCamp(G,id,wage){const f=G.F[id];if(!f)return;f.camp="player";f.wage=wage;f.met=true;G.bookings=G.bookings.filter(b=>!(b.b===id&&G.F[b.a]&&G.F[b.a].camp==="player"));
+  G.offers=(G.offers||[]).filter(o=>o.b!==id);G.rank[f.div]=G.rank[f.div]||{};if(!G.rank[f.div][id])G.rank[f.div][id]={pts:0,w:0,l:0,d:0};}
+function storyTop4(G,div){let t=standings(G,div).slice(0,4).map(s=>s.id);const me=LEADS[div][0],rv=leadRival(G,div);G.wild=G.wild||{};
   for(const id of [rv,me]){const f=G.F[id];if(!f||t.includes(id))continue;if(id===me&&f.camp!=="player")continue;if(id===rv&&f.camp!=="rival")continue;
-    const drop=[...t].reverse().find(x=>!LEADS[div].includes(x));if(!drop)continue;t[t.indexOf(drop)]=id;G.wild[id]=G.week;
+    const drop=[...t].reverse().find(x=>![me,rv].includes(x));if(!drop)continue;t[t.indexOf(drop)]=id;G.wild[id]=G.week;
     if(!G.rank[div][id])G.rank[div][id]={pts:0,w:0,l:0,d:0};}
   // seeds: pairs are [0,3] and [1,2]; keep me and rival apart
   const im=t.indexOf(me),ir=t.indexOf(rv),half=i=>i===0||i===3?0:1;
@@ -676,7 +685,7 @@ function finishBracket(G,booking,F){
   if(booking.tier==="final")return finishFinal(G,booking,F);
   if(booking.tier!=="semi")return;
   const div=G.F[booking.a].div;let w=F.result.win==="A"?booking.a:F.result.win==="B"?booking.b:(ovr(G.F[booking.a].a)>=ovr(G.F[booking.b].a)?booking.a:booking.b);
-  if(booking.npc){const rv=LEADS[div][1];if((booking.a===rv||booking.b===rv)&&G.F[rv].camp==="rival"&&w!==rv){w=rv;F.result.win=rv===booking.a?"A":"B";F.result.type="Decision win";}}
+  if(booking.npc){const rv=leadRival(G,div);if((booking.a===rv||booking.b===rv)&&G.F[rv].camp==="rival"&&w!==rv){w=rv;F.result.win=rv===booking.a?"A":"B";F.result.type="Decision win";}}
   if(!G.finalists[div].includes(w))G.finalists[div].push(w);
   if(G.finalists[div].length===2){const [a,b]=G.finalists[div];bookBracket(G,`final${div}`,a,b,49,"final",5);}}
 function finishFinal(G,booking,F){const div=G.F[booking.a].div;const w=F.result.win==="A"?booking.a:F.result.win==="B"?booking.b:(ovr(G.F[booking.a].a)>=ovr(G.F[booking.b].a)?booking.a:booking.b);G.champ[div]=w;}
