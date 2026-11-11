@@ -1359,8 +1359,8 @@ function adoptPet(G,k,name,fav){G.pets=G.pets||[];if(hasPet(G,k))return;G.pets.p
 const nameChoice=(k,fav,then)=>({choice:PET_NAMES[k].map(n=>({t:`ตั้งชื่อว่า "${n}"`,fx:G=>adoptPet(G,k,n,fav),then})).concat([{t:"ตั้งชื่อเอง…",fx:G=>{adoptPet(G,k,null,fav);UI.petName=(G.pets.length-1);},then}])});
 const petAge=(G,k)=>{const p=(G.pets||[]).find(x=>x.k===k);return p?G.week+((G.season||1)-1)*52-p.since:0;};
 const favOr=(G,id)=>inCamp(G,id)?id:"kati";
-/* v1.62: adoptions jump the queue on late saves, one new pet per week */
-const petGate=G=>!["pet_cat","pet_dog","pet_rooster","pet_turtle"].some(id=>G.seenWk&&G.seenWk[id]===G.week&&G.seen[id]);
+/* v1.62: adoptions jump the queue on late saves, one new pet every few weeks */
+const petGate=G=>!["pet_cat","pet_dog","pet_rooster","pet_turtle"].some(id=>G.seen[id]&&G.seenWk&&G.seenWk[id]!=null&&G.week-G.seenWk[id]>=0&&G.week-G.seenWk[id]<3);/* one new pet every 3 weeks at most */
 EVENTS.push(
  {id:"pet_cat",look:"casual",bg:"night",pri:2,when:G=>G.week>=3&&petGate(G),steps:[
   {n:"nar",t:"คืนฝนตกหนัก ประตูค่ายเปิดออก กะทิวิ่งเข้ามาตัวเปียกโชก ในอ้อมแขนมีแมวส้มตัวอ้วนที่ตัวเปียกกว่าเธออีก"},
