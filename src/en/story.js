@@ -666,20 +666,20 @@ EVENTS.push(
    {t:"Taste Mali's first",fx:G=>{add(G,"mali","bond",3);add(G,"rin","bond",1);},then:[{n:"nar",t:"So salty your eyes cross, but weirdly delicious"},{n:"rin",f:"happy",l:"casual",t:"…Noted. 'Heart and hands' is a variable I can't measure yet"}]}]}]});
 // v1.37: when the camp is flush, bad luck comes for the money (students stay home, repairs cost)
 EVENTS.push(
- {id:"dis_storm",look:"casual",when:G=>G.week>=14&&G.week<=30&&G.cash>=45000,bg:"camp",steps:[
+ {id:"dis_storm",pri:1,look:"casual",when:G=>G.week>=14&&G.week<=30&&G.cash>=45000,bg:"camp",steps:[
   {n:"nar",t:"A summer storm hits at 2 a.m.; sheets of tin roofing fly off and slam into the mango tree next door"},
   {n:"kati",f:"surprised",l:"casual",t:G=>`${CALL(G,"kati")}! Half the training room roof is gone! The rain's soaking all the sandbags!`},
   {n:"coach",t:"Kids can't train in a room with no roof. How do we fix it?"},
   {choice:[{t:"Repair it properly, fast (฿25,000)",fx:G=>{G.cash-=25000;},then:[{n:"nar",t:"A full crew arrives and finishes in two days; a shiny new roof, and classes carry on without a hitch"}]},
    {t:"Patch it up for now (฿8,000)",fx:G=>{G.cash-=8000;G.disaster={name:"The temporary roof",until:G.week+3,inc:.5};roster(G).forEach(f=>f.morale=Math.max(0,f.morale-3));},then:[{n:"nar",t:"A blue tarp covers the roof. Every time it rains, water drips onto the middle of the ring; only half the students come for three weeks"}]}]}]},
- {id:"dis_flood",look:"casual",when:G=>G.week>=30&&G.week<=44&&G.cash>=40000,bg:"camp",steps:[
+ {id:"dis_flood",pri:1,look:"casual",when:G=>G.week>=30&&G.week<=44&&G.cash>=40000,bg:"camp",steps:[
   {n:"nar",t:"Three days and nights of heavy rain. The river bursts its banks and floods the whole subdistrict; knee-deep water in camp, training mats drifting against the door"},
   {n:"mali",f:"sad",l:"casual",t:"Mali's gloves floated away! …Oh, there's a fish swimming into the camp!"},
   {n:"rin",f:"sad",l:"casual",t:"The road into the subdistrict is cut off. Students definitely can't come for at least three weeks. The generator and mats need replacing"},
   {n:"coach",t:G=>`${ME(G)}, the villagers' homes are flooded worse than ours. Do we send the girls to help them first, or rush to fix our camp?`},
   {choice:[{t:"Help the villagers move their things first (camp repairs ฿12,000)",fx:G=>{G.cash-=12000;G.rep+=3;G.disaster={name:"The flood",until:G.week+4,inc:0};roster(G).forEach(f=>{f.trust=Math.min(100,f.trust+4);f.fatigue=Math.min(100,f.fatigue+8);});},then:[{n:"nar",t:"Sirichai's fighters haul sandbags all day; the local paper puts their photo on the front page"},{n:"npc",who:"Auntie Sri, vegetable vendor",t:"This camp has the kindest hearts in the district! When the water goes down I'm sending three grandkids to train!"}]},
    {t:"Rush the camp repairs to reopen ASAP (฿25,000)",fx:G=>{G.cash-=25000;G.disaster={name:"The flood",until:G.week+2,inc:0};},then:[{n:"nar",t:"Three rented pumps; our camp dries out faster than anyone's, but the road stays cut off for two more weeks"}]}]}]},
- {id:"dis_termite",look:"train",when:G=>G.week>=36&&G.cash>=55000&&G.F.fah.met,bg:"gym",steps:[
+ {id:"dis_termite",pri:1,look:"train",when:G=>G.week>=36&&G.cash>=55000&&G.F.fah.met,bg:"gym",steps:[
   {n:"nar",t:"Crack! The corner post snaps while Fah is leaning on it… wait, what is Fah doing at our camp?"},
   {n:"fah",f:"surprised",l:"casual",t:"Fah was just passing by! Not spying on training! …And this post is hollow, termites ate all of it!"},
   {n:"coach",t:"Termites ate the camp's whole timber frame. It has to be rebuilt, ฿18,000. During the work, only half the students can come for two weeks"},{fx:G=>{G.cash-=18000;G.disaster={name:"Termite repairs",until:G.week+2,inc:.5};}},
@@ -1183,7 +1183,7 @@ const POACH_L={mali:{wait:"I haven't answered them… I wanted to talk to you fi
 const poachTarget=G=>["mali","rin"].filter(id=>inCamp(G,id)).sort((a,b)=>G.F[a].trust-G.F[b].trust)[0];
 function poachLeave(G,id){const f=G.F[id];f.camp="rival";G.bookings=G.bookings.filter(b=>b.a!==id&&b.b!==id);G.flags.poached=id;if(G.romance===id)G.romance=null;}
 EVENTS.push(
- {id:"poach",look:"casual",when:G=>G.week>=24&&G.week<=31&&!!poachTarget(G),bg:"night",steps:[
+ {id:"poach",pri:1,look:"casual",when:G=>G.week>=24&&G.week<=34&&!!poachTarget(G),bg:"night",steps:[
   {inject:G=>{const id=poachTarget(G),f=G.F[id];G._poach=id;return [
    {n:"nar",t:`Late at night, only one light is still on in the fighters' rooms. ${f.name} sits staring at a gold envelope with a tiger seal on the desk.`},
    {n:id,f:"sad",l:"casual",t:`${CALL(G,id)}… Golden Tiger reached out to me.`},

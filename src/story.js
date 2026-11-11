@@ -666,20 +666,20 @@ EVENTS.push(
    {t:"ชิมของมะลิก่อน",fx:G=>{add(G,"mali","bond",3);add(G,"rin","bond",1);},then:[{n:"nar",t:"เค็มจนตาเหล่ แต่อร่อยแบบแปลก ๆ"},{n:"rin",f:"happy",l:"casual",t:"…จดไว้ค่ะ 'ใจกับมือ' เป็นตัวแปรที่ฉันยังวัดไม่ได้"}]}]}]});
 // v1.37: when the camp is flush, bad luck comes for the money (students stay home, repairs cost)
 EVENTS.push(
- {id:"dis_storm",look:"casual",when:G=>G.week>=14&&G.week<=30&&G.cash>=45000,bg:"camp",steps:[
+ {id:"dis_storm",pri:1,look:"casual",when:G=>G.week>=14&&G.week<=30&&G.cash>=45000,bg:"camp",steps:[
   {n:"nar",t:"พายุฤดูร้อนพัดมาตอนตีสอง เสียงสังกะสีหลังคาค่ายปลิวไปกระแทกต้นมะม่วงข้างบ้าน"},
   {n:"kati",f:"surprised",l:"casual",t:G=>`${CALL(G,"kati")}คะ! หลังคาห้องซ้อมหายไปครึ่งนึง! ฝนตกใส่กระสอบทรายหมดเลย!`},
   {n:"coach",t:"เด็ก ๆ จะมาเรียนในห้องที่ไม่มีหลังคาไม่ได้ จะซ่อมแบบไหนดี"},
   {choice:[{t:"ซ่อมแบบดีให้เสร็จเร็ว (฿25,000)",fx:G=>{G.cash-=25000;},then:[{n:"nar",t:"ช่างมาครบทีมในสองวัน หลังคาใหม่เงาวับ คลาสเปิดต่อได้ไม่สะดุด"}]},
    {t:"ซ่อมชั่วคราวไปก่อน (฿8,000)",fx:G=>{G.cash-=8000;G.disaster={name:"หลังคาที่ซ่อมชั่วคราว",until:G.week+3,inc:.5};roster(G).forEach(f=>f.morale=Math.max(0,f.morale-3));},then:[{n:"nar",t:"ผ้าใบสีฟ้าคลุมหลังคาไว้ ฝนตกทีไรน้ำหยดลงกลางเวที นักเรียนมาครึ่งเดียวไปอีกสามสัปดาห์"}]}]}]},
- {id:"dis_flood",look:"casual",when:G=>G.week>=30&&G.week<=44&&G.cash>=40000,bg:"camp",steps:[
+ {id:"dis_flood",pri:1,look:"casual",when:G=>G.week>=30&&G.week<=44&&G.cash>=40000,bg:"camp",steps:[
   {n:"nar",t:"ฝนตกหนักสามวันสามคืน แม่น้ำล้นตลิ่ง น้ำท่วมทั้งตำบล ในค่ายน้ำสูงถึงเข่า เบาะซ้อมลอยไปติดประตู"},
   {n:"mali",f:"sad",l:"casual",t:"นวมของมะลิลอยไปแล้วค่ะ! …อ๊ะ มีปลาว่ายเข้ามาในค่ายด้วย!"},
   {n:"rin",f:"sad",l:"casual",t:"ถนนเข้าตำบลถูกตัดขาดค่ะ นักเรียนมาไม่ได้แน่นอน อย่างน้อยสามสัปดาห์ เครื่องปั่นไฟกับเบาะต้องซื้อใหม่"},
   {n:"coach",t:G=>`${ME(G)} บ้านชาวบ้านแถวนี้ท่วมหนักกว่าเรา จะเอาแรงเด็ก ๆ ไปช่วยเขาก่อน หรือเร่งซ่อมค่ายเราก่อน`},
   {choice:[{t:"ช่วยชาวบ้านขนของก่อน (ซ่อมค่าย ฿12,000)",fx:G=>{G.cash-=12000;G.rep+=3;G.disaster={name:"น้ำท่วม",until:G.week+4,inc:0};roster(G).forEach(f=>{f.trust=Math.min(100,f.trust+4);f.fatigue=Math.min(100,f.fatigue+8);});},then:[{n:"nar",t:"นักมวยค่ายศิริชัยแบกกระสอบทรายทั้งวัน ข่าวท้องถิ่นถ่ายรูปไปลงหน้าหนึ่ง"},{n:"npc",who:"ป้าศรี แม่ค้าผัก",t:"ค่ายนี้ใจดีที่สุดในอำเภอ! หายน้ำท่วมเมื่อไหร่ป้าจะส่งหลานไปเรียนสามคนเลย!"}]},
    {t:"เร่งซ่อมค่ายให้เปิดเร็วที่สุด (฿25,000)",fx:G=>{G.cash-=25000;G.disaster={name:"น้ำท่วม",until:G.week+2,inc:0};},then:[{n:"nar",t:"ปั๊มน้ำเช่ามาสามตัว ค่ายแห้งเร็วกว่าใคร แต่ถนนยังเข้าไม่ได้อีกสองสัปดาห์"}]}]}]},
- {id:"dis_termite",look:"train",when:G=>G.week>=36&&G.cash>=55000&&G.F.fah.met,bg:"gym",steps:[
+ {id:"dis_termite",pri:1,look:"train",when:G=>G.week>=36&&G.cash>=55000&&G.F.fah.met,bg:"gym",steps:[
   {n:"nar",t:"กร๊อบ! เสามุมเวทีหักลงมาตอนฟ้ายืนพิงอยู่ …เดี๋ยว ฟ้ามาทำอะไรที่ค่ายเรา"},
   {n:"fah",f:"surprised",l:"casual",t:"ฟ้าแค่ผ่านมา! ไม่ได้มาแอบดูซ้อม! …แล้วเสานี่มันกลวงนะ ปลวกกินหมดแล้ว!"},
   {n:"coach",t:"ปลวกกินโครงไม้ทั้งค่าย ต้องรื้อทำใหม่ ฿18,000 ระหว่างทำนักเรียนมาได้ครึ่งเดียวสองสัปดาห์"},{fx:G=>{G.cash-=18000;G.disaster={name:"งานซ่อมปลวก",until:G.week+2,inc:.5};}},
@@ -1183,7 +1183,7 @@ const POACH_L={mali:{wait:"หนูยังไม่ได้ตอบเข�
 const poachTarget=G=>["mali","rin"].filter(id=>inCamp(G,id)).sort((a,b)=>G.F[a].trust-G.F[b].trust)[0];
 function poachLeave(G,id){const f=G.F[id];f.camp="rival";G.bookings=G.bookings.filter(b=>b.a!==id&&b.b!==id);G.flags.poached=id;if(G.romance===id)G.romance=null;}
 EVENTS.push(
- {id:"poach",look:"casual",when:G=>G.week>=24&&G.week<=31&&!!poachTarget(G),bg:"night",steps:[
+ {id:"poach",pri:1,look:"casual",when:G=>G.week>=24&&G.week<=34&&!!poachTarget(G),bg:"night",steps:[
   {inject:G=>{const id=poachTarget(G),f=G.F[id];G._poach=id;return [
    {n:"nar",t:`ดึกแล้ว ไฟห้องพักนักมวยยังเปิดอยู่ห้องเดียว ${f.name}นั่งจ้องซองสีทองตราเสือบนโต๊ะ`},
    {n:id,f:"sad",l:"casual",t:`${CALL(G,id)}… ค่ายพยัคฆ์ทองติดต่อมาค่ะ`},
