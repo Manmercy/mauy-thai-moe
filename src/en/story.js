@@ -1196,23 +1196,23 @@ EVENTS.push(
 const POACH_WHY={mali:"The owner says he'll double my pay… I could send so much more to Mom.",rin:"The owner says this time he'll listen to my data, and give me my own analysis room… something they never had."};
 const POACH_L={mali:{wait:"I haven't answered them… I wanted to talk to you first.",pay:"…Thank you. I didn't really want to go. I just wanted to know this place still wants me.",ok:"…You didn't stop me, even though you could have. I'm staying. Nothing to think about.",think:"…Give me two weeks to think.",stay:"I've decided. I'm staying at Sirichai. …Don't ask me why.",stay2:"I'm staying… It just feels strange that I almost left. Give me a little time."},
  rin:{wait:"I haven't answered them yet… I wanted to talk to you first.",pay:"…Thank you. It was never about money. I just wanted to know this camp still values my data.",ok:"…You didn't stop me, even though you could have. I didn't include that variable in my model. I'm staying.",think:"…Give me two weeks to analyze it.",stay:"I've decided. I'm staying at Sirichai. …The numbers don't favor this place. But some things don't need calculating.",stay2:"I'm staying… I just haven't sorted out my thoughts yet. Give me a little more time."}};
+const POACH_REFUSE={mali:"Thank you, sir, but my home is here now. My jasmine is planted outside my room here. I can't move it.",rin:"The offer is thirty-eight percent higher than here. But there's a variable your camp never had: someone who listens to my data. …Thank you for your interest."};
+const POACH_AFTER={mali:"…I didn't ask anyone first, I just answered. I did the right thing, right?",rin:"I didn't hesitate at all. Didn't even need to calculate… Strange, isn't it."};
+const POACH_THX={mali:"No need to thank me! Family doesn't abandon each other!",rin:"No need to thank me. The data clearly says this is the best place for me… and for the person I want to be with."};
+const POACH_RAISE={mali:"I-I didn't do it for money! …But Mom will be so happy. Thank you.",rin:"There's no need… but I'll note that this camp rewards loyalty."};
 const poachTarget=G=>["mali","rin"].filter(id=>inCamp(G,id)).sort((a,b)=>G.F[a].trust-G.F[b].trust)[0];
 EVENTS.push(
- {id:"poach",pri:1,look:"casual",when:G=>G.week>=24&&G.week<=34&&!!poachTarget(G),bg:"night",steps:[
-  {inject:G=>{const id=poachTarget(G),f=G.F[id];G._poach=id;return [
-   {n:"nar",t:`Late at night, only one light is still on in the fighters' rooms. ${f.name} sits staring at a gold envelope with a tiger seal on the desk.`},
-   {n:id,f:"sad",l:"casual",t:`${CALL(G,id)}… Golden Tiger reached out to me.`},
-   {n:id,f:"flustered",l:"casual",t:POACH_WHY[id]},
-   {n:id,f:"sad",l:"casual",t:POACH_L[id].wait},
-   {choice:[
-    {t:"I'll raise your pay (wage +฿600/week · she stays for sure)",fx:G2=>{f.wage+=600;add(G2,id,"trust",3);},then:[{n:id,f:"happy",l:"casual",t:POACH_L[id].pay}]},
-    {t:`I trust you. Your call (depends on Trust, now ${Math.round(f.trust)})`,fx:G2=>{if(f.trust>=45){add(G2,id,"trust",8);add(G2,id,"bond",6);G2._poachOk=1;}else{G2.poach={id,wk:G2.week+2};G2._poachOk=0;}},
-     then:[{inject:G2=>G2._poachOk?[{n:id,f:"flustered",l:"casual",t:POACH_L[id].ok},{n:"nar",t:`${f.name} tears up the gold envelope in front of you (Trust +, Bond +)`}]
-       :[{n:id,f:"sad",l:"casual",t:POACH_L[id].think},{n:"nar",t:`(${f.name} will decide in two weeks · if her Trust reaches 40, she'll be fully confident in the camp again)`}]}]}]}];}}]},
- {id:"poach_end",look:"casual",when:G=>!!G.poach&&G.week>=G.poach.wk,bg:"camp",steps:[
-  {inject:G=>{const id=G.poach.id,f=G.F[id];G.poach=null;if(!inCamp(G,id))return [];
-   if(f.trust>=40){add(G,id,"bond",5);return [{n:"nar",t:`Monday morning, ${f.name} is at training by five a.m., before everyone else.`},{n:id,f:"happy",l:"train",t:POACH_L[id].stay}];}
-   add(G,id,"bond",2);f.morale=Math.max(0,f.morale-8);return [{n:"nar",t:`Monday morning, ${f.name} sent the gold envelope back to Golden Tiger, but she trains quietly and barely talks.`},{n:id,f:"flustered",l:"train",t:POACH_L[id].stay2},{n:"kati",f:"happy",l:"casual",t:"No need to answer anything yet. Just stay here with us. You'll realize this is home."},{n:"nar",t:`(${f.name} stays, but is still a little unsure · morale down slightly. Try spending more time with her)`}];}}]}
+ {id:"poach",pri:1,look:"casual",when:G=>G.week>=24&&G.week<=34&&!!poachTarget(G),bg:"camp",steps:[
+  // v1.57: the girls are loyal — the offer comes, and she turns it down on her own
+  {inject:G=>{const id=poachTarget(G),f=G.F[id];return [
+   {n:"nar",t:`Saturday afternoon, the Golden Tiger owner parks his luxury car at the gate and hands a gold tiger-seal envelope to ${f.name} in front of everyone.`},
+   {n:"nar",t:`${f.name} reads a single line, tears the envelope in half, and hands it back to the owner with both hands.`},
+   {n:id,f:"happy",l:"casual",t:POACH_REFUSE[id]},
+   {n:"npc",who:"Golden Tiger owner",t:"…How does Sirichai Camp raise its people?"},
+   {n:id,f:"flustered",l:"casual",t:POACH_AFTER[id]},
+   {choice:[{t:"Thank you for choosing this camp (Trust +)",fx:G2=>{add(G2,id,"trust",8);add(G2,id,"bond",4);},then:[{n:id,f:"happy",l:"casual",t:POACH_THX[id]}]},
+    {t:"Raise her pay as a reward for loyalty (wage +฿600/week · Bond +)",fx:G2=>{f.wage+=600;add(G2,id,"bond",6);add(G2,id,"trust",4);},then:[{n:id,f:"flustered",l:"casual",t:POACH_RAISE[id]}]}]}];}}]},
+ {id:"poach_end",look:"casual",when:G=>false,bg:"camp",steps:[{n:"nar",t:""}]}
 );
 
 // ===== v1.49: the year loop — calendar, birthdays and festivals that come back every year =====
@@ -1354,9 +1354,9 @@ EVENTS.push(
   {n:"fah",f:"flustered",l:"casual",t:"I don't WANT to switch camps! It's just… if there's room here… I can train hard, wake up early, I'll even wash dishes!"},
   {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"surprised",l:"casual",t:"Fah!? The one who kicked me out of the ring last year!?"},{n:"fah",f:"happy",l:"casual",t:"And then you got up and punched me back till my eye went purple! Call it even!"}]:[]},
   {choice:[
-   {t:"Welcome aboard (contract buyout ฿15,000 · wage ฿1,800/week)",fx:G=>{if(G.cash>=15000){G.cash-=15000;joinCamp(G,"fah",1800);makeProdigy(G,"B","fah");add(G,"fah","trust",8);G.flags.fahJoined=G.week;}else{G.flags.fahRetry=absWeek(G)+4;G.seen.fah_join=false;}},
+   {t:"Welcome aboard (contract buyout ฿60,000 · wage ฿1,800/week)",fx:G=>{if(G.cash>=60000){G.cash-=60000;joinCamp(G,"fah",1800);makeProdigy(G,"B","fah");add(G,"fah","trust",8);G.flags.fahJoined=G.week;}else{G.flags.fahRetry=absWeek(G)+4;G.seen.fah_join=false;}},
     then:[{inject:G=>G.F.fah.camp==="player"?[{n:"fah",f:"happy",l:"casual",t:"Really!? …No take-backs! I get to be the old Fah here. Smile in the ring, dance when I win!"},{n:"nar",t:"(Fah has joined Sirichai Camp)"}]
-      :[{n:"nar",t:"The camp doesn't have enough for the contract buyout yet. Fah says she'll wait, and ask again."},{n:"fah",f:"pout",l:"casual",t:"…It's okay. I can wait. Just not too long!"}]}]},
+      :[{n:"nar",t:"Fah's buyout is a steep ฿60,000. Golden Tiger won't let its star go cheap. The camp can't afford it yet. Fah says she'll wait and ask again."},{n:"fah",f:"pout",l:"casual",t:"…It's okay. I can wait. Just not too long!"}]}]},
    {t:"Give me time to get the camp ready first.",fx:G=>{G.flags.fahRetry=absWeek(G)+6;G.seen.fah_join=false;add(G,"fah","trust",2);},then:[{n:"fah",f:"pout",l:"casual",t:"Fine! I'm not in a hurry anyway! …I'll ask again in a month."}]}]}]},
  {id:"prodigy_intro",look:"fight",bg:"ring",when:G=>!!(G.prodigy&&G.prodigy.B)&&G.flags.fahJoined!=null&&G.week>G.flags.fahJoined,steps:[
   {n:"nar",t:"At the district stadium, Golden Tiger unveils a new fighter: a high blond ponytail just like Fah used to wear, black kit with gold trim, a face without expression. She kicks the bag so hard the chain rattles."},
@@ -1454,3 +1454,23 @@ const CARDS={
   {n:"nar",t:"Halloween night. Fah, wearing plastic vampire fangs, dangles her feet in the water at the pier."},{n:"fah",f:"happy",l:"casual",t:"When I was a kid nobody threw me a birthday, so I dressed up as a ghost and celebrated myself!"},
   {n:"fah",f:"flustered",l:"casual",t:"…This year someone's sitting with me. Guess I don't need to dress as a ghost anymore."}]}};
 function cardCheck(G){G.cards=G.cards||{};const got=[];for(const id in CARDS){if(G.cards[id])continue;const C=CARDS[id];try{if(C.need(G)){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};got.push(id);}}catch(e){}}return got;}
+
+// ===== v1.57: when the camp gets rich, funny little disasters eat some of the money =====
+const DRAIN_MIN=70000;
+const drainAmt=G=>Math.max(3000,Math.round(Math.min(20000,G.cash*.12)/100)*100);
+const drainOk=(G,salt)=>G.cash>=DRAIN_MIN&&G.week>=4&&absWeek(G)>=(((G.flags||{}).drainWk)||0)+5&&srand(G,salt)<.35;
+const drainPay=(G,mul)=>{const a=Math.round(drainAmt(G)*mul/100)*100;G.cash-=a;G.flags.drainWk=absWeek(G);return a;};
+const DRAINS=[
+ {id:"drain_cat",need:G=>hasPet(G,"cat"),steps:G=>[{n:"nar",t:`${petName(G,"cat")} chases a flying termite and pounces straight into the camp's new TV. The screen cracks like a spiderweb. The cat sits licking its paw like nothing happened.`},{n:"coach",t:"…Coach only paid the first installment on that TV."}],cul:G=>petName(G,"cat")},
+ {id:"drain_rooster",need:G=>hasPet(G,"rooster"),steps:G=>[{n:"nar",t:`${petName(G,"rooster")} escapes the camp, raids the khao man gai shop by the market, and pecks the whole rack of boiled chickens down.`},{n:"npc",who:"Chicken-rice auntie",t:"A live chicken fighting the boiled chickens! Who's paying for this!?"}],cul:G=>petName(G,"rooster")},
+ {id:"drain_roof",need:G=>inCamp(G,"kati"),steps:G=>[{n:"nar",t:"BOOM! Kati kicks the bag so hard the hook snaps. It flies through the tin roof and lands in the neighbor's yard."},{n:"kati",f:"flustered",l:"train",t:"I-I was just trying the kick Coach taught yesterday! I didn't think it'd work THIS well!"}],cul:G=>"Kati"},
+ {id:"drain_banquet",need:G=>true,steps:G=>[{n:"nar",t:"Coach Daeng throws a reunion for Grandpa Chai's old students, orders ten tables of Chinese banquet, and signs the bill to the camp."},{n:"coach",t:"Hey… I thought it'd be three tables. Who invited the whole district!?"}],cul:G=>"Coach Daeng"},
+ {id:"drain_durian",need:G=>inCamp(G,"mali"),steps:G=>[{n:"nar",t:"A pickup truck unloads three baskets of Monthong durian at the gate. The receipt says the buyer is: Mali."},{n:"mali",f:"happy",l:"casual",t:"It's durian season! I wanted everyone to have some! …I didn't know one basket was THIS big."}],cul:G=>"Mali"},
+ {id:"drain_flamingo",need:G=>inCamp(G,"fah")||inCamp(G,"kati"),steps:G=>{const w=inCamp(G,"fah")?"fah":"kati";return [{n:"nar",t:"2 a.m. Someone watched a live-selling stream and ordered with the camp card. In the morning, forty pink inflatable flamingos are piled at the gate."},{n:w,f:"flustered",l:"casual",t:w==="fah"?"They were on sale for nine baht each! …Oh. Ninety-nine. I misread it.":"I thought they were nine baht each! …Ninety-nine? I misread it."}];},cul:G=>inCamp(G,"fah")?"Fah":"Kati"}];
+DRAINS.forEach((D,k)=>{
+  const optPay={t:"Pay up and laugh it off together (everyone: morale +4)",fx:G2=>{G2._drain=drainPay(G2,1);R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+4);});},
+    then:[{inject:G2=>[{n:"nar",t:`Paid ${fmt(G2._drain)} · the camp laughs all night. It becomes camp legend.`}]}]};
+  const optHalf=G=>({t:`Haggle, and have ${D.cul(G)} work it off (pay half)`,fx:G2=>{G2._drain=drainPay(G2,.5);},
+    then:[{inject:G2=>[{n:"nar",t:`Paid ${fmt(G2._drain)} · ${D.cul(G2)} pitches in until it's paid off, grumbling all week.`}]}]});
+  EVENTS.push({id:D.id,annual:true,look:"casual",bg:"camp",when:G=>D.need(G)&&drainOk(G,301+k*17),
+    steps:[{inject:G=>D.steps(G).concat([{n:"nar",t:`Damages come to about ${fmt(drainAmt(G))}`},{choice:[optPay,optHalf(G)]}])}]});});

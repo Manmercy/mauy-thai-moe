@@ -1196,23 +1196,23 @@ EVENTS.push(
 const POACH_WHY={mali:"เถ้าแก่บอกว่าจะให้เงินเดือนสองเท่า… หนูจะส่งเงินให้แม่ได้เยอะขึ้นมาก",rin:"เถ้าแก่บอกว่าคราวนี้จะฟังข้อมูลของฉัน ให้ห้องวิเคราะห์เป็นของตัวเอง… ซึ่งที่นั่นไม่เคยมี"};
 const POACH_L={mali:{wait:"หนูยังไม่ได้ตอบเขา… อยากคุยกับคุณก่อน",pay:"…ขอบคุณค่ะ หนูไม่ได้อยากไปหรอก แค่อยากรู้ว่าที่นี่ยังอยากให้หนูอยู่",ok:"…คุณไม่ห้ามหนูเลยนะ ทั้งที่ห้ามได้ หนูอยู่ที่นี่ค่ะ ไม่ต้องคิดแล้ว",think:"…ขอเวลาคิดสองสัปดาห์นะคะ",stay:"ตัดสินใจแล้วค่ะ หนูอยู่ค่ายศิริชัย …ไม่ต้องถามเหตุผลนะคะ",stay2:"หนูอยู่ที่นี่ค่ะ …แค่ยังรู้สึกแปลก ๆ ที่เกือบไป ขอเวลาหน่อยนะคะ"},
  rin:{wait:"ฉันยังไม่ได้ตอบเขาค่ะ… อยากคุยกับคุณก่อน",pay:"…ขอบคุณค่ะ ฉันไม่ได้ต้องการเงินหรอก แค่อยากรู้ว่าค่ายนี้ยังเห็นค่าข้อมูลของฉัน",ok:"…คุณไม่ห้ามฉันเลย ทั้งที่ห้ามได้ ตัวแปรนี้ฉันไม่ได้ใส่ไว้ในการคำนวณค่ะ ฉันอยู่ที่นี่",think:"…ขอเวลาวิเคราะห์สองสัปดาห์นะคะ",stay:"ตัดสินใจแล้วค่ะ ฉันอยู่ค่ายศิริชัย …ตัวเลขไม่ได้เข้าข้างที่นี่หรอกนะคะ แต่บางเรื่องก็ไม่ต้องคำนวณ",stay2:"ฉันอยู่ที่นี่ค่ะ …แต่ยังจัดความคิดตัวเองไม่ลงตัว ขอเวลาอีกนิดนะคะ"}};
+const POACH_REFUSE={mali:"ขอบคุณค่ะเถ้าแก่ แต่บ้านหนูอยู่ที่นี่แล้ว ต้นมะลิของหนูก็ปลูกอยู่หน้าห้องที่นี่ ย้ายไม่ได้หรอกค่ะ",rin:"ข้อเสนอสูงกว่าที่นี่สามสิบแปดเปอร์เซ็นต์ค่ะ แต่ตัวแปรที่ค่ายคุณไม่เคยมี คือคนที่ฟังข้อมูลของฉัน …ขอบคุณที่สนใจนะคะ"};
+const POACH_AFTER={mali:"…หนูไม่ได้ถามใครก่อนเลยนะคะ ตอบไปเลย หนูทำถูกใช่ไหม",rin:"ฉันไม่ได้ลังเลเลยค่ะ ไม่ต้องคำนวณด้วยซ้ำ …แปลกดีนะคะ"};
+const POACH_THX={mali:"ไม่ต้องขอบคุณหรอกค่ะ คนในบ้านเดียวกันเขาไม่ทิ้งกันอยู่แล้ว!",rin:"ไม่ต้องขอบคุณค่ะ ข้อมูลชี้ชัดว่าที่นี่ดีที่สุดสำหรับฉัน …และสำหรับคนที่ฉันอยากอยู่ด้วย"};
+const POACH_RAISE={mali:"ห-หนูไม่ได้ทำเพื่อเงินนะคะ! …แต่แม่ต้องดีใจมากแน่ ๆ ขอบคุณค่ะ",rin:"ไม่จำเป็นเลยค่ะ …แต่ฉันจะบันทึกไว้ว่าค่ายนี้ตอบแทนความซื่อสัตย์"};
 const poachTarget=G=>["mali","rin"].filter(id=>inCamp(G,id)).sort((a,b)=>G.F[a].trust-G.F[b].trust)[0];
 EVENTS.push(
- {id:"poach",pri:1,look:"casual",when:G=>G.week>=24&&G.week<=34&&!!poachTarget(G),bg:"night",steps:[
-  {inject:G=>{const id=poachTarget(G),f=G.F[id];G._poach=id;return [
-   {n:"nar",t:`ดึกแล้ว ไฟห้องพักนักมวยยังเปิดอยู่ห้องเดียว ${f.name}นั่งจ้องซองสีทองตราเสือบนโต๊ะ`},
-   {n:id,f:"sad",l:"casual",t:`${CALL(G,id)}… ค่ายพยัคฆ์ทองติดต่อมาค่ะ`},
-   {n:id,f:"flustered",l:"casual",t:POACH_WHY[id]},
-   {n:id,f:"sad",l:"casual",t:POACH_L[id].wait},
-   {choice:[
-    {t:"ฉันขึ้นค่าจ้างให้ (ค่าจ้าง +฿600/สัปดาห์ · อยู่ต่อแน่นอน)",fx:G2=>{f.wage+=600;add(G2,id,"trust",3);},then:[{n:id,f:"happy",l:"casual",t:POACH_L[id].pay}]},
-    {t:`ฉันเชื่อใจเธอ เลือกเองเลย (ขึ้นกับความเชื่อใจ ตอนนี้ ${Math.round(f.trust)})`,fx:G2=>{if(f.trust>=45){add(G2,id,"trust",8);add(G2,id,"bond",6);G2._poachOk=1;}else{G2.poach={id,wk:G2.week+2};G2._poachOk=0;}},
-     then:[{inject:G2=>G2._poachOk?[{n:id,f:"flustered",l:"casual",t:POACH_L[id].ok},{n:"nar",t:`${f.name}ฉีกซองทองทิ้งต่อหน้าคุณ (ความเชื่อใจ +, ความสนิท +)`}]
-       :[{n:id,f:"sad",l:"casual",t:POACH_L[id].think},{n:"nar",t:`(${f.name}จะตัดสินใจในอีกสองสัปดาห์ · ถ้าความเชื่อใจถึง 40 เธอจะกลับมามั่นใจในค่ายเต็มร้อย)`}]}]}]}];}}]},
- {id:"poach_end",look:"casual",when:G=>!!G.poach&&G.week>=G.poach.wk,bg:"camp",steps:[
-  {inject:G=>{const id=G.poach.id,f=G.F[id];G.poach=null;if(!inCamp(G,id))return [];
-   if(f.trust>=40){add(G,id,"bond",5);return [{n:"nar",t:`เช้าวันจันทร์ ${f.name}มาซ้อมตั้งแต่ตีห้า ก่อนทุกคน`},{n:id,f:"happy",l:"train",t:POACH_L[id].stay}];}
-   add(G,id,"bond",2);f.morale=Math.max(0,f.morale-8);return [{n:"nar",t:`เช้าวันจันทร์ ${f.name}ส่งซองสีทองคืนค่ายพยัคฆ์ทองไปแล้ว แต่ยังซ้อมเงียบ ๆ ไม่ค่อยพูด`},{n:id,f:"flustered",l:"train",t:POACH_L[id].stay2},{n:"kati",f:"happy",l:"casual",t:"ไม่ต้องรีบตอบอะไรหรอก อยู่ด้วยกันตรงนี้ก่อน เดี๋ยวก็รู้เองว่าที่นี่คือบ้าน"},{n:"nar",t:`(${f.name}อยู่ค่ายต่อ แต่ยังลังเลอยู่บ้าง · กำลังใจลดลงเล็กน้อย ลองใช้เวลากับเธอให้มากขึ้น)`}];}}]}
+ {id:"poach",pri:1,look:"casual",when:G=>G.week>=24&&G.week<=34&&!!poachTarget(G),bg:"camp",steps:[
+  // v1.57: the girls are loyal — the offer comes, and she turns it down on her own
+  {inject:G=>{const id=poachTarget(G),f=G.F[id];return [
+   {n:"nar",t:`บ่ายวันเสาร์ เถ้าแก่ค่ายพยัคฆ์ทองมาจอดรถหรูดักรอหน้าค่าย ยื่นซองสีทองตราเสือให้${f.name}ต่อหน้าทุกคน`},
+   {n:"nar",t:`${f.name}เปิดอ่านแค่บรรทัดเดียว แล้วฉีกซองครึ่งหนึ่ง ยื่นคืนให้เถ้าแก่ด้วยสองมือ`},
+   {n:id,f:"happy",l:"casual",t:POACH_REFUSE[id]},
+   {n:"npc",who:"เถ้าแก่พยัคฆ์ทอง",t:"…ค่ายศิริชัยนี่เลี้ยงคนยังไงนะ"},
+   {n:id,f:"flustered",l:"casual",t:POACH_AFTER[id]},
+   {choice:[{t:"ขอบคุณที่เลือกค่ายนี้นะ (ความเชื่อใจ +)",fx:G2=>{add(G2,id,"trust",8);add(G2,id,"bond",4);},then:[{n:id,f:"happy",l:"casual",t:POACH_THX[id]}]},
+    {t:"ขึ้นค่าจ้างเป็นรางวัลความซื่อสัตย์ (ค่าจ้าง +฿600/สัปดาห์ · ความสนิท +)",fx:G2=>{f.wage+=600;add(G2,id,"bond",6);add(G2,id,"trust",4);},then:[{n:id,f:"flustered",l:"casual",t:POACH_RAISE[id]}]}]}];}}]},
+ {id:"poach_end",look:"casual",when:G=>false,bg:"camp",steps:[{n:"nar",t:""}]}
 );
 
 // ===== v1.49: the year loop — calendar, birthdays and festivals that come back every year =====
@@ -1354,9 +1354,9 @@ EVENTS.push(
   {n:"fah",f:"flustered",l:"casual",t:"ฟ้าไม่ได้อยากย้ายนะ! แค่… ถ้าที่นี่มีที่ว่าง …ฟ้าซ้อมหนักได้ ตื่นเช้าได้ ล้างจานก็ได้!"},
   {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"surprised",l:"casual",t:"พี่ฟ้า!? คนที่เตะหนูตกเวทีเมื่อปีที่แล้วน่ะเหรอ!"},{n:"fah",f:"happy",l:"casual",t:"แล้วเธอก็ลุกขึ้นมาต่อยฟ้าคืนจนตาเขียวไง! ถือว่าเจ๊ากัน!"}]:[]},
   {choice:[
-   {t:"ยินดีต้อนรับ (ค่าไถ่สัญญา ฿15,000 · ค่าจ้าง ฿1,800/สัปดาห์)",fx:G=>{if(G.cash>=15000){G.cash-=15000;joinCamp(G,"fah",1800);makeProdigy(G,"B","fah");add(G,"fah","trust",8);G.flags.fahJoined=G.week;}else{G.flags.fahRetry=absWeek(G)+4;G.seen.fah_join=false;}},
+   {t:"ยินดีต้อนรับ (ค่าไถ่สัญญา ฿60,000 · ค่าจ้าง ฿1,800/สัปดาห์)",fx:G=>{if(G.cash>=60000){G.cash-=60000;joinCamp(G,"fah",1800);makeProdigy(G,"B","fah");add(G,"fah","trust",8);G.flags.fahJoined=G.week;}else{G.flags.fahRetry=absWeek(G)+4;G.seen.fah_join=false;}},
     then:[{inject:G=>G.F.fah.camp==="player"?[{n:"fah",f:"happy",l:"casual",t:"จริงนะ!? …ห้ามเปลี่ยนใจแล้วนะ! ฟ้าจะเป็นฟ้าแบบเดิมที่นี่ ยิ้มบนเวทีได้ เต้นตอนชนะได้!"},{n:"nar",t:"(ฟ้าเข้าค่ายศิริชัยแล้ว)"}]
-      :[{n:"nar",t:"เงินในค่ายยังไม่พอค่าไถ่สัญญา ฟ้าบอกว่าจะรอ แล้วจะกลับมาถามใหม่อีกครั้ง"},{n:"fah",f:"pout",l:"casual",t:"…ไม่เป็นไร ฟ้ารอได้ แต่อย่านานนะ!"}]}]},
+      :[{n:"nar",t:"ค่าไถ่สัญญาฟ้าแพงถึง ฿60,000 ค่ายพยัคฆ์ทองไม่ยอมปล่อยดาวง่าย ๆ เงินในค่ายยังไม่พอ ฟ้าบอกว่าจะรอ แล้วจะกลับมาถามใหม่"},{n:"fah",f:"pout",l:"casual",t:"…ไม่เป็นไร ฟ้ารอได้ แต่อย่านานนะ!"}]}]},
    {t:"ขอเวลาเตรียมค่ายก่อน",fx:G=>{G.flags.fahRetry=absWeek(G)+6;G.seen.fah_join=false;add(G,"fah","trust",2);},then:[{n:"fah",f:"pout",l:"casual",t:"ก็ได้! ฟ้าไม่ได้รีบสักหน่อย! …อีกเดือนนึงฟ้ามาถามใหม่นะ"}]}]}]},
  {id:"prodigy_intro",look:"fight",bg:"ring",when:G=>!!(G.prodigy&&G.prodigy.B)&&G.flags.fahJoined!=null&&G.week>G.flags.fahJoined,steps:[
   {n:"nar",t:"เวทีมวยอำเภอ ค่ายพยัคฆ์ทองเปิดตัวนักมวยใหม่ ผมทองมัดสูงแบบเดียวกับที่ฟ้าเคยทำ ชุดดำขลิบทอง หน้านิ่งไม่มีอารมณ์ เตะกระสอบโชว์จนโซ่สั่น"},
@@ -1454,3 +1454,23 @@ const CARDS={
   {n:"nar",t:"คืนฮาโลวีน ฟ้าใส่ฟันแวมไพร์พลาสติกนั่งเล่นน้ำที่ท่าน้ำ"},{n:"fah",f:"happy",l:"casual",t:"ตอนเด็ก ๆ ไม่มีใครจัดวันเกิดให้ฟ้าเลย ฟ้าเลยแต่งเป็นผีเอง ฉลองเอง!"},
   {n:"fah",f:"flustered",l:"casual",t:"…ปีนี้มีคนมานั่งด้วยแล้ว แบบนี้ก็ไม่ต้องแต่งเป็นผีแล้วมั้ง"}]}};
 function cardCheck(G){G.cards=G.cards||{};const got=[];for(const id in CARDS){if(G.cards[id])continue;const C=CARDS[id];try{if(C.need(G)){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};got.push(id);}}catch(e){}}return got;}
+
+// ===== v1.57: when the camp gets rich, funny little disasters eat some of the money =====
+const DRAIN_MIN=70000;
+const drainAmt=G=>Math.max(3000,Math.round(Math.min(20000,G.cash*.12)/100)*100);
+const drainOk=(G,salt)=>G.cash>=DRAIN_MIN&&G.week>=4&&absWeek(G)>=(((G.flags||{}).drainWk)||0)+5&&srand(G,salt)<.35;
+const drainPay=(G,mul)=>{const a=Math.round(drainAmt(G)*mul/100)*100;G.cash-=a;G.flags.drainWk=absWeek(G);return a;};
+const DRAINS=[
+ {id:"drain_cat",need:G=>hasPet(G,"cat"),steps:G=>[{n:"nar",t:`${petName(G,"cat")}ไล่จับแมลงเม่าแล้วกระโจนใส่จอทีวีจอใหม่ของค่าย จอแตกเป็นลายใยแมงมุม แมวนั่งเลียอุ้งเท้าเหมือนไม่มีอะไรเกิดขึ้น`},{n:"coach",t:"…จอนี้ครูเพิ่งผ่อนงวดแรกเองนะ"}],cul:G=>petName(G,"cat")},
+ {id:"drain_rooster",need:G=>hasPet(G,"rooster"),steps:G=>[{n:"nar",t:`${petName(G,"rooster")}หลุดออกจากค่ายไปบุกร้านข้าวมันไก่หน้าตลาด จิกไก่ต้มที่แขวนโชว์จนหล่นทั้งราว`},{n:"npc",who:"เจ๊ร้านข้าวมันไก่",t:"ไก่เป็นมาตีกับไก่ต้ม! ใครจะรับผิดชอบ!"}],cul:G=>petName(G,"rooster")},
+ {id:"drain_roof",need:G=>inCamp(G,"kati"),steps:G=>[{n:"nar",t:"เสียงตูม! กะทิเตะกระสอบทรายแรงจนตะขอหลุด กระสอบลอยทะลุหลังคาสังกะสีไปตกบ้านข้าง ๆ"},{n:"kati",f:"flustered",l:"train",t:"ห-หนูแค่ลองเตะแบบที่ครูสอนเมื่อวาน! ไม่คิดว่าจะได้ผลขนาดนี้!"}],cul:G=>"กะทิ"},
+ {id:"drain_banquet",need:G=>true,steps:G=>[{n:"nar",t:"ครูแดงจัดงานคืนสู่เหย้าศิษย์เก่ารุ่นปู่ชัย สั่งโต๊ะจีนมาสิบโต๊ะ แล้วเซ็นบิลในนามค่าย"},{n:"coach",t:"เฮ้ย… ครูนึกว่ามาแค่สามโต๊ะ ใครชวนทั้งอำเภอมาวะ"}],cul:G=>"ครูแดง"},
+ {id:"drain_durian",need:G=>inCamp(G,"mali"),steps:G=>[{n:"nar",t:"รถกระบะขนทุเรียนหมอนทองสามเข่งมาจอดหน้าค่าย ใบเสร็จระบุผู้สั่ง: มะลิ"},{n:"mali",f:"happy",l:"casual",t:"หน้าทุเรียนค่ะ! หนูอยากให้ทุกคนได้กิน! …แต่ไม่คิดว่าเข่งนึงจะใหญ่ขนาดนี้"}],cul:G=>"มะลิ"},
+ {id:"drain_flamingo",need:G=>inCamp(G,"fah")||inCamp(G,"kati"),steps:G=>{const w=inCamp(G,"fah")?"fah":"kati";return [{n:"nar",t:"ตีสอง มีคนนั่งดูไลฟ์ขายของแล้วกดสั่งด้วยบัตรค่าย เช้ามามีห่วงยางฟลามิงโกสีชมพูสี่สิบตัวกองหน้าค่าย"},{n:w,f:"flustered",l:"casual",t:w==="fah"?"ก็มันลดราคาเหลือตัวละเก้าบาทนี่นา! …อ๋อ เก้าสิบเก้า ฟ้าอ่านผิด":"หนูนึกว่าตัวละเก้าบาท! …เก้าสิบเก้าเหรอคะ หนูอ่านผิด"}];},cul:G=>inCamp(G,"fah")?"ฟ้า":"กะทิ"}];
+DRAINS.forEach((D,k)=>{
+  const optPay={t:"จ่ายไป แล้วหัวเราะด้วยกัน (ทุกคนกำลังใจ +4)",fx:G2=>{G2._drain=drainPay(G2,1);R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+4);});},
+    then:[{inject:G2=>[{n:"nar",t:`จ่ายไป ${fmt(G2._drain)} · ค่ายหัวเราะกันทั้งคืน เรื่องนี้กลายเป็นตำนานประจำค่าย`}]}]};
+  const optHalf=G=>({t:`ต่อรอง และให้${D.cul(G)}ช่วยทำงานใช้หนี้ (จ่ายครึ่งเดียว)`,fx:G2=>{G2._drain=drainPay(G2,.5);},
+    then:[{inject:G2=>[{n:"nar",t:`จ่ายไป ${fmt(G2._drain)} · ${D.cul(G2)}ไปช่วยงานจนครบ แต่ก็บ่นทั้งสัปดาห์`}]}]});
+  EVENTS.push({id:D.id,annual:true,look:"casual",bg:"camp",when:G=>D.need(G)&&drainOk(G,301+k*17),
+    steps:[{inject:G=>D.steps(G).concat([{n:"nar",t:`ค่าเสียหายประมาณ ${fmt(drainAmt(G))}`},{choice:[optPay,optHalf(G)]}])}]});});
