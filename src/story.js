@@ -327,7 +327,7 @@ function dateScene(G,id,act){
           {t:"ฉันก็รู้สึกแบบเดียวกัน",fx:G3=>{G3.romance=id;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
           {t:"ขอบคุณ แต่ฉันอยากเป็นคนที่คอยอยู่ข้าง ๆ แบบนี้ต่อไป",fx:G3=>{add(G3,id,"trust",5);G3.loveNo=G3.loveNo||{};G3.loveNo[id]=G3.week;},then:[{n:id,f:"sad",l:"casual",t:LOVE_NO[id]}]}]});}
       // v1.29.3: a second chance — she won't ask twice, but after a while she lets you know the door is still open
-      else if(f.bond>=75&&f.trust>=40&&!G2.romance&&G2.seen["love_"+id]&&G2.week-((G2.loveNo&&G2.loveNo[id])||-99)>=6){G2.loveNo=G2.loveNo||{};G2.loveNo[id]=G2.week;
+      else if(f.bond>=75&&f.trust>=40&&!G2.romance&&G2.seen["love_"+id]&&G2.week-((G2.loveNo&&G2.loveNo[id])||-99)>=2){G2.loveNo=G2.loveNo||{};G2.loveNo[id]=G2.week;
         out.push({n:id,f:"flustered",l:"casual",t:LOVE_AGAIN[id]},{choice:[
           {t:"วันนั้นฉันตอบเร็วไป ฉันก็รู้สึกเหมือนเธอ",fx:G3=>{G3.romance=id;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
           {t:"ขออยู่ข้าง ๆ แบบนี้ต่อไปนะ",fx:G3=>add(G3,id,"trust",2),then:[{n:"nar",t:`${f.name}ยิ้มแล้วพยักหน้า ไม่ได้พูดอะไรต่อ`}]}]});}

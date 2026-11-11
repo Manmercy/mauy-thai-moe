@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.29.3";
+const VERSION="1.29.4";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -688,7 +688,7 @@ function sceneHTML(){const S=UI.scene,c=S.cur||{};const sp=c.n==="coach"?{name:"
    <div class="cast ${(S.cast||[]).length>1?"duo":""}">${cast}</div>
    ${c.choice?"":`<button class="vtap" data-act="vnext" aria-label="Continue"></button>`}
    <div class="vbox px" data-act="${c.choice?"":"vnext"}" style="--c:${sp.color||"var(--gold)"}">
-    ${c.choice?`<div class="choices">${c.choice.map((o,i)=>{const t=val(o.t),m=t.match(/^(.*?)\s*\(([^()]*)\)\s*$/);return `<button data-act="vchoose" data-v="${i}">${esc(m?m[1]:t)}${m?`<small class="cfx">${esc(m[2])}</small>`:""}</button>`;}).join("")}</div>`:
+    ${c.choice?`<div class="choices">${(UI._ck!==c?(UI._ck=c,UI._ct=Date.now()):0,"")}${c.choice.map((o,i)=>{const t=val(o.t),m=t.match(/^(.*?)\s*\(([^()]*)\)\s*$/);return `<button data-act="vchoose" data-v="${i}">${esc(m?m[1]:t)}${m?`<small class="cfx">${esc(m[2])}</small>`:""}</button>`;}).join("")}</div>`:
      `${who?`<div class="who">${tag}<b>${who}</b></div>`:""}<div class="txt ${c.n==="nar"?"nar":""}">${esc(c.t||"")}</div><div class="nextc">Tap to continue ▸</div>`}
    </div><button class="btn sm vskip" data-act="vskip">Skip scene</button></div>`;}
 function sceneSkip(){let g=0;while(UI.scene&&g++<300){const s=UI.scene;if(s.cur&&s.cur.choice)sceneChoose(0);else sceneNext();}}
@@ -1087,7 +1087,7 @@ const ACT={
     if(stageOf(G.week)==="local")G.rank[f.div][f.id]={pts:0,w:0,l:0,d:0};genOffers(G);save();
     playScene([{n:f.id,f:"happy",l:"train",t:f.id==="mali"?"Pleased to be here! I'll kick Sirichai's name across the whole province~":"Contract done. I'll send the first week's training plan tonight"},
       {n:"kati",f:"happy",l:"train",with:f.id,t:f.id==="mali"?"Welcome, Mali! Our camp won't be lonely anymore!":"Welcome, Rin! …Please don't count how many times my guard drops"}],()=>render(),{bg:"gym",look:"train"});},
-  vnext:()=>sceneNext(),vchoose:d=>sceneChoose(+d.v),vskip:()=>sceneSkip(),
+  vnext:()=>sceneNext(),vchoose:d=>{if(Date.now()-(UI._ct||0)<500)return;sceneChoose(+d.v);},vskip:()=>sceneSkip(),
   montageDone:()=>montageDone(),
   plan:d=>{UI.fight.plan=d.v;render();},
   fstart:()=>{const b=UI.fight.b;if(!b.waiDone&&(b.tier==="semi"||b.tier==="final"||!(G.flags&&G.flags.waiSeen)||G.F[b.b].canon||G.F[b.b].camp==="rival")){b.waiDone=true;

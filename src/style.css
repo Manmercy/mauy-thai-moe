@@ -1237,3 +1237,8 @@ details.skhelp summary{color:var(--muted);font-size:13px}
 @keyframes mblink2{50%{background:#ffd23f;transform:scale(1.25)}}
 .mailbtn.has{box-shadow:inset 0 0 0 2px var(--gold),0 0 10px rgba(242,193,78,.55);overflow:visible}
 @media (prefers-reduced-motion:reduce){.mbadge{animation:none}}
+
+/* v1.29.4: choices fade in and ignore taps for half a second, so fast tapping through dialogue can't pick one by accident */
+.choices{animation:chin .5s steps(4) both}
+@keyframes chin{0%{opacity:.25}100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.choices{animation:none}}
