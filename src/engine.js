@@ -47,25 +47,46 @@ function mkNPC(id,name,div,lvl,rng,i){
 const SCHOOLS={thasao:{name:"มวยท่าเสา",motto:"ไวกว่าท่าเสา",color:"#e23b4e"},chaiya:{name:"มวยไชยา",motto:"ท่าดีไชยา",color:"#4a7fe0"},
   lopburi:{name:"มวยลพบุรี",motto:"ฉลาดลพบุรี",color:"#3fae6a"},korat:{name:"มวยโคราช",motto:"หมัดหนักโคราช",color:"#9b62e0"},modern:{name:"มวยร่วมสมัย",motto:"บุกไม่ถอย",color:"#e7b443"}};
 const SKILLS={
- kati:[{id:"ts_fast",school:"thasao",name:"นาคาสะบัดหาง",desc:"ลูกไม้ท่าเสา หมัดนำแล้วเอนตัวเตะตาม · เตะแม่น +3% คะแนนเตะ +8%",fx:r=>({hit:{kick:.03*r},pts:{kick:.08*r}})},
-       {id:"ts_step",school:"thasao",name:"จดมวยกว้างท่าเสา",desc:"ท่าจดกว้าง น้ำหนักอยู่หลัง · หลบ +1.5% สวนกลับ +3%",fx:r=>({evade:.015*r,ctr:.03*r})},
-       {id:"heart",school:"thasao",name:"ใจศิษย์ปู่ชัย",desc:"ร่างกายต่ำกว่า 45 แม่นขึ้น 4%",fx:r=>({clutch:.04*r})},
-       // v1.20: more techniques open up with level; only 3 can be carried into the ring
-       {id:"ts_jab",lv:3,school:"thasao",name:"หมัดหน้าไม้ท่าเสา",desc:"หมัดนำไวแบบท่าเสา · หมัดแม่น +3% คะแนนหมัด +6%",fx:r=>({hit:{punch:.03*r},pts:{punch:.06*r}})},
-       {id:"ts_elbow",lv:5,school:"thasao",name:"ศอกกลับปู่ชัย",desc:"หมุนตัวกลับศอกที่ปู่ชัยสอน · แรงศอก +10% แม่น +1%",fx:r=>({dmg:{elbow:.1*r},hit:{elbow:.01*r}})},
-       {id:"ts_iron",lv:7,school:"thasao",name:"กำแพงท่าเสา",desc:"ตั้งการ์ดแน่นแล้วสวน · หลบ +1% สวนกลับ +2% ป้องกันวงใน +0.5",fx:r=>({evade:.01*r,ctr:.02*r,clDef:.5*r})}],
- mali:[{id:"cy_guard",school:"chaiya",name:"ป้อง ปัด ปิด เปิด",desc:"หลักป้องกันของไชยา · ป้องกันวงใน +1 หลบ +1%",fx:r=>({clDef:1*r,evade:.01*r})},
-       {id:"cy_kick",school:"chaiya",name:"กระโดดตบศอก",desc:"แม่ไม้ไชยา · ศอกแม่น +2% คะแนนศอก +10%",fx:r=>({hit:{elbow:.02*r},pts:{elbow:.1*r}})},
-       {id:"cy_poise",school:"chaiya",name:"ย่างสามขุม",desc:"ท่าครูไชยา ก้าวสามจังหวะ · ฟื้นแรงระหว่างยก +20% กำลังใจมีผล +1%",fx:r=>({regen:.2*r,mor:.01*r})},
-       {id:"cy_tee",lv:3,school:"chaiya",name:"เตะเปิดประตูไชยา",desc:"เตะกลางลำตัวเปิดการ์ด · เตะแม่น +3% คะแนนเตะ +6%",fx:r=>({hit:{kick:.03*r},pts:{kick:.06*r}})},
-       {id:"cy_knee",lv:5,school:"chaiya",name:"เข่าลอยไชยา",desc:"กระโดดเข่าจากระยะกลาง · แรงเข่า +10% แม่น +1%",fx:r=>({dmg:{knee:.1*r},hit:{knee:.01*r}})},
-       {id:"cy_breath",lv:7,school:"chaiya",name:"ลมหายใจครูไชยา",desc:"คุมลมหายใจตลอดไฟต์ · ฟื้นแรงระหว่างยก +15% ร่างกายต่ำกว่า 45 แม่นขึ้น 2%",fx:r=>({regen:.15*r,clutch:.02*r})}],
- rin:[{id:"lb_read",school:"lopburi",name:"ฉลาดลพบุรี",desc:"ขยับตัวตลอด หลบแล้วสวน · สวนกลับ +4% หลบ +1.5%",fx:r=>({ctr:.04*r,evade:.015*r})},
-      {id:"lb_jab",school:"lopburi",name:"หมัดตรงลพบุรี",desc:"หมัดตรงแม่นยำ · แรงหมัดสวน +12% หมัดแม่น +1%",fx:r=>({ctrDmg:.12*r,hit:{punch:.01*r}})},
-      {id:"lb_plan",school:"lopburi",name:"มวยเกี้ยว",desc:"ใช้ชั้นเชิงหลอกล่อ · คำสั่งพักยกได้ผลแรงขึ้น 25% ความแม่นพื้นฐาน +1%",fx:r=>({corner:.25*r,prep:.01*r})},
-      {id:"lb_teep",lv:3,school:"lopburi",name:"ถีบสกัดลพบุรี",desc:"ถีบตัดจังหวะคู่ชก · เตะแม่น +2% คะแนนเตะ +8%",fx:r=>({hit:{kick:.02*r},pts:{kick:.08*r}})},
-      {id:"lb_feint",lv:5,school:"lopburi",name:"หลอกซ้ายตีขวา",desc:"หลอกให้ปล่อยอาวุธก่อน · หลบ +1.5% สวนกลับ +2%",fx:r=>({evade:.015*r,ctr:.02*r})},
-      {id:"lb_calm",lv:7,school:"lopburi",name:"ใจนิ่งนักคำนวณ",desc:"เจ็บแค่ไหนก็คิดเลขต่อ · ร่างกายต่ำกว่า 45 แม่นขึ้น 3% กำลังใจมีผล +1%",fx:r=>({clutch:.03*r,mor:.01*r})}],
+ // v1.29 skill trees: 3 lines × (basic → mid → mid/passive → high). row 0..3, line 0..2, req = [main stat, cross stat?], pre = skill needed first
+ kati:[
+  {id:"ts_fast",line:0,row:0,req:["kick"],school:"thasao",name:"นาคาสะบัดหาง",desc:"ลูกไม้ท่าเสา หมัดนำแล้วเอนตัวเตะตาม · เตะแม่น +3% คะแนนเตะ +8%",fx:r=>({hit:{kick:.03*r},pts:{kick:.08*r}})},
+  {id:"ts_low",line:0,row:1,pre:"ts_fast",req:["kick","power"],school:"thasao",name:"เตะตัดขา",desc:"เตะต่ำตัดกำลังขา · แรงเตะ +8% เตะแม่น +1.5%",fx:r=>({dmg:{kick:.08*r},hit:{kick:.015*r}})},
+  {id:"k_shin",line:0,row:2,pre:"ts_fast",passive:1,req:["kick"],school:"thasao",name:"แข้งเหล็ก",desc:"ติดตัว · ฝึกโปรแกรมเตะแล้วล้าน้อยลง 12%",fx:r=>({}),px:r=>({fatKick:.12*r})},
+  {id:"ts_croc",line:0,row:3,pre:"ts_low",req:["kick","foot"],school:"thasao",name:"จระเข้ฟาดหาง",desc:"หมุนตัวเตะกลับหลัง · เตะแม่น +3% แรงเตะ +10% คะแนนเตะ +8%",fx:r=>({hit:{kick:.03*r},dmg:{kick:.1*r},pts:{kick:.08*r}})},
+  {id:"ts_jab",line:1,row:0,req:["punch"],school:"thasao",name:"หมัดหน้าไม้ท่าเสา",desc:"หมัดนำไวแบบท่าเสา · หมัดแม่น +3% คะแนนหมัด +6%",fx:r=>({hit:{punch:.03*r},pts:{punch:.06*r}})},
+  {id:"ts_elbow",line:1,row:1,pre:"ts_jab",req:["elbow","clinch"],school:"thasao",name:"ศอกเฉือนท่าเสา",desc:"หมุนตัวกลับศอกระยะประชิด · แรงศอก +10% แม่น +1%",fx:r=>({dmg:{elbow:.1*r},hit:{elbow:.01*r}})},
+  {id:"k_blood",line:1,row:2,pre:"ts_jab",passive:1,req:["comp"],school:"thasao",name:"เลือดนักสู้",desc:"ติดตัว · ได้ EXP จากไฟต์ที่แพ้เพิ่ม 20%",fx:r=>({}),px:r=>({lossXp:.2*r})},
+  {id:"ts_ring",line:1,row:3,pre:"ts_elbow",req:["punch","elbow"],school:"thasao",name:"หนุมานถวายแหวน",desc:"หมัดเสยคู่เข้าปลายคาง · หมัดแม่น +3% แรงหมัด +10% คะแนนหมัด +8%",fx:r=>({hit:{punch:.03*r},dmg:{punch:.1*r},pts:{punch:.08*r}})},
+  {id:"ts_step",line:2,row:0,req:["foot"],school:"thasao",name:"จดมวยกว้างท่าเสา",desc:"ท่าจดกว้าง น้ำหนักอยู่หลัง · หลบ +1.5% สวนกลับ +3%",fx:r=>({evade:.015*r,ctr:.03*r})},
+  {id:"heart",line:2,row:1,pre:"ts_step",req:["stamina"],school:"thasao",name:"ใจเกินร้อย",desc:"ร่างกายต่ำกว่า 45 แม่นขึ้น 4%",fx:r=>({clutch:.04*r})},
+  {id:"k_grind",line:2,row:2,pre:"ts_step",passive:1,req:["stamina"],school:"thasao",name:"ซ้อมหนักไม่ท้อ",desc:"ติดตัว · ล้าจากการฝึกทุกโปรแกรมลดลง 7%",fx:r=>({}),px:r=>({fatAll:.07*r})},
+  {id:"ts_iron",line:2,row:3,pre:"heart",req:["guard","iq"],school:"thasao",name:"กำแพงท่าเสา",desc:"ตั้งการ์ดแน่นแล้วสวน · หลบ +2% สวนกลับ +3% ป้องกันวงใน +0.8",fx:r=>({evade:.02*r,ctr:.03*r,clDef:.8*r})}],
+ mali:[
+  {id:"cy_kick",line:0,row:0,req:["elbow"],school:"chaiya",name:"กระโดดตบศอก",desc:"แม่ไม้ไชยา · ศอกแม่น +2% คะแนนศอก +10%",fx:r=>({hit:{elbow:.02*r},pts:{elbow:.1*r}})},
+  {id:"cy_spin",line:0,row:1,pre:"cy_kick",req:["elbow","foot"],school:"chaiya",name:"ศอกกลับตัว",desc:"หมุนตัวฟันศอกสวน · แรงศอก +10% ศอกแม่น +1.5%",fx:r=>({dmg:{elbow:.1*r},hit:{elbow:.015*r}})},
+  {id:"m_heart",line:0,row:2,pre:"cy_kick",passive:1,req:["comp"],school:"chaiya",name:"ตัวเล็กแต่ใจใหญ่",desc:"ติดตัว · ได้ EXP จากทุกไฟต์เพิ่ม 8%",fx:r=>({}),px:r=>({fightXp:.08*r})},
+  {id:"cy_erawan",line:0,row:3,pre:"cy_spin",req:["elbow","clinch"],school:"chaiya",name:"หักคอเอราวัณ",desc:"ดึงคอลงแล้วฟันศอก · แรงศอก +12% ศอกแม่น +3% ป้องกันวงใน +0.5",fx:r=>({dmg:{elbow:.12*r},hit:{elbow:.03*r},clDef:.5*r})},
+  {id:"cy_tee",line:1,row:0,req:["kick"],school:"chaiya",name:"เตะเปิดประตูไชยา",desc:"เตะกลางลำตัวเปิดการ์ด · เตะแม่น +3% คะแนนเตะ +6%",fx:r=>({hit:{kick:.03*r},pts:{kick:.06*r}})},
+  {id:"cy_poise",line:1,row:1,pre:"cy_tee",req:["foot"],school:"chaiya",name:"ย่างสามขุม",desc:"ท่าครูไชยา ก้าวสามจังหวะ · ฟื้นแรงระหว่างยก +20% กำลังใจมีผล +1%",fx:r=>({regen:.2*r,mor:.01*r})},
+  {id:"cy_breath",line:1,row:2,pre:"cy_tee",passive:1,req:["stamina"],school:"chaiya",name:"ลมหายใจครูไชยา",desc:"ติดตัว · ฟื้นแรงระหว่างยก +8% ทุกไฟต์",fx:r=>({regen:.08*r})},
+  {id:"cy_hanuman",line:1,row:3,pre:"cy_poise",req:["foot","speed"],school:"chaiya",name:"หนุมานแหวกฟอง",desc:"มุดต่ำแหวกการ์ดเข้าวงใน · หลบ +2.5% สวนกลับ +3% เข่าแม่น +2%",fx:r=>({evade:.025*r,ctr:.03*r,hit:{knee:.02*r}})},
+  {id:"cy_guard",line:2,row:0,req:["guard"],school:"chaiya",name:"ป้อง ปัด ปิด เปิด",desc:"หลักป้องกันของไชยา · ป้องกันวงใน +1 หลบ +1%",fx:r=>({clDef:1*r,evade:.01*r})},
+  {id:"cy_knee",line:2,row:1,pre:"cy_guard",req:["knee","clinch"],school:"chaiya",name:"เข่าลอยไชยา",desc:"กระโดดเข่าจากระยะกลาง · แรงเข่า +10% แม่น +1%",fx:r=>({dmg:{knee:.1*r},hit:{knee:.01*r}})},
+  {id:"m_smile",line:2,row:2,pre:"cy_guard",passive:1,req:["comp"],school:"chaiya",name:"ยิ้มสู้",desc:"ติดตัว · กำลังใจตกจากการแพ้น้อยลง 25%",fx:r=>({}),px:r=>({moraleLoss:.25*r})},
+  {id:"cy_root",line:2,row:3,pre:"cy_knee",req:["guard","dur"],school:"chaiya",name:"ปักหลักไชยา",desc:"ยืนหลักแน่น แทบไม่เสียคะแนน · หลบ +2% ป้องกันวงใน +1 ฟื้นแรงระหว่างยก +10%",fx:r=>({evade:.02*r,clDef:1*r,regen:.1*r})}],
+ rin:[
+  {id:"lb_read",line:0,row:0,req:["counter"],school:"lopburi",name:"ฉลาดลพบุรี",desc:"ขยับตัวตลอด หลบแล้วสวน · สวนกลับ +4% หลบ +1.5%",fx:r=>({ctr:.04*r,evade:.015*r})},
+  {id:"lb_jab",line:0,row:1,pre:"lb_read",req:["punch","counter"],school:"lopburi",name:"หมัดตรงลพบุรี",desc:"หมัดตรงแม่นยำ · แรงหมัดสวน +12% หมัดแม่น +1%",fx:r=>({ctrDmg:.12*r,hit:{punch:.01*r}})},
+  {id:"lb_calm",line:0,row:2,pre:"lb_read",passive:1,req:["comp"],school:"lopburi",name:"ใจนิ่งนักคำนวณ",desc:"ติดตัว · ร่างกายต่ำกว่า 45 แม่นขึ้น 2% ทุกไฟต์",fx:r=>({clutch:.02*r})},
+  {id:"lb_kris",line:0,row:3,pre:"lb_jab",req:["counter","speed"],school:"lopburi",name:"อิเหนาแทงกริช",desc:"หลบแล้วแทงหมัดตรงสวน · สวนกลับ +4% แรงหมัดสวน +15% หมัดแม่น +2%",fx:r=>({ctr:.04*r,ctrDmg:.15*r,hit:{punch:.02*r}})},
+  {id:"lb_plan",line:1,row:0,req:["iq"],school:"lopburi",name:"มวยเกี้ยว",desc:"ใช้ชั้นเชิงหลอกล่อ · คำสั่งพักยกได้ผลแรงขึ้น 25% ความแม่นพื้นฐาน +1%",fx:r=>({corner:.25*r,prep:.01*r})},
+  {id:"lb_feint",line:1,row:1,pre:"lb_plan",req:["iq"],school:"lopburi",name:"หลอกซ้ายตีขวา",desc:"หลอกให้ปล่อยอาวุธก่อน · หลบ +1.5% สวนกลับ +2%",fx:r=>({evade:.015*r,ctr:.02*r})},
+  {id:"r_note",line:1,row:2,pre:"lb_plan",passive:1,req:["iq"],school:"lopburi",name:"สมุดบันทึกคู่ชก",desc:"ติดตัว · ความแม่นพื้นฐาน +0.8% ทุกไฟต์",fx:r=>({prep:.008*r})},
+  {id:"lb_giant",line:1,row:3,pre:"lb_feint",req:["iq","comp"],school:"lopburi",name:"ขุนยักษ์จับลิง",desc:"อ่านทางสามจังหวะ · คำสั่งพักยกได้ผล +30% ความแม่นพื้นฐาน +1.2% หลบ +1%",fx:r=>({corner:.3*r,prep:.012*r,evade:.01*r})},
+  {id:"lb_teep",line:2,row:0,req:["kick"],school:"lopburi",name:"ถีบสกัดลพบุรี",desc:"ถีบตัดจังหวะคู่ชก · เตะแม่น +2% คะแนนเตะ +8%",fx:r=>({hit:{kick:.02*r},pts:{kick:.08*r}})},
+  {id:"lb_range",line:2,row:1,pre:"lb_teep",req:["kick","foot"],school:"lopburi",name:"ตัดวงนอก",desc:"คุมระยะด้วยลูกถีบและฟุตเวิร์ก · เตะแม่น +2% คะแนนเตะ +8% หลบ +1%",fx:r=>({hit:{kick:.02*r},pts:{kick:.08*r},evade:.01*r})},
+  {id:"r_pace",line:2,row:2,pre:"lb_teep",passive:1,req:["stamina"],school:"lopburi",name:"นับจังหวะ",desc:"ติดตัว · ใช้แรงออกอาวุธน้อยลง 4% ทุกไฟต์",fx:r=>({staSave:.04*r})},
+  {id:"lb_tiger",line:2,row:3,pre:"lb_range",req:["kick","foot"],school:"lopburi",name:"เสือลากหาง",desc:"ถอยหลอกแล้วเตะกลับ · แรงเตะ +10% เตะแม่น +3% สวนกลับ +2%",fx:r=>({dmg:{kick:.1*r},hit:{kick:.03*r},ctr:.02*r})}],
  ploy:[{id:"kr_swing",school:"korat",name:"หมัดเหวี่ยงควาย",desc:"หมัดวงกว้างหนักหน่วง · แรงหมัด +12% คะแนนหมัด +5%",fx:r=>({dmg:{punch:.12*r},pts:{punch:.05*r}})},
        {id:"kr_knee",school:"korat",name:"เตะคอขาด",desc:"เตะตัดคอแบบโคราช · เตะแม่น +3% คะแนนเตะ +8%",fx:r=>({hit:{kick:.03*r},pts:{kick:.08*r}})},
        {id:"captain",school:"korat",name:"คาดเชือกถึงศอก",desc:"แขนแกร่งรับลูกเตะ · หลบ/รับ +1% ใจนิ่ง +1% ป้องกันวงใน +0.5",fx:r=>({evade:.01*r,mor:.01*r,clDef:.5*r})},
@@ -85,20 +106,35 @@ const hasSignature=f=>!!SIGNATURE[f.id]&&f.camp==="player"&&(f.bond||0)>=60;
 function skillMods(f){const m={hit:{},pts:{},dmg:{},ctr:0,ctrDmg:0,clutch:0,regen:0,mor:0,evade:0,corner:0,prep:0,clDef:0,staSave:0};
   if(hasSignature(f)){const e=SIGNATURE[f.id].fx;for(const k in e){if(typeof e[k]==="object")for(const w in e[k])m[k][w]=(m[k][w]||0)+e[k][w];else m[k]+=e[k];}}
   const list=SKILLS[f.id];if(!list||!f.skills)return m;const eq=equipped(f);
-  for(const sk of list){if(!eq.includes(sk.id))continue;const r=f.skills[sk.id]||0;if(!r)continue;const e=sk.fx(r);
+  for(const sk of list){if(!sk.passive&&!eq.includes(sk.id))continue;const r=f.skills[sk.id]||0;if(!r)continue;const e=sk.fx(r);
     for(const k in e){if(typeof e[k]==="object")for(const w in e[k])m[k][w]=(m[k][w]||0)+e[k][w];else m[k]+=e[k];}}
   return m;}
 const xpNeed=lvl=>50+lvl*30;
 function gainXP(G,f,x){if(!f.canon)return;if(f.camp==="player"&&G.fac&&G.fac.ring)x=Math.round(x*(1+G.fac.ring*.15));f.xp+=x;f.xpGain=(f.xpGain||0)+x;
-  while(f.lvl<10&&f.xp>=xpNeed(f.lvl)){f.xp-=xpNeed(f.lvl);f.lvl++;f.sp++;if(f.camp==="player"){G.levelUps=G.levelUps||[];G.levelUps.push(f.id);}}}
+  while(f.lvl<10&&f.xp>=xpNeed(f.lvl)){f.xp-=xpNeed(f.lvl);f.lvl++;f.sp+=SP_PER_LV(f);if(f.camp==="player"){G.levelUps=G.levelUps||[];G.levelUps.push(f.id);}}}
 const skillDef=(fid,sk)=>(SKILLS[fid]||[]).find(s=>s.id===sk);
-function learnSkill(G,id,sk){const f=G.F[id],d=skillDef(id,sk);if(!d||f.sp<1||(f.skills[sk]||0)>=3||(d.lv||1)>f.lvl)return false;f.skills[sk]=(f.skills[sk]||0)+1;f.sp--;
-  f.equip=equipped(f);if(!f.equip.includes(sk)&&f.equip.length<3)f.equip.push(sk);return true;}
+// v1.29: stat requirements scale from each fighter's starting stats, so every line asks for real training
+const hasTree=fid=>!!(SKILLS[fid]&&SKILLS[fid][0]&&SKILLS[fid][0].line!=null);
+const SP_PER_LV=f=>hasTree(f.id)?3:1;
+// thresholds are written in "weeks of focused training" and converted with each fighter's measured growth (8 / 14 weeks of the best programme)
+const GROW={"kati":{"punch":[3.1,4.8],"counter":[2.6,4.5],"power":[1.8,3.2],"speed":[1.7,2.7],"kick":[3.5,5.6],"foot":[2.1,3.3],"knee":[3.5,5.9],"clinch":[3.7,5.9],"stamina":[3.2,5],"elbow":[3.7,6.1],"guard":[3.9,6.2],"iq":[2.6,4.2],"comp":[1.3,2.2],"dur":[1.7,2.8]},"mali":{"punch":[2.9,4.6],"counter":[2.3,4.1],"power":[1.5,2.7],"speed":[1.4,2.3],"kick":[2.3,3.7],"foot":[1.6,2.5],"knee":[2.8,4.8],"clinch":[3.2,5],"stamina":[2,3.1],"elbow":[3.1,5.2],"guard":[3,4.8],"iq":[2,3.2],"comp":[1,1.7],"dur":[1.4,2.3]},"rin":{"punch":[2.7,4.3],"counter":[1.7,3.1],"power":[1.5,2.8],"speed":[1.6,2.6],"kick":[2.6,4.2],"foot":[1.4,2.2],"knee":[2.8,4.7],"clinch":[2.9,4.5],"stamina":[2.5,4],"elbow":[2.8,4.7],"guard":[2.6,4.1],"iq":[1.1,1.7],"comp":[0.8,1.3],"dur":[1.4,2.3]}};
+const REQ_WK={main:[[0,2,4],[3,5,7],[3,5,7],[6,8,10]],cross:[[0,0,0],[1,2,3],[0,0,0],[2,3,4]],scale:{kati:1,mali:.85,rin:.7}};
+function skillReqs(fid,sk,rank){const d=skillDef(fid,sk);if(!d||!d.req||!CANON[fid]||!GROW[fid])return [];const base=CANON[fid].a,r=clamp(rank,1,3)-1,sc=REQ_WK.scale[fid]||1;
+  return d.req.map((k,i)=>{const w=(i?REQ_WK.cross:REQ_WK.main)[d.row][r]*sc,g=GROW[fid][k]||[2,3.2];const up=w<=8?g[0]*w/8:g[0]+(g[1]-g[0])*(w-8)/6;return {k,v:Math.floor((base[k]+up)*2)/2};});}
+// why a skill can't be raised right now ([] = ok). Each entry: {t:"sp"|"max"|"lv"|"pre"|"stat", ...}
+function skillBlock(f,sk){const d=skillDef(f.id,sk),r=(f.skills&&f.skills[sk])||0,B=[];if(!d)return [{t:"none"}];
+  if(r>=3)return [{t:"max"}];if((d.lv||1)>f.lvl)B.push({t:"lv",v:d.lv});
+  if(d.pre&&!((f.skills[d.pre]||0)>0))B.push({t:"pre",id:d.pre});
+  for(const q of skillReqs(f.id,sk,r+1))if(f.a[q.k]+1e-6<q.v)B.push({t:"stat",k:q.k,v:q.v,have:f.a[q.k]});
+  if(f.sp<1)B.push({t:"sp"});return B;}
+function learnSkill(G,id,sk){const f=G.F[id],d=skillDef(id,sk);if(!d||skillBlock(f,sk).length)return false;f.skills[sk]=(f.skills[sk]||0)+1;f.sp--;
+  if(d.passive)return true;f.equip=equipped(f);if(!f.equip.includes(sk)&&f.equip.length<3)f.equip.push(sk);return true;}
+function passiveMods(f){const m={fatKick:0,fatAll:0,lossXp:0,fightXp:0,moraleLoss:0};for(const sk of SKILLS[f.id]||[]){const r=(f.skills&&f.skills[sk.id])||0;if(!r||!sk.px)continue;const e=sk.px(r);for(const k in e)m[k]+=e[k];}return m;}
 // v1.20: only 3 techniques are carried into the ring (player picks; rivals carry their best 3)
 const MAX_EQUIP=3;
-function equipped(f){const has=k=>(f.skills&&f.skills[k])>0;if(Array.isArray(f.equip))return f.equip.filter(has).slice(0,MAX_EQUIP);
+function equipped(f){const pas=k=>{const d=skillDef(f.id,k);return !!(d&&d.passive);};const has=k=>(f.skills&&f.skills[k])>0&&!pas(k);if(Array.isArray(f.equip))return f.equip.filter(has).slice(0,MAX_EQUIP);
   return (SKILLS[f.id]||[]).filter(s=>has(s.id)).sort((a,b)=>f.skills[b.id]-f.skills[a.id]).slice(0,MAX_EQUIP).map(s=>s.id);}
-function toggleEquip(G,id,sk){const f=G.F[id];if(!(f.skills[sk]>0))return false;let e=equipped(f);if(e.includes(sk))e=e.filter(x=>x!==sk);else{if(e.length>=MAX_EQUIP)return false;e.push(sk);}f.equip=e;return true;}
+function toggleEquip(G,id,sk){const f=G.F[id];const dd=skillDef(id,sk);if(!(f.skills[sk]>0)||(dd&&dd.passive))return false;let e=equipped(f);if(e.includes(sk))e=e.filter(x=>x!==sk);else{if(e.length>=MAX_EQUIP)return false;e.push(sk);}f.equip=e;return true;}
 
 function baseFighter(id,d){return {id,name:d.name,full:d.full,div:d.div,camp:d.camp,color:d.color,potential:d.potential,wage:d.wage||0,fee:d.fee||0,
   canon:!!CANON[id],a:{...d.a},fatigue:10,injury:0,morale:60,trust:id==="kati"?40:20,bond:id==="kati"?20:0,
@@ -144,7 +180,7 @@ function trainWeek(G,f,rng){
     if(g>0){f.a[k]=Math.min(20,f.a[k]+g);f.gains[k]=g;}
   }
   f.drillBonus=0;
-  let load=p.load*it.l*7*(pr==="cond"?1-hill*.08-(st.includes("tong")?.1:0):1);
+  let load=p.load*it.l*7*(pr==="cond"?1-hill*.08-(st.includes("tong")?.1:0):1);{const pm=passiveMods(f);load*=clamp(1-pm.fatAll-(pr==="kick"?pm.fatKick:0),.4,1);}
   f.fatigue=clamp(f.fatigue+load-(10+G.fac.recovery*5+G.fac.kitchen*2+clin*3)-(f.plan.preset==="rest"?22:0),0,100);
   if(f.plan.preset==="rest")f.morale=clamp(f.morale+3,0,100);
   f.prepBonus=f.plan.preset==="prep";
@@ -391,7 +427,7 @@ const hasStaff=(G,k)=>(G.staff||[]).includes(k);
 const staffLocked=(G,k)=>{const r=STAFF[k].req;if(!r)return "";if(r.lv&&campLevel(G)<r.lv)return `ค่าย Lv.${r.lv}`;if(r.rep&&G.rep<r.rep)return `ชื่อเสียง ${r.rep}`;return "";};
 function hireStaff(G,k){const S=STAFF[k];G.staff=G.staff||[];if(!S||hasStaff(G,k)||G.staff.length>=staffSlots(G)||staffLocked(G,k)||G.cash<S.fee)return false;G.cash-=S.fee;G.staff.push(k);G.fac.assistants=G.staff.length;return true;}
 function fireStaff(G,k){G.staff=(G.staff||[]).filter(x=>x!==k);G.fac.assistants=G.staff.length;return true;}
-function fixSave(G){G.fac=G.fac||{};for(const k of Object.keys(FACILITIES))G.fac[k]=G.fac[k]||0;G.fac.daeng=G.fac.daeng||1;
+function fixSave(G){if(G.F)for(const id in G.F){const f=G.F[id];if(f&&hasTree(id)&&!f.spv){f.sp=(f.sp||0)+2*Math.max(0,(f.lvl||1)-1);f.spv=2;}}G.fac=G.fac||{};for(const k of Object.keys(FACILITIES))G.fac[k]=G.fac[k]||0;G.fac.daeng=G.fac.daeng||1;
   if(!G.staff){G.staff=["nok","paeng"].slice(0,G.fac.assistants||0);}G.fac.assistants=G.staff.length;
   if(G.stu==null)G.stu=Math.min(studentCap(G),studentDemand(G));G.mail=G.mail||[];G.cal=G.cal||[];return G;}
 const DAENG_COST=[0,15000,30000];
@@ -523,7 +559,7 @@ function applyResult(G,F,booking){
     const s=side==="A"?A:B;
     if(s.hp<40&&!off&&mulberry32(F.seed+(side==="A"?1:2))()<.45)me.injury=Math.max(me.injury,2+(s.hp<15?2:0));
     if(res==="L"&&/KO|TKO/.test(r.type))me.injury=Math.max(me.injury,3);
-    me.morale=clamp(me.morale+(res==="W"?10:res==="L"?-10:2),0,100);
+    const pmods=passiveMods(me);me.morale=clamp(me.morale+(res==="W"?10:res==="L"?-10*(1-Math.min(.9,pmods.moraleLoss)):2),0,100);
     // v1.21: beating someone stronger is worth more (ranking point, fame, EXP) — a reason to take the hard offers
     const upset=res==="W"&&ovr(op.a)-ovr(me.a)>.4;
     if(!off&&booking.tier!=="exhibition"&&booking.tier!=="special"&&booking.tier!=="final"){const rk=G.rank[me.div][me.id];if(rk){rk.pts+=res==="W"?3+(upset?1:0):res==="D"?1:0;rk[res==="W"?"w":res==="L"?"l":"d"]++;}}
@@ -534,7 +570,7 @@ function applyResult(G,F,booking){
       if(res==="L"&&!G.flags.firstLoss)G.flags.firstLoss=me.id;
       if(op.id==="fah"||op.id==="ploy"){G.flags[`vs_${op.id}`]=res;
         if(res==="W"){op.surge=(op.surge||0)+7;op.potential=Math.min(20,op.potential+.5);G.flags[`beat_${op.id}`]=(G.flags[`beat_${op.id}`]||0)+1;G.flags[`surgeWk_${op.id}`]=G.week;}}
-      gainXP(G,me,Math.round((res==="W"?45*(upset?1.3:1):res==="D"?35:30)*(booking.tier==="district"?1.3:booking.tier==="semi"?1.6:booking.tier==="final"?2:1)));
+      gainXP(G,me,Math.round((res==="W"?45*(upset?1.3:1):res==="D"?35:30)*(1+pmods.fightXp+(res==="L"?pmods.lossXp:0))*(booking.tier==="district"?1.3:booking.tier==="semi"?1.6:booking.tier==="final"?2:1)));
       G.cal=G.cal||[];G.cal.push({wk:G.week,a:me.id,b:op.id,bn:op.name,tier:booking.tier,res,type:r.type,cards:(F.cards||[]).map(c=>[...c]),pay});
       ret={pay,res,upset};
     }
@@ -659,4 +695,4 @@ const SHOW_COST=25000;
 function hostShow(G){const st=stageOf(G.week);if(G.cash<SHOW_COST||G.week<10||G.flags["show_"+st])return false;G.cash-=SHOW_COST;G.flags["show_"+st]=true;
   G.rep+=3;G.camp.beauty=Math.min(10,G.camp.beauty+1);roster(G).forEach(f=>f.morale=Math.min(100,f.morale+8));return true;}
 function clearDebt(G){if(G.debt<=0||G.cash<G.debt)return false;G.cash-=G.debt;G.debt=0;G.flags.debtCleared=true;G.rep+=2;return true;}
-if(typeof module!=="undefined")module.exports={DIFF,studentCap,studentDemand,studentFee,growStudents,storyTop4,RIVAL_OF,LEADS,upkeep,campActLocked,equipped,toggleEquip,MAX_EQUIP,roundBegin,fightEx,roundDone,roundFinish,useSkill,fightSkills,SKILL_KIND_NAME,fixSave,STAFF,hireStaff,fireStaff,staffSlots,staffLocked,facLocked,mainStyle,mastery,styleVal,STYLE_NAME,STYLE_ATTRS,MASTERY_AT,aiCorner,FACILITIES,SIGNATURE,hasSignature,counterPreset,oppTop,careNeeds,applyCare,throwTowel,CARE,MASTERS,hireMaster,hostShow,clearDebt,SHOW_COST,TAC,setTactics,finishBracket,mulberry32,newGame,weekTrain,weekFinish,genOffers,acceptOffer,buyFacility,upgradeDaeng,students,campLevel,newFight,fightRound,quickFight,applyResult,standings,roster,ovr,styleOf,stageOf,finishFinal,condition,ATTRS,isBooked,PRESETS,CANON,advise,doCampAction,learnSkill,SKILLS,SCHOOLS,campLook,newSeason};
+if(typeof module!=="undefined")module.exports={trainWeek,passiveMods,skillReqs,skillBlock,hasTree,DIFF,studentCap,studentDemand,studentFee,growStudents,storyTop4,RIVAL_OF,LEADS,upkeep,campActLocked,equipped,toggleEquip,MAX_EQUIP,roundBegin,fightEx,roundDone,roundFinish,useSkill,fightSkills,SKILL_KIND_NAME,fixSave,STAFF,hireStaff,fireStaff,staffSlots,staffLocked,facLocked,mainStyle,mastery,styleVal,STYLE_NAME,STYLE_ATTRS,MASTERY_AT,aiCorner,FACILITIES,SIGNATURE,hasSignature,counterPreset,oppTop,careNeeds,applyCare,throwTowel,CARE,MASTERS,hireMaster,hostShow,clearDebt,SHOW_COST,TAC,setTactics,finishBracket,mulberry32,newGame,weekTrain,weekFinish,genOffers,acceptOffer,buyFacility,upgradeDaeng,students,campLevel,newFight,fightRound,quickFight,applyResult,standings,roster,ovr,styleOf,stageOf,finishFinal,condition,ATTRS,isBooked,PRESETS,CANON,advise,doCampAction,learnSkill,SKILLS,SCHOOLS,campLook,newSeason};

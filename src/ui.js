@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.28.3";
+const VERSION="1.29.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -234,7 +234,7 @@ function rinBrief(){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0)retur
   else{const w=R.map(f=>[f,RADAR_AX.map(([n,fn])=>[n,fn(f.a)]).sort((a,b)=>a[1]-b[1])[0]]).sort((a,b)=>a[1][1]-b[1][1])[0];t=`จุดอ่อนที่สุดในทีมตอนนี้คือ${w[1][0]}ของ${w[0].name} ถ้าแก้ได้ อัตราชนะน่าจะขึ้นอีกเยอะ`;}
   return `<div class="px rinnote"><img src="${faceSrc("rin","happy")}" alt=""><span><b>รินสรุปข้อมูล</b>${t}</span></div>`;}
 function hubHTML(){
-  const dots={fights:G.offers.length>0,people:!G.freeUsed||(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>f.sp>0||(!f.injury&&!trLocked(f)))};
+  const dots={fights:G.offers.length>0,people:!G.freeUsed||(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>skReady(f)||(!f.injury&&!trLocked(f)))};
   return `<header class="hud"><div class="hud-in">
     <div class="brand">MUAY THAI <b>MOE</b></div>
     <div class="wk"><strong class="num">สัปดาห์ ${Math.min(G.week,52)}<small>/52</small></strong><span>${G.season>1?`ฤดูกาล ${G.season} · `:""}${stageLabel()}</span></div>
@@ -255,7 +255,7 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
     if(b&&scouted(b.b)){const cp=counterPreset(G.F[b.b]);if(cp&&f.plan.preset!==cp&&b.week-G.week>1&&!trLocked(f))T.push({p:4,t:`คู่ชกของ${f.name}${COUNTER_WHY[cp]} ฝึก "${PRESETS[cp].name}" แก้ทางจะได้โบนัสวันชก`,act:{k:"setprep",id:f.id,label:"ไปตั้งโปรแกรม"}});}
     if(b&&!scouted(b.b)&&G.cash>=scoutCost())T.push({p:5,t:`ยังไม่ได้ดูเทป${G.F[b.b].name} คู่ชกของ${f.name} ดูก่อนจะได้รู้ทางแก้`,act:{k:"tab",v:"fights",label:"ไปดูเทป"}});
     if(b&&!b.planSet)T.push({p:5,t:`ยังไม่ได้ตั้งแผนไฟต์ของ${f.name} (สัปดาห์ ${b.week})`,act:{k:"tab",v:"train",label:"ไปตั้งแผน"}});
-    if(f.sp>0)T.push({p:6,t:`${f.name}มีแต้มสกิล ${f.sp} แต้ม ไปเลือกสกิลได้เลย`,act:{k:"fighter",id:f.id,v:"skill",label:"เลือกสกิล"}});
+    if(skReady(f))T.push({p:6,t:`${f.name}มีแต้มสกิล ${f.sp} แต้ม ไปเลือกสกิลได้เลย`,act:{k:"fighter",id:f.id,v:"skill",label:"เลือกสกิล"}});
     if(f.plan.intensity==="heavy"&&f.fatigue>50)T.push({p:5,t:`${f.name}ซ้อมหนักต่อเนื่อง ระวังบาดเจ็บนะ`});}
   if(!G.bookings.some(b=>G.F[b.a].camp==="player")&&G.offers.length)T.push({p:5,t:"ยังไม่มีไฟต์ในตาราง ครูดูข้อเสนอให้แล้ว มีสีบอกว่าคู่ไหนง่ายหรือเสี่ยง",act:{k:"tab",v:"fights",label:"ดูข้อเสนอ"}});
   if(weeksLeft()<=6){if(weeksLeft()<=3||G.week%3===0)T.push({p:10,t:`⚠ ถ้ารายรับเท่าเดิม เงินจะหมดในราว ${weeksLeft()} สัปดาห์! รับไฟต์ สอนคลาสพิเศษ หรือลดค่าจ้าง`,act:{k:"tab",v:"fights",label:"ดูไฟต์"}});}
@@ -305,7 +305,7 @@ function homeHTML(){const R=roster(G);
 function fighterMini(f){const c=condition(f);const nb=nextBooking(f);
   return `<button class="px fmini" data-act="fighter" data-id="${f.id}" aria-label="ดูสถานะและข้อมูล ${esc(f.name)}">${faceImg(f)}<b>${esc(f.name)} <span class="lv">Lv.${f.lvl}</span></b>
     <div class="minis"><span>พร้อม</span>${mini(c,condColor(c))}<span>ล้า</span>${mini(f.fatigue,f.fatigue>=52?"var(--red)":"var(--warn)")}</div>
-    <span class="meta">${f.injury?'<span class="redt">บาดเจ็บ</span>':nb?`ชก สด.${nb.week}`:"ว่าง"}${f.sp>0?' · <span class="goldt">สกิล!</span>':""}</span><span class="fmore">▸</span></button>`;}
+    <span class="meta">${f.injury?'<span class="redt">บาดเจ็บ</span>':nb?`ชก สด.${nb.week}`:"ว่าง"}${skReady(f)?' · <span class="goldt">สกิล!</span>':""}</span><span class="fmore">▸</span></button>`;}
 function fighterChip(f){const c=condition(f);const nb=G.bookings.find(b=>b.a===f.id);
   return `<button class="px fchip" data-act="fighter" data-id="${f.id}" aria-label="ดูสถานะและข้อมูล ${esc(f.name)}"><span class="fmore">▸</span>${faceImg(f)}<div class="fci"><div class="nm">${esc(f.name)} <span class="lv">Lv.${f.lvl}</span>${f.sp>0?'<span class="pill gold">สกิล</span>':""}${f.injury?'<span class="pill red">เจ็บ</span>':""}</div>
     <div class="meta">${f.injury?"พักรักษาตัว":PRESETS[f.plan.preset].name} · ${rec(f)}</div>
@@ -498,7 +498,7 @@ function fighterHTML(f){const mine=f.camp==="player";const P=PROFILES[f.id];
   const tabs=mine?[["rel","ประวัติ"],["over","ค่าพลัง"],["train","ฝึก"],["skill","สกิล"]]:[["rel","ประวัติ"],["over","ค่าพลัง"]];
   let t=UI.ptab;if(!tabs.some(x=>x[0]===t))t="over";
   const head=`<div class="fp-head">${faceImg(f)}<div><h2>${esc(f.full)}</h2><div class="meta">${P?P.age+" ปี · ":""}${f.camp==="player"?"ค่ายศิริชัย":f.camp==="rival"?"ค่ายพยัคฆ์ทอง":"นักมวยอิสระ"} · รุ่น ${f.div} · ${styleOf(f.a)} · ${rec(f)}</div>${xpBar(f)}</div></div>
-   <div class="seg ptabs">${tabs.map(([k,n])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${t===k}">${n}${k==="skill"&&f.sp>0?" •":""}</button>`).join("")}</div>`;
+   <div class="seg ptabs">${tabs.map(([k,n])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${t===k}">${n}${k==="skill"&&skReady(f)?" •":""}</button>`).join("")}</div>`;
   let body="";
   if(t==="over"){const c=condition(f);const nb=G.bookings.find(b=>b.a===f.id||b.b===f.id);
     body=`<div class="fp-over">${radarSVG(f,240)}<div><div class="bars">${bar("ความพร้อม",c,condColor(c))}${bar("ความล้า",f.fatigue,"var(--warn)")}${bar("กำลังใจ",f.morale,"var(--blue)")}</div>
@@ -508,7 +508,26 @@ function fighterHTML(f){const mine=f.camp==="player";const P=PROFILES[f.id];
   if(t==="skill")body=skillGrid(f,mine)+(SIGNATURE[f.id]?`<details class="sigcard ${hasSignature(f)?"on":""}"><summary><b>${hasSignature(f)?"✦":"🔒"} ท่าไม้ตาย: ${SIGNATURE[f.id].name}</b></summary><span class="meta">${SIGNATURE[f.id].desc}${hasSignature(f)?"":` · ตอนนี้ความสนิท ${Math.round(f.bond||0)}/60`}</span></details>`:"")+`<details class="skhelp"><summary>สกิลทำงานยังไง?</summary><p class="meta">ได้แต้มสกิล 1 แต้มทุกเลเวลอัป · ท่าใหม่ปลดล็อกตามเลเวล · แต่ละท่าอัปได้ 3 ขั้น · ตอนชกกดใช้ได้เฉพาะ 3 ท่าที่ "ใช้" · แตะชื่อท่าเพื่อดูรายละเอียด</p></details>`;
   if(t==="rel")body=relHTML(f);
   return head+`<div class="fp-body">${body}</div>`;}
-function skillGrid(f,mine){const L=SKILLS[f.id]||[];const sc=SCHOOLS[L[0]&&L[0].school]||{name:"",motto:""};
+const SK_AN=Object.fromEntries(ATTRS);
+const SK_LINES={kati:["สายแข้ง","สายหมัดศอก","สายการ์ดและใจ"],mali:["สายศอก","สายเตะและความไว","สายป้องกัน"],rin:["สายสวนกลับ","สายอ่านเกม","สายคุมระยะ"]};
+const SK_ROWN=["พื้นฐาน","ระดับกลาง","ระดับกลาง · ติดตัว","ระดับสูง"];
+const skReady=f=>f.sp>0&&(hasTree(f.id)?(SKILLS[f.id]||[]).some(k=>!skillBlock(f,k.id).length):true);
+const fmtA=v=>(Math.floor(v*10)/10).toFixed(1).replace(/\.0$/,"");
+// v1.29: skill tree — three lines running top (basic) to bottom (high); tap a node for its requirements
+function skillTree(f,mine){const L=SKILLS[f.id],eqd=equipped(f),sc=SCHOOLS[L[0].school]||{name:""};
+  let sel=UI.skSel&&UI.skSel.indexOf(f.id+":")===0?UI.skSel.slice(f.id.length+1):null;if(!sel||!skillDef(f.id,sel)){const c=mine&&L.find(k=>!skillBlock(f,k.id).length);sel=c?c.id:L[0].id;}
+  const node=s=>{const r=f.skills[s.id]||0,B=mine?skillBlock(f,s.id):[{t:"x"}],can=!B.length,pre=s.pre&&!((f.skills[s.pre]||0)>0),k=skillKind(s);
+    return `<button class="tnode ${r?"has":""} ${eqd.includes(s.id)?"eq":""} ${can?"can":""} ${pre?"lk":""} ${s.passive?"pas":""} ${sel===s.id?"sel":""}" data-act="sksel" data-id="${f.id}" data-v="${s.id}" aria-pressed="${sel===s.id}" aria-label="${s.name} ขั้น ${r}/3">${s.passive?PIX.sk_rec:PIX["sk_"+k.k]}<b>${s.name}</b><span class="pips">${[1,2,3].map(i=>`<i class="${i<=r?"on":""}"></i>`).join("")}</span></button>`;};
+  const col=li=>`<div class="tcol"><small class="tlh">${(SK_LINES[f.id]||[])[li]||""}</small>${[0,1,2,3].map(row=>{const s=L.find(k=>k.line===li&&k.row===row);return s?node(s):"";}).join("")}</div>`;
+  const d=skillDef(f.id,sel),r=f.skills[d.id]||0,B=mine?skillBlock(f,d.id):[],eq=eqd.includes(d.id);
+  const reqs=r>=3?[]:skillReqs(f.id,d.id,r+1);
+  const chips=(d.pre?[`<span class="rq ${(f.skills[d.pre]||0)>0?"ok":"no"}">มี "${skillDef(f.id,d.pre).name}"</span>`]:[]).concat(reqs.map(q=>`<span class="rq ${f.a[q.k]+1e-6>=q.v?"ok":"no"}">${SK_AN[q.k]} <b class="num">${fmtA(f.a[q.k])}/${fmtA(q.v)}</b></span>`));
+  const det=`<div class="tdet px"><div class="tdh"><b>${d.name}</b><span class="meta">${SK_ROWN[d.row]} · ขั้น ${r}/3</span></div><p class="tdd">${d.desc}${r>1?` <span class="meta">(×${r} ตามขั้น)</span>`:""}</p>
+    ${r>=3?`<p class="meta goldt">อัปเต็มแล้ว</p>`:`<div class="rqs"><small>เงื่อนไขขั้น ${r+1}</small>${chips.join("")||`<span class="rq ok">ไม่มี</span>`}</div>`}
+    ${mine?`<div class="tda">${r&&!d.passive?`<button class="btn sm eqbtn ${eq?"on":""}" data-act="equip" data-id="${f.id}" data-v="${d.id}" ${!eq&&eqd.length>=MAX_EQUIP?"disabled":""}>${eq?"ใช้ขึ้นชกอยู่":"ใช้ขึ้นชก"}</button>`:d.passive&&r?`<span class="meta">ทำงานตลอด ไม่ใช้ช่อง</span>`:""}${r<3?`<button class="btn sm primary" data-act="learn" data-id="${f.id}" data-v="${d.id}" ${B.length?"disabled":""}>${r?"อัปขั้น "+(r+1):"เรียนท่านี้"} · 1 แต้ม</button>`:""}</div>`:""}</div>`;
+  return `<div class="school sm" style="--c:${sc.color}"><b>${sc.name}</b>${mine?`<span class="pill ${f.sp>0?"gold":""}">แต้มสกิล ${f.sp}</span><span class="pill">ใช้ขึ้นชก ${eqd.length}/${MAX_EQUIP}</span>`:""}</div>
+   <div class="tree">${[0,1,2].map(col).join("")}</div>${det}`;}
+function skillGrid(f,mine){if(hasTree(f.id))return skillTree(f,mine);const L=SKILLS[f.id]||[];const sc=SCHOOLS[L[0]&&L[0].school]||{name:"",motto:""};
   // v1.23: compact — unlocked moves as short rows (tap the name for details), locked ones folded away
   const op=L.filter(s=>(s.lv||1)<=f.lvl),lk=L.filter(s=>(s.lv||1)>f.lvl),eqd=equipped(f);
   const row=s=>{const r=f.skills[s.id]||0,eq=eqd.includes(s.id),k=skillKind(s),o=UI.skOpen===f.id+s.id;
@@ -601,7 +620,7 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
     body=`<h2>เซ็นสัญญา${esc(f.name)}?</h2><div class="ctip big"><img src="${faceSrc("coach")}" alt=""><span><b>ครูแดงเตือน:</b> ${net<0?`ถ้าเซ็นตอนนี้ ค่ายจะติดลบ ${fmt(-net)} ทุกสัปดาห์ ต้องพึ่งค่าตัวไฟต์ ถ้าเงินติดลบ 4 สัปดาห์จนเกิน ฿10,000 ค่ายจะล้มละลาย`:`ค่าเซ็น ${fmt(f.fee)} จะทำให้เงินสดเหลือแค่ ${fmt(G.cash-f.fee)} เผื่อเงินฉุกเฉินไว้ด้วย`}</span></div>
      <div class="kv-row"><span>ค่าเซ็น</span><b class="num">${fmt(f.fee)}</b></div><div class="kv-row"><span>ค่าจ้าง</span><b class="num">${fmt(f.wage)}/สัปดาห์</b></div><div class="kv-row"><span>สุทธิต่อสัปดาห์หลังเซ็น</span><b class="num ${net<0?"neg":"pos"}">${fmt(net)}</b></div>
      <div class="mfoot"><button class="btn ghost" data-act="closeModal">รอก่อน</button><button class="btn primary" data-act="sign" data-v="${f.id}" data-ok="1">เซ็นเลย</button></div>`;}
-  if(m.type==="levelup"){body=`<h2 class="lvup">LEVEL UP!</h2>${m.ids.map(id=>{const f=G.F[id];return `<div class="lvrow"><div class="l">${faceImg(f,"sm")}<b>${esc(f.name)} Lv.${f.lvl}</b></div>${coachOn()&&f.sp>0?`<p class="hinttxt"><img src="${faceSrc("coach")}" alt=""><span>${skillTip(f)}</span></p>`:""}${skillGrid(f,true)}</div>`;}).join("")}`;}
+  if(m.type==="levelup"){body=`<h2 class="lvup">LEVEL UP!</h2>${m.ids.map(id=>{const f=G.F[id];return `<div class="lvrow"><div class="l">${faceImg(f,"sm")}<b>${esc(f.name)} Lv.${f.lvl}</b></div>${coachOn()&&f.sp>0&&!hasTree(f.id)?`<p class="hinttxt"><img src="${faceSrc("coach")}" alt=""><span>${skillTip(f)}</span></p>`:""}${skillGrid(f,true)}</div>`;}).join("")}`;}
   if(typeof XMODAL!=="undefined"&&XMODAL[m.type]){const r=XMODAL[m.type](m);body=r.body;foot=r.foot;}
   return `<div class="overlay" data-act="closeModalBg"><div class="px modal pxscroll m-${m.type}" data-sk="modal-${m.type}" role="dialog" aria-modal="true"><button class="xbtn" data-act="closeModal" aria-label="ปิด">✕</button>${body}
     ${foot?`<div class="mfoot"><button class="btn primary" data-act="closeModal">${m.type==="report"||m.type==="levelup"?"ไปต่อ ▸":"ปิด"}</button></div>`:""}</div></div>`;}
@@ -833,7 +852,11 @@ function cornerHTML(F){const U=UI.fight,C=U.care,A=F.A,B=F.B,c=F.cards[F.cards.l
 </div>`;}
 // v1.13: the coach reads the actual fight (cards, stamina, what landed) before giving a hint
 // v1.21: only suggest what can actually be learned now, favour the carried 3, flag fresh unlocks, and vary the pick
-function skillTip(f){const all=SKILLS[f.id]||[],eq=equipped(f);const ok=all.filter(k=>(k.lv||1)<=f.lvl&&(f.skills[k.id]||0)<3);
+function skillTip(f){if(hasTree(f.id)){const L=SKILLS[f.id],eq=equipped(f);const ok=L.filter(k=>!skillBlock(f,k.id).length);
+    if(ok.length){const pick=ok.slice().sort((a,b)=>(eq.includes(b.id)?2:0)+b.row-((eq.includes(a.id)?2:0)+a.row))[0];return `ตอนนี้อัป "${pick.name}" ได้ (ขั้น ${(f.skills[pick.id]||0)+1}/3)`;}
+    let best=null;for(const k of L){const B=skillBlock(f,k.id).filter(b=>b.t!=="sp");if(B.length!==1||B[0].t!=="stat")continue;const gap=B[0].v-B[0].have;if(!best||gap<best.gap)best={k,gap,st:B[0].k};}
+    return best?`ฝึก${SK_AN[best.st]}อีก ${fmtA(Math.ceil(best.gap*10)/10)} จะอัป "${best.k.name}" ได้`:"ท่าถัดไปต้องฝึกค่าพลังเพิ่ม แตะที่ท่าเพื่อดูเงื่อนไข";}
+  const all=SKILLS[f.id]||[],eq=equipped(f);const ok=all.filter(k=>(k.lv||1)<=f.lvl&&(f.skills[k.id]||0)<3);
   const nxt=all.filter(k=>(k.lv||1)>f.lvl).sort((a,b)=>a.lv-b.lv)[0];const tail=nxt?` · Lv.${nxt.lv} จะปลดล็อก "${nxt.name}"`:"";
   if(!ok.length)return nxt?`ท่าที่อัปได้ตอนนี้เต็มหมดแล้ว เก็บแต้มไว้รอ${tail.slice(3)}`:"สกิลเต็มหมดแล้ว";
   const fresh=ok.find(k=>(k.lv||1)===f.lvl&&!(f.skills[k.id]>0));if(fresh)return `เพิ่งปลดล็อก "${fresh.name}" ลองอัปแล้วเลือกใช้ดู${tail}`;
@@ -1014,7 +1037,8 @@ const ACT={
   fighter:d=>{UI.ptab=d.v||"over";UI.look=G.F[d.id].camp==="player"?"train":"fight";UI.modal={type:"fighter",id:d.id};render();},
   ptab:d=>{UI.ptab=d.v;render();},
   plook:d=>{UI.look=d.v;render();},
-  learn:d=>{if(learnSkill(G,d.id,d.v)){AU.sfx("level");save();render();}},
+  learn:d=>{if(learnSkill(G,d.id,d.v)){UI.skSel=d.id+":"+d.v;AU.sfx("level");save();render();}},
+  sksel:d=>{UI.skSel=d.id+":"+d.v;AU.sfx("ui");render();},
   closeModal:()=>{const m=UI.modal;UI.modal=null;render();if(m&&m.after)m.after();},
   closeModalBg:(d,e)=>{if(e.target.classList.contains("overlay")&&UI.modal&&!["report","levelup"].includes(UI.modal.type)){UI.modal=null;render();}},
   preset:d=>{if(trLocked(G.F[d.f]))return;const f=G.F[d.f];f.plan.preset=d.v;if(d.v==="rest")f.plan.intensity="normal";save();render();},

@@ -1213,3 +1213,21 @@ details.skhelp summary{color:var(--muted);font-size:13px}
 .fight.isdone .insight{margin:0;padding:6px 10px;font-size:13px}.fight.isdone .statgrid{font-size:13px;gap:1px 10px}
 @media (max-height:720px){.fight.incorner .stagewrap{display:none}.fight.incorner .fhead{position:sticky;top:0}
   .fight.isdone #fstage{height:15vh}.fight.isdone .obub{display:none}}
+
+/* v1.29 skill tree */
+.tree{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:6px 0}
+.tcol{display:grid;gap:10px;align-content:start;position:relative}
+.tcol::before{content:"";position:absolute;left:50%;top:26px;bottom:20px;width:3px;margin-left:-1.5px;background:var(--line)}
+.tlh{text-align:center;font-weight:700;font-size:11px;color:var(--muted);position:relative;background:var(--surface);z-index:1}
+.tnode{position:relative;z-index:1;display:grid;justify-items:center;gap:2px;padding:5px 3px;min-height:64px;border:0;cursor:pointer;font:inherit;color:var(--fg);background:var(--bg2);box-shadow:inset 0 0 0 2px var(--line);opacity:.72}
+.tnode b{font-size:11.5px;line-height:1.15;text-align:center;font-weight:600;overflow-wrap:anywhere}
+.tnode svg,.tnode canvas,.tnode img{width:18px;height:18px}
+.tnode .pips i{width:7px;height:7px}
+.tnode.has{opacity:1;background:var(--raise)}.tnode.can{opacity:1;box-shadow:inset 0 0 0 2px var(--green)}
+.tnode.eq{box-shadow:inset 0 0 0 2px var(--gold)}.tnode.lk{opacity:.42}
+.tnode.pas{border-radius:14px}.tnode.pas.has{background:linear-gradient(180deg,rgba(99,196,140,.16),var(--raise))}
+.tnode.sel{outline:3px solid #fff;outline-offset:1px;opacity:1}
+.tdet{padding:8px 10px;display:grid;gap:5px}.tdh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.tdh b{font-family:var(--f-display);font-size:16px}
+.tdd{margin:0;font-size:13px}.rqs{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.rqs small{color:var(--muted);width:100%}
+.rq{font-size:12.5px;padding:2px 7px;background:var(--bg2);box-shadow:inset 0 0 0 2px var(--line)}.rq.ok{box-shadow:inset 0 0 0 2px var(--green);color:var(--green)}.rq.no{box-shadow:inset 0 0 0 2px var(--red);color:#ff9aa6}
+.tda{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}

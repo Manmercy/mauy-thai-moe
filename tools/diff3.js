@@ -1,5 +1,5 @@
 const NEW=process.env.NEW!=='0';const TAPER=process.env.TAPER==='1';
-const E=require('./engine.js');const {PRESETS}=E;
+const E=require('../src/engine.js');const {PRESETS}=E;
 const INT={light:{g:.6,l:.6},normal:{g:1,l:1},heavy:{g:1.4,l:1.5}};
 const projF=(G,f,p,i)=>Math.max(0,f.fatigue+PRESETS[p].load*INT[i].l*7-(10+G.fac.recovery*5+G.fac.kitchen*2)-(p==="rest"?22:0));
 const AX={punch:"punch",kick:"kick",knee:"knee",defense:"guard",cond:"stamina"};
@@ -13,8 +13,8 @@ function train(G,P,rng){for(const f of E.roster(G)){if(f.injury)continue;const b
   if(f.fatigue>=cap.rest){f.plan={preset:"rest",intensity:"light"};continue;}
   if(wk===0){f.plan={preset:"prep",intensity:safeInt(G,f,"prep",45,false)};continue;}
   if(TAPER&&wk===1&&f.fatigue>22){f.plan={preset:"rest",intensity:"light"};continue;}
-  if(wk<=2){const cp=E.counterPreset(G.F[b.b]);f.plan={preset:cp,intensity:safeInt(G,f,cp,cap.f,P==="expert")};continue;}
-  const p=P==="expert"&&G.week%3===0?strongPreset(f):weakPreset(f);f.plan={preset:p,intensity:safeInt(G,f,p,cap.n,P==="expert")};}}
+  if(wk<=2&&!(process.env.FOCUS&&f.id==='kati')){const cp=E.counterPreset(G.F[b.b]);f.plan={preset:cp,intensity:safeInt(G,f,cp,cap.f,P==="expert")};continue;}
+  const FO=process.env.FOCUS&&f.id==="kati"?process.env.FOCUS.split(","):null;const p=FO?FO[G.week%FO.length]:P==="expert"&&G.week%3===0?strongPreset(f):weakPreset(f);f.plan={preset:p,intensity:safeInt(G,f,p,cap.n,P==="expert")};}}
 function winRate(G,a,b,rounds,n){let w=0;for(let i=0;i<n;i++){const F=E.quickFight(G.F[a],G.F[b],777+i*11,rounds);if(F.result.win==="A")w++;}return w/n;}
 function fightP(G,b,P,seed){const fa=G.F[b.a],fb=G.F[b.b];let plan="balanced";
   if(P!=="casual"){const A=E.advise(G,b.a,b.b,b.rounds,P==="expert"?16:8);plan=A.best;}
@@ -29,7 +29,7 @@ function season(seed,P){const G=E.newGame({diff:process.env.DIFF||'normal',seed}
     const buf=P==="expert"?12000:P==="average"?20000:45000;
     for(const k of (P==="casual"?['gym','classroom']:['classroom','brand','gym','recovery','kitchen','dorm','hill','video','ring','clinic','shrine','van','sauna','lights','hall'])){const c=E.FACILITIES[k].cost[G.fac[k]||0];if(c!==undefined&&G.cash-c>buf)E.buyFacility(G,k);}
     if(NEW&&P!=="casual"){const want=P==="expert"?["nok","paeng","wit","jan","yai","tong"]:["nok","paeng","jan"];for(const k of want){if(G.cash-E.STAFF[k].fee>buf+15000&&E.hireStaff(G,k))break;}if(G.cash<8000&&G.staff.length)E.fireStaff(G,G.staff[G.staff.length-1]);}
-    for(const f of E.roster(G))while(f.sp>0){const sk=(E.SKILLS[f.id]||[]).find(s=>(f.skills[s.id]||0)<3&&(s.lv||1)<=f.lvl);if(!sk||!E.learnSkill(G,f.id,sk.id))break;}
+    for(const f of E.roster(G))while(f.sp>0){const sk=(E.SKILLS[f.id]||[]).slice().sort((x,y)=>(y.row||0)-(x.row||0)).find(s=>!E.skillBlock(f,s.id).length);if(!sk||!E.learnSkill(G,f.id,sk.id))break;}
     if(P!=="casual"){const ks=["media","spar","ladies","class","merit"];const k=G.cash<10000?"class":ks.find(k=>E.doCampAction&&G.rep>=({media:28,spar:12,ladies:16}[k]||0));if(k)E.doCampAction(G,k);}
     for(const f of E.roster(G)){if(f.injury)continue;const os=G.offers.filter(o=>o.a===f.id&&o.tier!=="exhibition");
       if(P==="casual"){if(os[0]&&f.fatigue<60)E.acceptOffer(G,os[0].id);continue;}
@@ -42,7 +42,7 @@ function season(seed,P){const G=E.newGame({diff:process.env.DIFF||'normal',seed}
       if((b.a==="kati"&&b.b==="ploy"))kp.push([G.week,F.result.win,E.ovr(G.F.kati.a).toFixed(1),E.ovr(G.F.ploy.a).toFixed(1)]);
       E.finishBracket(G,b,F);E.applyResult(G,F,b);}
     G.bookings=G.bookings.filter(b=>b.week!==G.week);{const c0=G.cash;E.weekFinish(G);G.gross=(G.gross||0)+G.history[G.history.length-1].inc;}if(G.week===30)G.c30=G.cash;if([26,30,34,38,44,48].includes(G.week)&&G.F.ploy.camp==='rival'){G.wr=G.wr||{};G.wr[G.week]=winRate(G,'kati','ploy',3,24);}if(G.week===45){G.c45=G.cash;G.s45=E.students(G);G.f45=Object.keys(E.FACILITIES).reduce((s,k)=>s+(E.FACILITIES[k].cost.length-(G.fac[k]||0)),0);}if(!G.fullWk&&Object.keys(E.FACILITIES).every(k=>(G.fac[k]||0)>=E.FACILITIES[k].cost.length))G.fullWk=G.week;}
-  const k=G.F.kati;return {wr:G.wr||{},gross:G.gross,fightInc:G.history.reduce((a,h)=>a+(h.fight||0),0),c30:G.c30,c45:G.c45,s45:G.s45,f45:G.f45,fullWk:G.fullWk||0,cashMax:G.cashMax||0,stud:E.students(G),staff:(G.staff||[]).length,facs:["hill","video","ring","clinic","shrine"].reduce((s,x)=>s+(G.fac[x]||0),0),end:G.ended,cash:Math.round(G.cash),kovr:E.ovr(k.a),povr:E.ovr(G.F.ploy.a),grit:k.grit||0,lv:k.lvl,rec:k.rec,
+  const k=G.F.kati;if(process.env.TREE){const L=E.SKILLS.kati;console.log('TREE',[0,1,2].map(li=>L.filter(s=>s.line===li).map(s=>k.skills[s.id]||0).join('')).join(' '),'sp',k.sp,'lv',k.lvl,Object.entries(k.a).map(([q,v])=>q.slice(0,3)+v.toFixed(0)).join(' '));}return {wr:G.wr||{},gross:G.gross,fightInc:G.history.reduce((a,h)=>a+(h.fight||0),0),c30:G.c30,c45:G.c45,s45:G.s45,f45:G.f45,fullWk:G.fullWk||0,cashMax:G.cashMax||0,stud:E.students(G),staff:(G.staff||[]).length,facs:["hill","video","ring","clinic","shrine"].reduce((s,x)=>s+(G.fac[x]||0),0),end:G.ended,cash:Math.round(G.cash),kovr:E.ovr(k.a),povr:E.ovr(G.F.ploy.a),grit:k.grit||0,lv:k.lvl,rec:k.rec,
     qual:G.qual.A.includes('kati'),semi:(G.semis.A||[]).includes('kati'),fin:G.finalists.A.includes('kati'),champA:G.champ.A,champ:G.champ.A,champB:G.champ.B,kpFinal,kp,
     mali:G.F.mali.camp==="player"?G.F.mali.rec:null,rin:G.F.rin.camp==="player"};}
 module.exports={season};

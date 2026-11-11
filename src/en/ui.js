@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.28.3";
+const VERSION="1.29.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -234,7 +234,7 @@ function rinBrief(){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0)retur
   else{const w=R.map(f=>[f,RADAR_AX.map(([n,fn])=>[n,fn(f.a)]).sort((a,b)=>a[1]-b[1])[0]]).sort((a,b)=>a[1][1]-b[1][1])[0];t=`The weakest spot in the team right now is ${w[1][0]} of ${w[0].name}. Fix it and the win rate should rise a lot`;}
   return `<div class="px rinnote"><img src="${faceSrc("rin","happy")}" alt=""><span><b>Rin's report</b>${t}</span></div>`;}
 function hubHTML(){
-  const dots={fights:G.offers.length>0,people:!G.freeUsed||(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>f.sp>0||(!f.injury&&!trLocked(f)))};
+  const dots={fights:G.offers.length>0,people:!G.freeUsed||(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>skReady(f)||(!f.injury&&!trLocked(f)))};
   return `<header class="hud"><div class="hud-in">
     <div class="brand">MUAY THAI <b>MOE</b></div>
     <div class="wk"><strong class="num">Week ${Math.min(G.week,52)}<small>/52</small></strong><span>${G.season>1?`Season ${G.season} · `:""}${stageLabel()}</span></div>
@@ -255,7 +255,7 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
     if(b&&scouted(b.b)){const cp=counterPreset(G.F[b.b]);if(cp&&f.plan.preset!==cp&&b.week-G.week>1&&!trLocked(f))T.push({p:4,t:`The opponent of ${f.name}${COUNTER_WHY[cp]} Train "${PRESETS[cp].name}" to counter for a fight-day bonus`,act:{k:"setprep",id:f.id,label:"Set the program"}});}
     if(b&&!scouted(b.b)&&G.cash>=scoutCost())T.push({p:5,t:`Haven't scouted ${G.F[b.b].name}, the opponent of ${f.name}. Scout first to find the counter`,act:{k:"tab",v:"fights",label:"Scout the tape"}});
     if(b&&!b.planSet)T.push({p:5,t:`No fight plan set for ${f.name} (week ${b.week})`,act:{k:"tab",v:"train",label:"Set the plan"}});
-    if(f.sp>0)T.push({p:6,t:`${f.name} has ${f.sp} skill point(s), go pick a skill`,act:{k:"fighter",id:f.id,v:"skill",label:"Pick skills"}});
+    if(skReady(f))T.push({p:6,t:`${f.name} has ${f.sp} skill point(s), go pick a skill`,act:{k:"fighter",id:f.id,v:"skill",label:"Pick skills"}});
     if(f.plan.intensity==="heavy"&&f.fatigue>50)T.push({p:5,t:`${f.name}: long stretch of hard training, watch for injuries`});}
   if(!G.bookings.some(b=>G.F[b.a].camp==="player")&&G.offers.length)T.push({p:5,t:"No fights scheduled. Coach has checked the offers; colors show which are easy or risky",act:{k:"tab",v:"fights",label:"See offers"}});
   if(weeksLeft()<=6){if(weeksLeft()<=3||G.week%3===0)T.push({p:10,t:`⚠ At this rate, money runs out in about ${weeksLeft()} weeks! Take fights, teach special classes, or cut wages`,act:{k:"tab",v:"fights",label:"See fights"}});}
@@ -305,7 +305,7 @@ function homeHTML(){const R=roster(G);
 function fighterMini(f){const c=condition(f);const nb=nextBooking(f);
   return `<button class="px fmini" data-act="fighter" data-id="${f.id}" aria-label="See status and info of ${esc(f.name)}">${faceImg(f)}<b>${esc(f.name)} <span class="lv">Lv.${f.lvl}</span></b>
     <div class="minis"><span>Ready</span>${mini(c,condColor(c))}<span>Fatigue</span>${mini(f.fatigue,f.fatigue>=52?"var(--red)":"var(--warn)")}</div>
-    <span class="meta">${f.injury?"<span class=\"redt\">Injured</span>":nb?`Fight wk ${nb.week}`:"Empty"}${f.sp>0?" · <span class=\"goldt\">Skill!</span>":""}</span><span class="fmore">▸</span></button>`;}
+    <span class="meta">${f.injury?"<span class=\"redt\">Injured</span>":nb?`Fight wk ${nb.week}`:"Empty"}${skReady(f)?" · <span class=\"goldt\">Skill!</span>":""}</span><span class="fmore">▸</span></button>`;}
 function fighterChip(f){const c=condition(f);const nb=G.bookings.find(b=>b.a===f.id);
   return `<button class="px fchip" data-act="fighter" data-id="${f.id}" aria-label="See status and info of ${esc(f.name)}"><span class="fmore">▸</span>${faceImg(f)}<div class="fci"><div class="nm">${esc(f.name)} <span class="lv">Lv.${f.lvl}</span>${f.sp>0?"<span class=\"pill gold\">Skill</span>":""}${f.injury?"<span class=\"pill red\">Hurt</span>":""}</div>
     <div class="meta">${f.injury?"Recovering":PRESETS[f.plan.preset].name} · ${rec(f)}</div>
@@ -498,7 +498,7 @@ function fighterHTML(f){const mine=f.camp==="player";const P=PROFILES[f.id];
   const tabs=mine?[["rel","Profile"],["over","Stats"],["train","Train"],["skill","Skills"]]:[["rel","Profile"],["over","Stats"]];
   let t=UI.ptab;if(!tabs.some(x=>x[0]===t))t="over";
   const head=`<div class="fp-head">${faceImg(f)}<div><h2>${esc(f.full)}</h2><div class="meta">${P?P.age+" yrs · ":""}${f.camp==="player"?"Sirichai Camp":f.camp==="rival"?"Golden Tiger Camp":"Free agent"} · Div ${f.div} · ${styleOf(f.a)} · ${rec(f)}</div>${xpBar(f)}</div></div>
-   <div class="seg ptabs">${tabs.map(([k,n])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${t===k}">${n}${k==="skill"&&f.sp>0?" •":""}</button>`).join("")}</div>`;
+   <div class="seg ptabs">${tabs.map(([k,n])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${t===k}">${n}${k==="skill"&&skReady(f)?" •":""}</button>`).join("")}</div>`;
   let body="";
   if(t==="over"){const c=condition(f);const nb=G.bookings.find(b=>b.a===f.id||b.b===f.id);
     body=`<div class="fp-over">${radarSVG(f,240)}<div><div class="bars">${bar("Readiness",c,condColor(c))}${bar("Fatigue",f.fatigue,"var(--warn)")}${bar("Morale",f.morale,"var(--blue)")}</div>
@@ -508,7 +508,26 @@ function fighterHTML(f){const mine=f.camp==="player";const P=PROFILES[f.id];
   if(t==="skill")body=skillGrid(f,mine)+(SIGNATURE[f.id]?`<details class="sigcard ${hasSignature(f)?"on":""}"><summary><b>${hasSignature(f)?"✦":"🔒"} Signature move: ${SIGNATURE[f.id].name}</b></summary><span class="meta">${SIGNATURE[f.id].desc}${hasSignature(f)?"":` · bond now ${Math.round(f.bond||0)}/60`}</span></details>`:"")+`<details class="skhelp"><summary>How do skills work?</summary><p class="meta">1 skill point per level-up · new moves unlock by level · each move upgrades 3 times · in a fight you can only use the 3 moves marked "Use" · tap a move's name for details</p></details>`;
   if(t==="rel")body=relHTML(f);
   return head+`<div class="fp-body">${body}</div>`;}
-function skillGrid(f,mine){const L=SKILLS[f.id]||[];const sc=SCHOOLS[L[0]&&L[0].school]||{name:"",motto:""};
+const SK_AN=Object.fromEntries(ATTRS);
+const SK_LINES={kati:["Shin line","Punch & elbow line","Guard & heart line"],mali:["Elbow line","Kick & speed line","Defense line"],rin:["Counter line","Ring-IQ line","Range line"]};
+const SK_ROWN=["Basics","Mid tier","Mid tier · passive","High tier"];
+const skReady=f=>f.sp>0&&(hasTree(f.id)?(SKILLS[f.id]||[]).some(k=>!skillBlock(f,k.id).length):true);
+const fmtA=v=>(Math.floor(v*10)/10).toFixed(1).replace(/\.0$/,"");
+// v1.29: skill tree — three lines running top (basic) to bottom (high); tap a node for its requirements
+function skillTree(f,mine){const L=SKILLS[f.id],eqd=equipped(f),sc=SCHOOLS[L[0].school]||{name:""};
+  let sel=UI.skSel&&UI.skSel.indexOf(f.id+":")===0?UI.skSel.slice(f.id.length+1):null;if(!sel||!skillDef(f.id,sel)){const c=mine&&L.find(k=>!skillBlock(f,k.id).length);sel=c?c.id:L[0].id;}
+  const node=s=>{const r=f.skills[s.id]||0,B=mine?skillBlock(f,s.id):[{t:"x"}],can=!B.length,pre=s.pre&&!((f.skills[s.pre]||0)>0),k=skillKind(s);
+    return `<button class="tnode ${r?"has":""} ${eqd.includes(s.id)?"eq":""} ${can?"can":""} ${pre?"lk":""} ${s.passive?"pas":""} ${sel===s.id?"sel":""}" data-act="sksel" data-id="${f.id}" data-v="${s.id}" aria-pressed="${sel===s.id}" aria-label="${s.name} rank ${r}/3">${s.passive?PIX.sk_rec:PIX["sk_"+k.k]}<b>${s.name}</b><span class="pips">${[1,2,3].map(i=>`<i class="${i<=r?"on":""}"></i>`).join("")}</span></button>`;};
+  const col=li=>`<div class="tcol"><small class="tlh">${(SK_LINES[f.id]||[])[li]||""}</small>${[0,1,2,3].map(row=>{const s=L.find(k=>k.line===li&&k.row===row);return s?node(s):"";}).join("")}</div>`;
+  const d=skillDef(f.id,sel),r=f.skills[d.id]||0,B=mine?skillBlock(f,d.id):[],eq=eqd.includes(d.id);
+  const reqs=r>=3?[]:skillReqs(f.id,d.id,r+1);
+  const chips=(d.pre?[`<span class="rq ${(f.skills[d.pre]||0)>0?"ok":"no"}">Have "${skillDef(f.id,d.pre).name}"</span>`]:[]).concat(reqs.map(q=>`<span class="rq ${f.a[q.k]+1e-6>=q.v?"ok":"no"}">${SK_AN[q.k]} <b class="num">${fmtA(f.a[q.k])}/${fmtA(q.v)}</b></span>`));
+  const det=`<div class="tdet px"><div class="tdh"><b>${d.name}</b><span class="meta">${SK_ROWN[d.row]} · rank ${r}/3</span></div><p class="tdd">${d.desc}${r>1?` <span class="meta">(×${r} per rank)</span>`:""}</p>
+    ${r>=3?`<p class="meta goldt">Maxed out</p>`:`<div class="rqs"><small>Requirements for rank ${r+1}</small>${chips.join("")||`<span class="rq ok">None</span>`}</div>`}
+    ${mine?`<div class="tda">${r&&!d.passive?`<button class="btn sm eqbtn ${eq?"on":""}" data-act="equip" data-id="${f.id}" data-v="${d.id}" ${!eq&&eqd.length>=MAX_EQUIP?"disabled":""}>${eq?"Equipped":"Equip for fights"}</button>`:d.passive&&r?`<span class="meta">Always active, uses no slot</span>`:""}${r<3?`<button class="btn sm primary" data-act="learn" data-id="${f.id}" data-v="${d.id}" ${B.length?"disabled":""}>${r?"Raise to rank "+(r+1):"Learn this move"} · 1 point</button>`:""}</div>`:""}</div>`;
+  return `<div class="school sm" style="--c:${sc.color}"><b>${sc.name}</b>${mine?`<span class="pill ${f.sp>0?"gold":""}">Skill points ${f.sp}</span><span class="pill">In the fight ${eqd.length}/${MAX_EQUIP}</span>`:""}</div>
+   <div class="tree">${[0,1,2].map(col).join("")}</div>${det}`;}
+function skillGrid(f,mine){if(hasTree(f.id))return skillTree(f,mine);const L=SKILLS[f.id]||[];const sc=SCHOOLS[L[0]&&L[0].school]||{name:"",motto:""};
   // v1.23: compact — unlocked moves as short rows (tap the name for details), locked ones folded away
   const op=L.filter(s=>(s.lv||1)<=f.lvl),lk=L.filter(s=>(s.lv||1)>f.lvl),eqd=equipped(f);
   const row=s=>{const r=f.skills[s.id]||0,eq=eqd.includes(s.id),k=skillKind(s),o=UI.skOpen===f.id+s.id;
@@ -601,7 +620,7 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
     body=`<h2>Sign ${esc(f.name)}?</h2><div class="ctip big"><img src="${faceSrc("coach")}" alt=""><span><b>Coach Daeng warns:</b> ${net<0?`If you sign now, the camp runs a deficit of ${fmt(-net)} every week and must rely on fight purses. In the red 4 weeks and below ฿10,000, the camp goes bankrupt`:`The signing fee of ${fmt(f.fee)} leaves only ${fmt(G.cash-f.fee)}. Keep an emergency fund too`}</span></div>
      <div class="kv-row"><span>Signing fee</span><b class="num">${fmt(f.fee)}</b></div><div class="kv-row"><span>Wage</span><b class="num">${fmt(f.wage)}/wk</b></div><div class="kv-row"><span>Weekly net after signing</span><b class="num ${net<0?"neg":"pos"}">${fmt(net)}</b></div>
      <div class="mfoot"><button class="btn ghost" data-act="closeModal">Wait</button><button class="btn primary" data-act="sign" data-v="${f.id}" data-ok="1">Sign now</button></div>`;}
-  if(m.type==="levelup"){body=`<h2 class="lvup">LEVEL UP!</h2>${m.ids.map(id=>{const f=G.F[id];return `<div class="lvrow"><div class="l">${faceImg(f,"sm")}<b>${esc(f.name)} Lv.${f.lvl}</b></div>${coachOn()&&f.sp>0?`<p class="hinttxt"><img src="${faceSrc("coach")}" alt=""><span>${skillTip(f)}</span></p>`:""}${skillGrid(f,true)}</div>`;}).join("")}`;}
+  if(m.type==="levelup"){body=`<h2 class="lvup">LEVEL UP!</h2>${m.ids.map(id=>{const f=G.F[id];return `<div class="lvrow"><div class="l">${faceImg(f,"sm")}<b>${esc(f.name)} Lv.${f.lvl}</b></div>${coachOn()&&f.sp>0&&!hasTree(f.id)?`<p class="hinttxt"><img src="${faceSrc("coach")}" alt=""><span>${skillTip(f)}</span></p>`:""}${skillGrid(f,true)}</div>`;}).join("")}`;}
   if(typeof XMODAL!=="undefined"&&XMODAL[m.type]){const r=XMODAL[m.type](m);body=r.body;foot=r.foot;}
   return `<div class="overlay" data-act="closeModalBg"><div class="px modal pxscroll m-${m.type}" data-sk="modal-${m.type}" role="dialog" aria-modal="true"><button class="xbtn" data-act="closeModal" aria-label="Close">✕</button>${body}
     ${foot?`<div class="mfoot"><button class="btn primary" data-act="closeModal">${m.type==="report"||m.type==="levelup"?"Continue ▸":"Close"}</button></div>`:""}</div></div>`;}
@@ -833,7 +852,11 @@ function cornerHTML(F){const U=UI.fight,C=U.care,A=F.A,B=F.B,c=F.cards[F.cards.l
 </div>`;}
 // v1.13: the coach reads the actual fight (cards, stamina, what landed) before giving a hint
 // v1.21: only suggest what can actually be learned now, favour the carried 3, flag fresh unlocks, and vary the pick
-function skillTip(f){const all=SKILLS[f.id]||[],eq=equipped(f);const ok=all.filter(k=>(k.lv||1)<=f.lvl&&(f.skills[k.id]||0)<3);
+function skillTip(f){if(hasTree(f.id)){const L=SKILLS[f.id],eq=equipped(f);const ok=L.filter(k=>!skillBlock(f,k.id).length);
+    if(ok.length){const pick=ok.slice().sort((a,b)=>(eq.includes(b.id)?2:0)+b.row-((eq.includes(a.id)?2:0)+a.row))[0];return `You can raise "${pick.name}" now (rank ${(f.skills[pick.id]||0)+1}/3)`;}
+    let best=null;for(const k of L){const B=skillBlock(f,k.id).filter(b=>b.t!=="sp");if(B.length!==1||B[0].t!=="stat")continue;const gap=B[0].v-B[0].have;if(!best||gap<best.gap)best={k,gap,st:B[0].k};}
+    return best?`Train ${SK_AN[best.st]}${fmtA(Math.ceil(best.gap*10)/10)} more to raise "${best.k.name}"`:"The next moves need higher stats. Tap a move to see its requirements";}
+  const all=SKILLS[f.id]||[],eq=equipped(f);const ok=all.filter(k=>(k.lv||1)<=f.lvl&&(f.skills[k.id]||0)<3);
   const nxt=all.filter(k=>(k.lv||1)>f.lvl).sort((a,b)=>a.lv-b.lv)[0];const tail=nxt?` · Lv.${nxt.lv} will unlock "${nxt.name}"`:"";
   if(!ok.length)return nxt?`All upgradable moves are maxed. Save your points ${tail.slice(3)}`:"All skills maxed";
   const fresh=ok.find(k=>(k.lv||1)===f.lvl&&!(f.skills[k.id]>0));if(fresh)return `Just unlocked "${fresh.name}". Try upgrading and equipping it ${tail}`;
@@ -1014,7 +1037,8 @@ const ACT={
   fighter:d=>{UI.ptab=d.v||"over";UI.look=G.F[d.id].camp==="player"?"train":"fight";UI.modal={type:"fighter",id:d.id};render();},
   ptab:d=>{UI.ptab=d.v;render();},
   plook:d=>{UI.look=d.v;render();},
-  learn:d=>{if(learnSkill(G,d.id,d.v)){AU.sfx("level");save();render();}},
+  learn:d=>{if(learnSkill(G,d.id,d.v)){UI.skSel=d.id+":"+d.v;AU.sfx("level");save();render();}},
+  sksel:d=>{UI.skSel=d.id+":"+d.v;AU.sfx("ui");render();},
   closeModal:()=>{const m=UI.modal;UI.modal=null;render();if(m&&m.after)m.after();},
   closeModalBg:(d,e)=>{if(e.target.classList.contains("overlay")&&UI.modal&&!["report","levelup"].includes(UI.modal.type)){UI.modal=null;render();}},
   preset:d=>{if(trLocked(G.F[d.f]))return;const f=G.F[d.f];f.plan.preset=d.v;if(d.v==="rest")f.plan.intensity="normal";save();render();},
