@@ -416,6 +416,7 @@ function yearEndScene(G){const y=G.season||1,R=roster(G),pChamp=Object.entries(G
       :{n:"coach",t:"ปีนี้เรายังไม่ได้ถ้วย แต่ทุกคนยังอยู่ครบ ยังซ้อมด้วยกันทุกเช้า …ค่ายมวยวัดกันแบบนี้แหละ"},
     G.debt>0?{n:"nar",t:`หนี้ของปู่ชัยยังเหลือ ${fmt(G.debt)} ค่อย ๆ จ่ายกันไปปีต่อปี`}:{n:"nar",t:"ค่ายศิริชัยไม่มีหนี้ติดตัวแล้ว ป้ายค่ายเป็นของทุกคนเต็มตัว"}];
   if(top)steps.push({n:top.id,f:"happy",l:"casual",t:`${CALL(G,top.id)}คะ ปีหน้าก็อยู่ด้วยกันแบบนี้อีกนะคะ`});
+  if((G.pets||[]).length)steps.push({n:"nar",t:`${G.pets.map(p=>p.name).join(" ")} ก็ต้องอยู่ในรูปด้วย ใช้เวลาจัดท่าสัตว์เลี้ยงนานกว่าจัดท่าคนอีก`});
   steps.push({n:"nar",t:`กล้องตั้งเวลาดังแชะ รูปปีที่ ${y} ถูกแขวนต่อจากรูปปีที่แล้วบนผนังค่าย`});
   return {key:"year",title:pChamp.length?`ปีที่ ${y} · แชมป์อีกครั้ง`:`ปีที่ ${y} · ค่ายยังเดินต่อ`,steps,bg:"camp",look:"casual"};}
 function endingScene(G){if((G.season||1)>=2&&G.ended!=="bankrupt")return yearEndScene(G);
@@ -1277,3 +1278,58 @@ EVENTS.push({id:"year_open",annual:true,pri:1,look:"casual",bg:"camp",when:G=>(G
   out.push({choice:[{t:"ปีนี้ขอแค่ทุกคนไม่เจ็บตัว (ทุกคนกำลังใจ +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);})},
    {t:"ปีนี้เป้าหมายคือแชมป์ (ทุกคนกำลังใจ +8 · ล้า +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+8);f.fatigue=Math.min(100,f.fatigue+5);})}]});
   return out;}}]});
+
+// ===== v1.51: camp pets — each joins through a small story, then has a moment with one of the girls =====
+const hasPet=(G,k)=>(G.pets||[]).some(p=>p.k===k);
+const petName=(G,k)=>{const p=(G.pets||[]).find(x=>x.k===k);return p?p.name:PETS[k].name;};
+function adoptPet(G,k,name,fav){G.pets=G.pets||[];if(hasPet(G,k))return;G.pets.push({k,name:name||PET_NAMES[k][0],joy:60,wk:-1,fav,since:G.week+((G.season||1)-1)*52});}
+const nameChoice=(k,fav,then)=>({choice:PET_NAMES[k].map(n=>({t:`ตั้งชื่อว่า "${n}"`,fx:G=>adoptPet(G,k,n,fav),then})).concat([{t:"ตั้งชื่อเอง…",fx:G=>{adoptPet(G,k,null,fav);UI.petName=(G.pets.length-1);},then}])});
+const petAge=(G,k)=>{const p=(G.pets||[]).find(x=>x.k===k);return p?G.week+((G.season||1)-1)*52-p.since:0;};
+const favOr=(G,id)=>inCamp(G,id)?id:"kati";
+EVENTS.push(
+ {id:"pet_cat",look:"casual",bg:"night",when:G=>G.week>=3,steps:[
+  {n:"nar",t:"คืนฝนตกหนัก ประตูค่ายเปิดออก กะทิวิ่งเข้ามาตัวเปียกโชก ในอ้อมแขนมีแมวส้มตัวอ้วนที่ตัวเปียกกว่าเธออีก"},
+  {n:"kati",f:"flustered",l:"casual",t:"แมวส้มหลังวัดค่ะ! หลังคาศาลาพังตรงที่มันนอนพอดี …ปู่เคยแอบให้ข้าวมันทุกเย็นเลยนะคะ"},
+  {n:"coach",t:"ค่ายเราเลี้ยงคนยังแทบไม่ไหว จะเลี้ยงแมวอีก… (แต่มือครูก็หยิบผ้าขนหนูมาเช็ดตัวมันแล้ว)"},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}คะ ให้มันอยู่ด้วยนะคะ ตั้งชื่อให้มันหน่อย!`},
+  nameChoice("cat","kati",[{n:"nar",t:"แมวส้มสะบัดน้ำใส่ทุกคน แล้วเดินไปนอนบนกระสอบทรายเหมือนเป็นเจ้าของค่ายมาตั้งแต่แรก"}])]},
+ {id:"pet_dog",look:"casual",bg:"camp",when:G=>G.week>=9,steps:[
+  {n:"nar",t:"สามวันแล้วที่หมาไทยหลังอานตัวหนึ่งนอนเฝ้าหน้าประตูค่าย ไม่เห่า ไม่ขออะไร แค่วิ่งตามเวลานักมวยออกไปวิ่งเช้า"},
+  {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"flustered",l:"train",t:"ห-หนูกลัวหมาค่ะ… ตอนเด็กโดนกัดที่นา แต่ตัวนี้… มันวิ่งช้าลงรอหนูทุกเช้าเลย"},{n:"kati",f:"happy",l:"train",t:"เห็นไหม มันเลือกมะลิแล้วล่ะ"}]
+    :[{n:"kati",f:"happy",l:"train",t:"มันวิ่งตามหนูไปถึงสะพานทุกเช้าเลยค่ะ เหมือนเป็นโค้ชวิ่งให้ฟรี ๆ"}]},
+  {n:"coach",t:"หมาหลังอานนี่หมาพันธุ์นักสู้นะ อยู่ค่ายมวยก็เหมาะดี"},
+  {inject:G=>[nameChoice("dog",favOr(G,"mali"),[{n:"nar",t:"หมาตัวใหม่เดินวนสามรอบ แล้วนอนลงหน้าประตูค่ายตรงเดิม ครั้งนี้มีปลอกคอสีแดงแล้ว"}])]}]},
+ {id:"pet_rooster",look:"casual",bg:"camp",when:G=>G.week>=18,steps:[
+  {n:"nar",t:"ลุงเจ้าของบ่อนไก่ชนท้ายตลาดหิ้วกรงไม้มาวางหน้าค่าย ข้างในเป็นไก่ชนหางยาวสีเขียวเหลือบ ตาข้างหนึ่งมีแผลเป็น"},
+  {n:"npc",who:"ลุงไก่ชน",t:"มันแพ้ไฟต์สุดท้ายไปแล้ว ผมเลี้ยงไว้ต่อก็ไม่มีใครดู …นักสู้ต้องอยู่กับนักสู้ ฝากค่ายนี้ด้วยนะ"},
+  {n:"kati",f:"surprised",l:"casual",t:"มันจ้องหนูเหมือนจะขอชกด้วยเลยค่ะ!"},
+  nameChoice("rooster","kati",[{n:"nar",t:"เช้าวันต่อมา ตีสี่ตรง ไก่ชนประจำค่ายขันลั่นจนทุกคนสะดุ้งตื่น …ค่ายนี้ไม่ต้องใช้นาฬิกาปลุกอีกแล้ว"}])]},
+ {id:"pet_turtle",look:"casual",bg:"camp",when:G=>G.week>=30,steps:[
+  {inject:G=>{const w=favOr(G,"rin");return [
+   {n:"nar",t:"ตลาดเช้าวันพระ มีคนขายเต่าให้ปล่อยทำบุญ ตัวหนึ่งกระดองร้าวเป็นทางยาว ไม่มีใครเลือก"},
+   w==="rin"?{n:"rin",f:"flustered",l:"casual",t:"ฉันซื้อมาเพื่อปล่อยค่ะ แต่กระดองร้าวแบบนี้ ปล่อยไปอัตรารอดไม่ถึงสามสิบเปอร์เซ็นต์ …ขอเลี้ยงไว้ในกะละมังหลังค่ายจนกว่าจะหายได้ไหมคะ"}
+     :{n:"kati",f:"sad",l:"casual",t:"หนูซื้อมาจะปล่อย แต่กระดองมันร้าว ปล่อยไปคงไม่รอด …เลี้ยงไว้ก่อนนะคะ"},
+   nameChoice("turtle",w,[{n:"nar",t:"เต่าตัวใหม่ยื่นหัวออกมาดูค่ายช้า ๆ แล้วหดกลับเข้าไปอีกที คงยังไม่แน่ใจว่าที่นี่ปลอดภัย"}])];}}]},
+ // a moment with each pet
+ {id:"petx_cat_rin",look:"casual",bg:"camp",when:G=>hasPet(G,"cat")&&inCamp(G,"rin")&&petAge(G,"cat")>=4,steps:[
+  {n:"nar",t:G=>`ตีหนึ่ง คุณลงมาดื่มน้ำ เห็นรินนั่งยอง ๆ หน้าตู้เย็น กำลังป้อนปลาทูให้${petName(G,"cat")}ทีละชิ้น`},
+  {n:"rin",f:"flustered",l:"casual",t:G=>`…นี่ไม่ใช่อย่างที่คิดนะคะ ฉันแค่เก็บข้อมูลน้ำหนัก${petName(G,"cat")}รายสัปดาห์ เดือนนี้ขึ้นมาสามร้อยกรัม …ซึ่งส่วนหนึ่งอาจเป็นความผิดฉันเอง`},
+  {choice:[{t:"(นั่งลงป้อนด้วยกัน)",fx:G=>{add(G,"rin","bond",5);},then:[{n:"rin",f:"happy",l:"casual",t:"…งั้นเราแบ่งความผิดกันคนละครึ่งนะคะ"}]},
+   {t:"แซวว่าแอบใจดีนี่นา",fx:G=>{add(G,"rin","bond",3);add(G,"rin","morale",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"ห-ห้ามบอกใครนะคะ! โดยเฉพาะกะทิ!"}]}]}]},
+ {id:"petx_dog_mali",look:"casual",bg:"camp",when:G=>hasPet(G,"dog")&&inCamp(G,"mali")&&petAge(G,"dog")>=5,steps:[
+  {n:"nar",t:G=>`เย็นวันหนึ่ง เด็กแถวนั้นแกล้งแย่งกระเป๋ามะลิหน้าค่าย ${petName(G,"dog")}พุ่งออกไปยืนขวาง เห่าเสียงเดียว เด็ก ๆ วิ่งหนีกระจาย`},
+  {n:"mali",f:"flustered",l:"casual",t:G=>`${petName(G,"dog")}… ปกป้องหนูเหรอ หนูเคยกลัวแกแท้ ๆ`},
+  {n:"nar",t:"มะลิค่อย ๆ ยื่นมือออกไป เจ้าหมาหลังอานเอาหัวมาซุกฝ่ามือเธอเบา ๆ"},
+  {fx:G=>{add(G,"mali","bond",3);add(G,"mali","morale",8);}},{n:"mali",f:"happy",l:"casual",t:"…ต่อไปนี้วิ่งเช้าด้วยกันนะ หนูจะไม่ช้าแล้ว!"}]},
+ {id:"petx_rooster_kati",look:"train",bg:"gym",when:G=>hasPet(G,"rooster")&&inCamp(G,"kati")&&petAge(G,"rooster")>=3,steps:[
+  {n:"nar",t:G=>`ตีสี่ ${petName(G,"rooster")}ขันลั่นหน้าห้องกะทิเป็นวันที่สิบติด`},
+  {n:"kati",f:"angry",l:"train",t:G=>`${petName(G,"rooster")}!!! วันนี้วันหยุดนะ! …ก็ได้ ๆ ตื่นแล้ว ซ้อมก็ซ้อม`},
+  {n:"nar",t:"ครึ่งชั่วโมงต่อมา กะทิเตะกระสอบอยู่คนเดียวใต้ไฟดวงเดียว ไก่ชนยืนเกาะเชือกเวทีมองไม่วางตา"},
+  {choice:[{t:"(ลงไปถือเป้าให้)",fx:G=>{add(G,"kati","bond",4);add(G,"kati","morale",5);},then:[{n:"kati",f:"happy",l:"train",t:"ผู้จัดการก็โดนปลุกเหมือนกันเหรอคะ ฮ่า ๆ งั้นเรามาเป็นทีมตีสี่ด้วยกันเลย!"}]},
+   {t:"(ปล่อยให้ซ้อมกับคู่หูไก่ชน)",fx:G=>{add(G,"kati","morale",6);G.F.kati.fatigue=Math.max(0,G.F.kati.fatigue-3);},then:[{n:"nar",t:"เสียงกระสอบกับเสียงไก่ขันดังสลับกันจนฟ้าสาง"}]}]}]},
+ {id:"petx_turtle_fah",look:"casual",bg:"camp",when:G=>hasPet(G,"turtle")&&G.F.fah&&G.F.fah.met&&!inCamp(G,"fah")&&petAge(G,"turtle")>=3,steps:[
+  {n:"nar",t:"เย็นวันอาทิตย์ มีคนแอบนั่งยอง ๆ อยู่หลังค่าย ใส่หมวกแก๊ปปิดหน้า กำลังเอาผักบุ้งจิ้มให้เต่ากิน"},
+  {n:"fah",f:"surprised",l:"casual",t:"ฟ้าไม่ได้มาดูเต่านะ! ฟ้ามาสอดแนมค่ายศัตรู! …แต่เต่ามันกินผักบุ้งน่ารักมากเลยอ่ะ"},
+  {choice:[{t:"มาเยี่ยมได้ทุกเมื่อนะ",fx:G=>{add(G,"fah","bond",5);},then:[{n:"fah",f:"flustered",l:"casual",t:G=>`…ฟ้าจะมาเยี่ยม${petName(G,"turtle")} ไม่ได้มาเยี่ยมใครทั้งนั้น! จำไว้!`}]},
+   {t:"จับได้แล้วนะ สายลับ",fx:G=>{add(G,"fah","bond",3);},then:[{n:"fah",f:"angry",l:"casual",t:"ไม่ได้โดนจับ! ฟ้าตั้งใจให้เห็นต่างหาก! …บ๊ายบาย!"}]}]}]}
+);

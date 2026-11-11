@@ -1360,3 +1360,7 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .pb{display:block;height:8px;background:#2a2340;position:relative}.pb::after{content:"";position:absolute;top:0;bottom:0;width:var(--v)}.pb.l::after{right:0;background:var(--red,#e23b4e)}.pb.r::after{left:0;background:#4a7fe0}.redt{color:#ff8a96}
 .tc-h .fpbtn:not(.set){background:transparent;color:#ff9aa5;box-shadow:inset 0 0 0 2px var(--red)}
 .hall-y{margin:6px 0 10px}.hall-y>b{display:block;color:var(--gold,#f2c94c);margin-bottom:4px;font:700 14px "Chakra Petch",sans-serif}
+.petrow{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 0}.petchip{display:flex;align-items:center;gap:6px;padding:3px 8px 3px 4px;background:#2a2340;border:2px solid #4a3f6b;color:inherit;font:inherit;cursor:pointer;flex:1 1 0;min-width:0}
+.petchip span{display:flex;flex-direction:column;line-height:1.15;min-width:0;text-align:left}.petchip b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.petchip small{font-size:11px;color:var(--gold,#f2c94c)}
+.petchip.done{opacity:.6}.petchip.done small{color:var(--mut,#9a91ad)}.peti{width:34px;height:26px;image-rendering:pixelated;flex:none}.petnm{display:flex;gap:8px;align-items:center;margin:8px 0}.petnm input{flex:1;font:inherit;padding:8px;background:#1b1530;color:#fff;border:2px solid #4a3f6b}
+.petrow{display:grid;grid-template-columns:1fr 1fr;gap:6px}

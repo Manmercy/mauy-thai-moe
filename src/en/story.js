@@ -416,6 +416,7 @@ function yearEndScene(G){const y=G.season||1,R=roster(G),pChamp=Object.entries(G
       :{n:"coach",t:"No trophy this year, but everyone is still here, still training together every morning… That's how you measure a camp."},
     G.debt>0?{n:"nar",t:`Grandpa Chai's debt still has ${fmt(G.debt)} left. We'll keep paying it off, year by year.`}:{n:"nar",t:"Sirichai Camp is debt-free now. The sign belongs to all of us."}];
   if(top)steps.push({n:top.id,f:"happy",l:"casual",t:`${CALL(G,top.id)}, let's stay together like this next year too.`});
+  if((G.pets||[]).length)steps.push({n:"nar",t:`${G.pets.map(p=>p.name).join(" ")} have to be in the photo too. Posing the pets takes longer than posing the people.`});
   steps.push({n:"nar",t:`The self-timer clicks. The photo for year ${y} is hung next to last year's on the camp wall.`});
   return {key:"year",title:pChamp.length?`Year ${y} · Champions again`:`Year ${y} · The camp goes on`,steps,bg:"camp",look:"casual"};}
 function endingScene(G){if((G.season||1)>=2&&G.ended!=="bankrupt")return yearEndScene(G);
@@ -1277,3 +1278,58 @@ EVENTS.push({id:"year_open",annual:true,pri:1,look:"casual",bg:"camp",when:G=>(G
   out.push({choice:[{t:"This year I just want nobody to get hurt (everyone: morale +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);})},
    {t:"This year the goal is the title (everyone: morale +8 · fatigue +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+8);f.fatigue=Math.min(100,f.fatigue+5);})}]});
   return out;}}]});
+
+// ===== v1.51: camp pets — each joins through a small story, then has a moment with one of the girls =====
+const hasPet=(G,k)=>(G.pets||[]).some(p=>p.k===k);
+const petName=(G,k)=>{const p=(G.pets||[]).find(x=>x.k===k);return p?p.name:PETS[k].name;};
+function adoptPet(G,k,name,fav){G.pets=G.pets||[];if(hasPet(G,k))return;G.pets.push({k,name:name||PET_NAMES[k][0],joy:60,wk:-1,fav,since:G.week+((G.season||1)-1)*52});}
+const nameChoice=(k,fav,then)=>({choice:PET_NAMES[k].map(n=>({t:`Name it "${n}"`,fx:G=>adoptPet(G,k,n,fav),then})).concat([{t:"Pick a name…",fx:G=>{adoptPet(G,k,null,fav);UI.petName=(G.pets.length-1);},then}])});
+const petAge=(G,k)=>{const p=(G.pets||[]).find(x=>x.k===k);return p?G.week+((G.season||1)-1)*52-p.since:0;};
+const favOr=(G,id)=>inCamp(G,id)?id:"kati";
+EVENTS.push(
+ {id:"pet_cat",look:"casual",bg:"night",when:G=>G.week>=3,steps:[
+  {n:"nar",t:"Pouring rain at night. The gate swings open and Kati runs in, soaked, holding a fat orange cat that's even wetter than she is."},
+  {n:"kati",f:"flustered",l:"casual",t:"It's the orange cat from behind the temple! The pavilion roof fell in right where it sleeps… Grandpa used to sneak it rice every evening."},
+  {n:"coach",t:"We can barely feed the people here, and now a cat… (but Coach is already towel-drying it)"},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}, let it stay with us! Give it a name!`},
+  nameChoice("cat","kati",[{n:"nar",t:"The orange cat shakes water all over everyone, then goes to sleep on the heavy bag like it's owned the camp all along."}])]},
+ {id:"pet_dog",look:"casual",bg:"camp",when:G=>G.week>=9,steps:[
+  {n:"nar",t:"For three days a Thai Ridgeback has been sleeping outside the camp gate. It doesn't bark or beg, just runs along when the fighters go jogging in the morning."},
+  {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"flustered",l:"train",t:"I-I'm scared of dogs… I got bitten in the rice field as a kid. But this one… it slows down and waits for me every morning."},{n:"kati",f:"happy",l:"train",t:"See? It picked Mali."}]
+    :[{n:"kati",f:"happy",l:"train",t:"It follows me all the way to the bridge every morning. Like a free running coach."}]},
+  {n:"coach",t:"A Thai Ridgeback is a fighter's breed. Suits a boxing camp."},
+  {inject:G=>[nameChoice("dog",favOr(G,"mali"),[{n:"nar",t:"The new dog walks three circles and lies down at the same spot by the gate. This time with a red collar."}])]}]},
+ {id:"pet_rooster",look:"casual",bg:"camp",when:G=>G.week>=18,steps:[
+  {n:"nar",t:"The uncle who runs the cockfighting pit behind the market sets a wooden cage at the gate. Inside is a long-tailed rooster, iridescent green, with a scar over one eye."},
+  {n:"npc",who:"Rooster Uncle",t:"He lost his last fight. Keeping him, nobody'd care for him. …A fighter belongs with fighters. Please look after him."},
+  {n:"kati",f:"surprised",l:"casual",t:"It's staring at me like it wants to spar!"},
+  nameChoice("rooster","kati",[{n:"nar",t:"Next morning, 4 a.m. sharp, the camp rooster crows so loud everyone jolts awake. …This camp doesn't need alarm clocks anymore."}])]},
+ {id:"pet_turtle",look:"casual",bg:"camp",when:G=>G.week>=30,steps:[
+  {inject:G=>{const w=favOr(G,"rin");return [
+   {n:"nar",t:"Holy-day morning market. Someone sells turtles for merit release. One has a long crack down its shell, and nobody picks it."},
+   w==="rin"?{n:"rin",f:"flustered",l:"casual",t:"I bought it to release for merit, but with a cracked shell like that, its survival rate is under thirty percent. …Can I keep it in a basin behind the camp until it heals?"}
+     :{n:"kati",f:"sad",l:"casual",t:"I bought it to release, but its shell is cracked. It won't survive out there… let's keep it for now."},
+   nameChoice("turtle",w,[{n:"nar",t:"The new turtle slowly pokes its head out to look at the camp, then pulls back in. Not sure yet that it's safe here."}])];}}]},
+ // a moment with each pet
+ {id:"petx_cat_rin",look:"casual",bg:"camp",when:G=>hasPet(G,"cat")&&inCamp(G,"rin")&&petAge(G,"cat")>=4,steps:[
+  {n:"nar",t:G=>`1 a.m. You come down for water and find Rin crouched in front of the fridge, feeding mackerel to ${petName(G,"cat")} one piece at a time.`},
+  {n:"rin",f:"flustered",l:"casual",t:G=>`…This isn't what it looks like. I'm just tracking ${petName(G,"cat")}'s weight every week. Up three hundred grams this month… part of which may be my fault.`},
+  {choice:[{t:"(Sit down and feed it together)",fx:G=>{add(G,"rin","bond",5);},then:[{n:"rin",f:"happy",l:"casual",t:"…Then we split the blame fifty-fifty."}]},
+   {t:"Tease her for being secretly sweet",fx:G=>{add(G,"rin","bond",3);add(G,"rin","morale",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"D-don't tell anyone! Especially not Kati!"}]}]}]},
+ {id:"petx_dog_mali",look:"casual",bg:"camp",when:G=>hasPet(G,"dog")&&inCamp(G,"mali")&&petAge(G,"dog")>=5,steps:[
+  {n:"nar",t:G=>`One evening, some local kids try to snatch Mali's bag outside the camp. ${petName(G,"dog")} charges out and stands in the way. One bark, and the kids scatter.`},
+  {n:"mali",f:"flustered",l:"casual",t:G=>`${petName(G,"dog")}… you protected me? I used to be so scared of you.`},
+  {n:"nar",t:"Mali slowly reaches out. The ridgeback presses its head gently into her palm."},
+  {fx:G=>{add(G,"mali","bond",3);add(G,"mali","morale",8);}},{n:"mali",f:"happy",l:"casual",t:"…From now on we run together every morning. I won't be slow anymore!"}]},
+ {id:"petx_rooster_kati",look:"train",bg:"gym",when:G=>hasPet(G,"rooster")&&inCamp(G,"kati")&&petAge(G,"rooster")>=3,steps:[
+  {n:"nar",t:G=>`4 a.m. ${petName(G,"rooster")} crows outside Kati's room for the tenth day in a row.`},
+  {n:"kati",f:"angry",l:"train",t:G=>`${petName(G,"rooster")}!!! It's a rest day! …Fine, fine, I'm up. Training it is.`},
+  {n:"nar",t:"Half an hour later Kati is kicking the bag alone under a single light. The rooster perches on the ring ropes, watching every move."},
+  {choice:[{t:"(Go down and hold pads for her)",fx:G=>{add(G,"kati","bond",4);add(G,"kati","morale",5);},then:[{n:"kati",f:"happy",l:"train",t:"The rooster got you up too, Manager? Haha, then we're the four a.m. team now!"}]},
+   {t:"(Let her train with her rooster buddy)",fx:G=>{add(G,"kati","morale",6);G.F.kati.fatigue=Math.max(0,G.F.kati.fatigue-3);},then:[{n:"nar",t:"The thud of the bag and the rooster's crowing trade off until dawn."}]}]}]},
+ {id:"petx_turtle_fah",look:"casual",bg:"camp",when:G=>hasPet(G,"turtle")&&G.F.fah&&G.F.fah.met&&!inCamp(G,"fah")&&petAge(G,"turtle")>=3,steps:[
+  {n:"nar",t:"Sunday evening, someone is crouching behind the camp, cap pulled low, poking morning glory at the turtle."},
+  {n:"fah",f:"surprised",l:"casual",t:"I'm not here to see the turtle! I'm spying on the enemy camp! …But the way it eats morning glory is sooo cute."},
+  {choice:[{t:"Come visit any time.",fx:G=>{add(G,"fah","bond",5);},then:[{n:"fah",f:"flustered",l:"casual",t:G=>`…I'll come visit ${petName(G,"turtle")}! Not visiting anyone else! Remember that!`}]},
+   {t:"Caught you, spy.",fx:G=>{add(G,"fah","bond",3);},then:[{n:"fah",f:"angry",l:"casual",t:"I didn't get caught! I let you see me on purpose! …Bye-bye!"}]}]}]}
+);

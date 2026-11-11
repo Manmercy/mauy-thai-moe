@@ -527,7 +527,15 @@ function advise(G,a,b,rounds,n=40){const fa=G.F[a],fb=G.F[b];const res={};
   for(const plan of Object.keys(PLANS)){let w=0;for(let i=0;i<n;i++){const F=newFight(fa,fb,{seed:9001+i*7,rounds,planA:plan});
     while(!F.over){F.A.instr=aiCorner(F,F.A,F.B);F.B.instr=aiCorner(F,F.B,F.A);fightRound(F);}if(F.result.win==="A")w++;else if(F.result.win==="D")w+=.5;}res[plan]=w/n;}
   const best=Object.entries(res).sort((x,y)=>y[1]-x[1])[0];return {rates:res,best:best[0],bestRate:best[1],base:res.balanced};}
-const upkeep=G=>1800+(G?facTotal(G)*220+[0,0,800,1800][campLevel(G)]:0); // v1.43: a bigger camp costs more to run
+// v1.51: camp pets — they join through little stories, wander the yard, and cheer the team up once a week
+const PETS={cat:{name:"Orange cat",food:150,eff:"Everyone: morale +2"},dog:{name:"Thai Ridgeback",food:250,eff:"Everyone: fatigue −3"},rooster:{name:"Retired fighting rooster",food:100,eff:"Everyone: morale +1 · fatigue −1"},turtle:{name:"Temple turtle",food:80,eff:"Everyone: morale +3 (calmer minds)"}};
+const PET_NAMES={cat:["Pomelo","Bread","Chubbs"],dog:["Blackie","Goldie","Khao Tu"],rooster:["Greenie","King Cluck","Goofy"],turtle:["Slowpoke","Mochi","Abbot"]};
+const petFood=G=>(G&&G.pets||[]).reduce((s,p)=>s+(PETS[p.k]?PETS[p.k].food:0),0);
+function petPlay(G,i){const p=(G.pets||[])[i];if(!p||p.wk===G.week)return false;p.wk=G.week;p.joy=Math.min(100,(p.joy||50)+10);const R=roster(G);
+  if(p.k==="cat")R.forEach(f=>f.morale=Math.min(100,f.morale+2));if(p.k==="dog")R.forEach(f=>f.fatigue=Math.max(0,f.fatigue-3));
+  if(p.k==="rooster")R.forEach(f=>{f.morale=Math.min(100,f.morale+1);f.fatigue=Math.max(0,f.fatigue-1);});if(p.k==="turtle")R.forEach(f=>f.morale=Math.min(100,f.morale+3));
+  const fav=p.fav&&G.F[p.fav];if(fav&&fav.camp==="player")fav.morale=Math.min(100,fav.morale+3);return true;}
+const upkeep=G=>1800+(G?facTotal(G)*220+[0,0,800,1800][campLevel(G)]+petFood(G):0); // v1.43: a bigger camp costs more to run
 function weeklyNet(G){return classIncome(G)-upkeep(G)-wages(G);}
 
 function eligible(G,f){const st=stageOf(G.week);

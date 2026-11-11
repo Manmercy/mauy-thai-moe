@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.50";
+const VERSION="1.51";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -114,6 +114,7 @@ function render(){
   if(!G)h=UI.creator?creatorHTML():titleHTML();
   else if(UI.ending)h=endingHTML();
   else h=`<div class="shell">${hubHTML()}</div>`;
+  if(G&&UI.petName!=null&&!UI.scene&&!UI.modal){UI.modal={type:"petname",i:UI.petName};UI.petName=null;}
   if(UI.modal)h+=modalHTML();
   if(G&&UI.montage)h+=montageHTML();
   if(G&&UI.fight)h+=fightHTML();
@@ -311,6 +312,9 @@ function verdictOf(rate){return rate>=.6?{c:"green",t:"อ่อนกว่า"
 
 function rinNoteHTML(){const n=G.rinNote;if(!n||!G.F.rin||G.F.rin.camp!=="player")return "";
   return `<button class="px rinnote" data-act="rinread"><img src="${faceSrc("rin")}" alt=""><span><b>รินส่งรายงานมา</b><small>สรุป 3 สัปดาห์ · แตะเพื่ออ่าน</small></span><i class="tdot2"></i></button>`;}
+// v1.51: pets on the home card — tap once a week to play
+function petsRowHTML(){const P=G.pets||[];if(!P.length)return "";return `<div class="petrow">${P.map((p,i)=>{const done=p.wk===G.week;
+  return `<button class="petchip ${done?"done":""}" data-act="petplay" data-v="${i}" ${done?"disabled":""} title="${esc(PETS[p.k].eff)}"><img class="peti" src="${petIcon(p.k)}" alt=""><span><b>${esc(p.name)}</b><small>${done?"เล่นแล้ว ✓":"เล่นด้วย"}</small></span></button>`;}).join("")}</div>`;}
 function homeHTML(){const R=roster(G);
   let guide="";
   if(coachOn()&&G.guideHidden!==G.week&&G.week<=2&&!(G.season>1)){
@@ -330,6 +334,7 @@ function homeHTML(){const R=roster(G);
     <div class="goal ov">${goalText()}</div></div>
     ${G.campUsed?`<button class="campact done" data-act="campacts"><span class="ci">✓</span><span><small>กิจกรรมค่ายสัปดาห์นี้</small><b>${esc(CAMP_ACTIONS[G.campUsed].name)}</b></span></button>`
       :`<button class="campact" data-act="campacts"><span class="ci"></span><span><small>กิจกรรมค่ายสัปดาห์นี้ · ยังไม่ได้เลือก</small><b>เลือกกิจกรรมค่าย</b></span><span class="chev">▸</span></button>`}
+    ${petsRowHTML()}
     <div class="camp-info"><button class="cinfo" data-act="tab" data-v="camp"><small>ระดับค่าย</small><b>Lv.${lv} ${CAMP_LV_NAME[lv]}</b></button><button class="cinfo" data-act="studinfo"><small>นักเรียน</small><b>${students(G)}/${studentCap(G)} คน</b></button></div></section>
    <div class="side">${guide}<div class="fgrid">${R.map(fighterChip).join("")}</div></div></div>`;}
 function fighterMini(f){const c=condition(f);const nb=nextBooking(f);
@@ -674,6 +679,7 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
   if(m.type==="campacts"){body=campActsHTML();foot=!m.pick;}
   if(m.type==="studinfo"){body=studInfoHTML();}
   if(m.type==="gift")body=giftHTML(m.id);
+  if(m.type==="petname"){const p=(G.pets||[])[m.i];if(!p){UI.modal=null;return "";}body=`<h2>ตั้งชื่อ${esc(PETS[p.k].name)}</h2><div class="petnm"><img class="peti" src="${petIcon(p.k)}" alt=""><input id="petname" maxlength="12" value="${esc(p.name)}" autocomplete="off"></div><p class="meta">ชื่อนี้จะโผล่ในฉากต่าง ๆ ของค่าย</p><button class="btn primary" data-act="petnamesave" data-v="${m.i}">ตั้งชื่อ</button>`;}
   if(m.type==="masters"){body=`<h2>เชิญครูมวยโบราณ</h2><p class="meta">${fmt(18000)} ต่อครั้ง · นักมวยแต่ละคนเรียนได้ครั้งเดียวต่อฤดูกาล</p><div class="mlist">${Object.entries(MASTERS).map(([k,M])=>`<div class="mrow"><b>${M.name}</b><small>เสริม ${M.attrs.map(a=>ATTR_LABEL[a]).join(" · ")}</small><div class="obtns">${roster(G).map(f=>`<button class="btn sm" data-act="hiremaster" data-id="${f.id}" data-v="${k}" ${G.cash<M.cost||f.masterSeason===(G.season||1)?"disabled":""}>${esc(f.name)}</button>`).join("")}</div></div>`).join("")}</div>`;}
   if(m.type==="advice"){body=adviceHTML(m.id);foot=false;}
   if(m.type==="drill"){body=drillHTML();foot=false;}
@@ -1122,6 +1128,9 @@ const ACT={
   delslot:()=>{clearSave(UI.delSlot);UI.delSlot=null;if(!loadSave())UI.modal=null;render();},
   beginNew:i=>{UI.slot=i;UI.modal=null;AU.startMusic("hub");UI.creator={name:"",...CHIBI.randomManager(Math.random),gender:"m",diff:"normal",outfit:"tee",hat:"none",glasses:"none"};UI.modal=null;render();},
   copyseed:()=>{const v=G.seedText||String(G.seed);const ok=()=>toast("คัดลอก seed แล้ว: "+v);try{navigator.clipboard.writeText(v).then(ok,()=>toast("seed: "+v));}catch(e){toast("seed: "+v);}},
+  petplay:d=>{const i=+d.v,p=(G.pets||[])[i];if(!p||!petPlay(G,i))return;AU.sfx&&AU.sfx("ui");const PL={cat:"นอนหงายให้เกาพุง",dog:"วิ่งไล่ลูกบอลรอบเวที",rooster:"ขันโชว์จนทุกคนหัวเราะ",turtle:"ยื่นหัวออกมาให้ลูบช้า ๆ"};
+    toast(`${p.name} ${PL[p.k]} · ${PETS[p.k].eff}`);save();render();},
+  petnamesave:d=>{const p=(G.pets||[])[+d.v];const v=((document.getElementById("petname")||{}).value||"").trim();if(p&&v)p.name=v.slice(0,12);UI.modal=null;save();render();},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},
   cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator[d.k]=d.v;render();},
   crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};crSeed();UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab,seed:o.seed};render();},
