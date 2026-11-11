@@ -1359,25 +1359,27 @@ function adoptPet(G,k,name,fav){G.pets=G.pets||[];if(hasPet(G,k))return;G.pets.p
 const nameChoice=(k,fav,then)=>({choice:PET_NAMES[k].map(n=>({t:`Name it "${n}"`,fx:G=>adoptPet(G,k,n,fav),then})).concat([{t:"Pick a name…",fx:G=>{adoptPet(G,k,null,fav);UI.petName=(G.pets.length-1);},then}])});
 const petAge=(G,k)=>{const p=(G.pets||[]).find(x=>x.k===k);return p?G.week+((G.season||1)-1)*52-p.since:0;};
 const favOr=(G,id)=>inCamp(G,id)?id:"kati";
+/* v1.62: adoptions jump the queue on late saves, one new pet per week */
+const petGate=G=>!["pet_cat","pet_dog","pet_rooster","pet_turtle"].some(id=>G.seenWk&&G.seenWk[id]===G.week&&G.seen[id]);
 EVENTS.push(
- {id:"pet_cat",look:"casual",bg:"night",when:G=>G.week>=3,steps:[
+ {id:"pet_cat",look:"casual",bg:"night",pri:2,when:G=>G.week>=3&&petGate(G),steps:[
   {n:"nar",t:"Pouring rain at night. The gate swings open and Kati runs in, soaked, holding a fat orange cat that's even wetter than she is."},
   {n:"kati",f:"flustered",l:"casual",t:"It's the orange cat from behind the temple! The pavilion roof fell in right where it sleeps… Grandpa used to sneak it rice every evening."},
   {n:"coach",t:"We can barely feed the people here, and now a cat… (but Coach is already towel-drying it)"},
   {n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}, let it stay with us! Give it a name!`},
   nameChoice("cat","kati",[{n:"nar",t:"The orange cat shakes water all over everyone, then goes to sleep on the heavy bag like it's owned the camp all along."}])]},
- {id:"pet_dog",look:"casual",bg:"camp",when:G=>G.week>=9,steps:[
+ {id:"pet_dog",look:"casual",bg:"camp",pri:2,when:G=>G.week>=9&&petGate(G),steps:[
   {n:"nar",t:"For three days a Thai Ridgeback has been sleeping outside the camp gate. It doesn't bark or beg, just runs along when the fighters go jogging in the morning."},
   {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"flustered",l:"train",t:"I-I'm scared of dogs… I got bitten in the rice field as a kid. But this one… it slows down and waits for me every morning."},{n:"kati",f:"happy",l:"train",t:"See? It picked Mali."}]
     :[{n:"kati",f:"happy",l:"train",t:"It follows me all the way to the bridge every morning. Like a free running coach."}]},
   {n:"coach",t:"A Thai Ridgeback is a fighter's breed. Suits a boxing camp."},
   {inject:G=>[nameChoice("dog",favOr(G,"mali"),[{n:"nar",t:"The new dog walks three circles and lies down at the same spot by the gate. This time with a red collar."}])]}]},
- {id:"pet_rooster",look:"casual",bg:"camp",when:G=>G.week>=18,steps:[
+ {id:"pet_rooster",look:"casual",bg:"camp",pri:2,when:G=>G.week>=18&&petGate(G),steps:[
   {n:"nar",t:"The uncle who runs the cockfighting pit behind the market sets a wooden cage at the gate. Inside is a long-tailed rooster, iridescent green, with a scar over one eye."},
   {n:"npc",who:"Rooster Uncle",t:"He lost his last fight. Keeping him, nobody'd care for him. …A fighter belongs with fighters. Please look after him."},
   {n:"kati",f:"surprised",l:"casual",t:"It's staring at me like it wants to spar!"},
   nameChoice("rooster","kati",[{n:"nar",t:"Next morning, 4 a.m. sharp, the camp rooster crows so loud everyone jolts awake. …This camp doesn't need alarm clocks anymore."}])]},
- {id:"pet_turtle",look:"casual",bg:"camp",when:G=>G.week>=30,steps:[
+ {id:"pet_turtle",look:"casual",bg:"camp",pri:2,when:G=>G.week>=30&&petGate(G),steps:[
   {inject:G=>{const w=favOr(G,"rin");return [
    {n:"nar",t:"Holy-day morning market. Someone sells turtles for merit release. One has a long crack down its shell, and nobody picks it."},
    w==="rin"?{n:"rin",f:"flustered",l:"casual",t:"I bought it to release for merit, but with a cracked shell like that, its survival rate is under thirty percent. …Can I keep it in a basin behind the camp until it heals?"}

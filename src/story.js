@@ -1359,25 +1359,27 @@ function adoptPet(G,k,name,fav){G.pets=G.pets||[];if(hasPet(G,k))return;G.pets.p
 const nameChoice=(k,fav,then)=>({choice:PET_NAMES[k].map(n=>({t:`ตั้งชื่อว่า "${n}"`,fx:G=>adoptPet(G,k,n,fav),then})).concat([{t:"ตั้งชื่อเอง…",fx:G=>{adoptPet(G,k,null,fav);UI.petName=(G.pets.length-1);},then}])});
 const petAge=(G,k)=>{const p=(G.pets||[]).find(x=>x.k===k);return p?G.week+((G.season||1)-1)*52-p.since:0;};
 const favOr=(G,id)=>inCamp(G,id)?id:"kati";
+/* v1.62: adoptions jump the queue on late saves, one new pet per week */
+const petGate=G=>!["pet_cat","pet_dog","pet_rooster","pet_turtle"].some(id=>G.seenWk&&G.seenWk[id]===G.week&&G.seen[id]);
 EVENTS.push(
- {id:"pet_cat",look:"casual",bg:"night",when:G=>G.week>=3,steps:[
+ {id:"pet_cat",look:"casual",bg:"night",pri:2,when:G=>G.week>=3&&petGate(G),steps:[
   {n:"nar",t:"คืนฝนตกหนัก ประตูค่ายเปิดออก กะทิวิ่งเข้ามาตัวเปียกโชก ในอ้อมแขนมีแมวส้มตัวอ้วนที่ตัวเปียกกว่าเธออีก"},
   {n:"kati",f:"flustered",l:"casual",t:"แมวส้มหลังวัดค่ะ! หลังคาศาลาพังตรงที่มันนอนพอดี …ปู่เคยแอบให้ข้าวมันทุกเย็นเลยนะคะ"},
   {n:"coach",t:"ค่ายเราเลี้ยงคนยังแทบไม่ไหว จะเลี้ยงแมวอีก… (แต่มือครูก็หยิบผ้าขนหนูมาเช็ดตัวมันแล้ว)"},
   {n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}คะ ให้มันอยู่ด้วยนะคะ ตั้งชื่อให้มันหน่อย!`},
   nameChoice("cat","kati",[{n:"nar",t:"แมวส้มสะบัดน้ำใส่ทุกคน แล้วเดินไปนอนบนกระสอบทรายเหมือนเป็นเจ้าของค่ายมาตั้งแต่แรก"}])]},
- {id:"pet_dog",look:"casual",bg:"camp",when:G=>G.week>=9,steps:[
+ {id:"pet_dog",look:"casual",bg:"camp",pri:2,when:G=>G.week>=9&&petGate(G),steps:[
   {n:"nar",t:"สามวันแล้วที่หมาไทยหลังอานตัวหนึ่งนอนเฝ้าหน้าประตูค่าย ไม่เห่า ไม่ขออะไร แค่วิ่งตามเวลานักมวยออกไปวิ่งเช้า"},
   {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"flustered",l:"train",t:"ห-หนูกลัวหมาค่ะ… ตอนเด็กโดนกัดที่นา แต่ตัวนี้… มันวิ่งช้าลงรอหนูทุกเช้าเลย"},{n:"kati",f:"happy",l:"train",t:"เห็นไหม มันเลือกมะลิแล้วล่ะ"}]
     :[{n:"kati",f:"happy",l:"train",t:"มันวิ่งตามหนูไปถึงสะพานทุกเช้าเลยค่ะ เหมือนเป็นโค้ชวิ่งให้ฟรี ๆ"}]},
   {n:"coach",t:"หมาหลังอานนี่หมาพันธุ์นักสู้นะ อยู่ค่ายมวยก็เหมาะดี"},
   {inject:G=>[nameChoice("dog",favOr(G,"mali"),[{n:"nar",t:"หมาตัวใหม่เดินวนสามรอบ แล้วนอนลงหน้าประตูค่ายตรงเดิม ครั้งนี้มีปลอกคอสีแดงแล้ว"}])]}]},
- {id:"pet_rooster",look:"casual",bg:"camp",when:G=>G.week>=18,steps:[
+ {id:"pet_rooster",look:"casual",bg:"camp",pri:2,when:G=>G.week>=18&&petGate(G),steps:[
   {n:"nar",t:"ลุงเจ้าของบ่อนไก่ชนท้ายตลาดหิ้วกรงไม้มาวางหน้าค่าย ข้างในเป็นไก่ชนหางยาวสีเขียวเหลือบ ตาข้างหนึ่งมีแผลเป็น"},
   {n:"npc",who:"ลุงไก่ชน",t:"มันแพ้ไฟต์สุดท้ายไปแล้ว ผมเลี้ยงไว้ต่อก็ไม่มีใครดู …นักสู้ต้องอยู่กับนักสู้ ฝากค่ายนี้ด้วยนะ"},
   {n:"kati",f:"surprised",l:"casual",t:"มันจ้องหนูเหมือนจะขอชกด้วยเลยค่ะ!"},
   nameChoice("rooster","kati",[{n:"nar",t:"เช้าวันต่อมา ตีสี่ตรง ไก่ชนประจำค่ายขันลั่นจนทุกคนสะดุ้งตื่น …ค่ายนี้ไม่ต้องใช้นาฬิกาปลุกอีกแล้ว"}])]},
- {id:"pet_turtle",look:"casual",bg:"camp",when:G=>G.week>=30,steps:[
+ {id:"pet_turtle",look:"casual",bg:"camp",pri:2,when:G=>G.week>=30&&petGate(G),steps:[
   {inject:G=>{const w=favOr(G,"rin");return [
    {n:"nar",t:"ตลาดเช้าวันพระ มีคนขายเต่าให้ปล่อยทำบุญ ตัวหนึ่งกระดองร้าวเป็นทางยาว ไม่มีใครเลือก"},
    w==="rin"?{n:"rin",f:"flustered",l:"casual",t:"ฉันซื้อมาเพื่อปล่อยค่ะ แต่กระดองร้าวแบบนี้ ปล่อยไปอัตรารอดไม่ถึงสามสิบเปอร์เซ็นต์ …ขอเลี้ยงไว้ในกะละมังหลังค่ายจนกว่าจะหายได้ไหมคะ"}
