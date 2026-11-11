@@ -3561,18 +3561,18 @@ EVENTS.push(
 const leaveSteps=(G,why,wk,post)=>[{inject:G2=>{G2.coachAway=G2.week+wk;G2.flags.coachBack=false;if(typeof addMail==="function")addMail(G2,{kind:"letter",from:"ครูแดง",title:post[0],body:post[1]});return [];}},
   {n:"nar",t:`ครูแดงลา ${wk} สัปดาห์ · ช่วงนี้ไม่มีคำแนะนำจากครู${inCamp(G,"rin")?" มีแค่ข้อสังเกตของริน":""}`}];
 EVENTS.push(
- {id:"daeng_leave_monk",look:"fight",when:G=>G.week>=17,bg:"camp",steps:[
+ {id:"daeng_leave_monk",look:"fight",when:G=>G.week>=17&&G.week<=19&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"เจ้าของค่าย หลานชายครูจะบวช ครูต้องไปช่วยงานที่วัดสองสัปดาห์ ไปแห่นาค ไปโกนหัว ไปนั่งฟังพระสวด"},
   {n:"kati",f:"surprised",l:"casual",t:"ครูแดงจะโกนหัวด้วยเหรอคะ!?"},
   {n:"coach",t:"ครูไม่ได้บวช! …แต่ถ้าแพ้พนันเรื่องฟุตบอลกับพ่อนาค ก็อาจจะโกน"},
   {n:"rin",f:"happy",l:"casual",t:"ระหว่างนี้ฉันจะบันทึกทุกอย่างไว้ให้ค่ะ แต่ตัดสินใจแทนไม่ได้นะคะ ฉันแค่วิเคราะห์"},
   {inject:G=>leaveSteps(G,"monk",2,["ข่าวจากงานบวช","งานบวชหลานเรียบร้อยดี ครูแพ้พนันบอลกับพ่อนาค เลยต้องโกนหัวไปด้วย อย่าหัวเราะตอนครูกลับนะ ฝากเด็ก ๆ วิ่งตอนเช้าด้วย — ครูแดง"])}]},
- {id:"daeng_leave_knee",look:"fight",when:G=>G.week>=40,bg:"camp",steps:[
+ {id:"daeng_leave_knee",look:"fight",when:G=>G.week>=40&&G.week<=42&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"หมอนัดผ่าตัดเข่าเล็ก ๆ ครูต้องนอนโรงพยาบาลสองสัปดาห์ ไม่ต้องห่วง หมอบอกว่าเข่าครูแข็งแรงเหมือนอายุห้าสิบ"},
   {n:"mali",f:"sad",l:"casual",t:"ครูแดงอายุหกสิบแปดนี่คะ…"},
   {n:"coach",t:"ก็นั่นแหละ ดีกว่าอายุจริงตั้งสิบแปดปี! ช่วงนี้ช่วงสำคัญ ตัดสินใจกันเองให้ดี ครูดูไลฟ์จากเตียงนะ"},
   {inject:G=>leaveSteps(G,"knee",2,["จากเตียงโรงพยาบาล","พยาบาลห้ามครูตะโกนเชียร์ไลฟ์ ครูเลยเชียร์ในใจจนความดันขึ้น ไม่ต้องมาเยี่ยม เอาเวลาไปซ้อม ถ้าจะเยี่ยมเอาส้มตำมาด้วย — ครูแดง"])}]});
-EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29,bg:"camp",steps:[
+EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29&&G.week<=31&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"เจ้าของค่าย ครูขอลากลับบ้านที่สุรินทร์สองสัปดาห์นะ หลานสาวแต่งงาน"},
   {n:"coach",t:"ตารางซ้อมครูเขียนแปะไว้ที่ผนังแล้ว ช่วงนี้ต้องตัดสินใจเองทั้งหมดนะ ครูเชื่อมือ"},
   {n:"kati",f:"surprised",t:"ห้ะ! สองสัปดาห์เลยเหรอคะ! …ไม่เป็นไรค่ะ หนูจะคุมทุกคนซ้อมเอง!"},{inject:G=>{G.coachAway=G.week+2;G.flags.coachBack=false;if(typeof addMail==="function")addMail(G,{kind:"letter",from:"ครูแดง (สุรินทร์)",title:"โปสการ์ดจากสุรินทร์",body:"ถึงเด็ก ๆ ค่ายศิริชัย งานแต่งหลานสนุกมาก ครูรำมวยโชว์แขกจนเอวเคล็ด อย่าลืมพันมือทุกครั้งก่อนซ้อม อย่าให้กะทิสั่งวิ่งเกินวันละสิบรอบ แล้วอย่าให้มะลิเปิดเพลงลูกทุ่งดังเกิน — ครูแดง (ป.ล. ฝากรดน้ำต้นมะม่วงด้วย)"});return [];}},
@@ -4193,9 +4193,9 @@ EVENTS.push(
       :[{n:"nar",t:"เงินในค่ายยังไม่พอค่าไถ่สัญญา ฟ้าบอกว่าจะรอ แล้วจะกลับมาถามใหม่อีกครั้ง"},{n:"fah",f:"pout",l:"casual",t:"…ไม่เป็นไร ฟ้ารอได้ แต่อย่านานนะ!"}]}]},
    {t:"ขอเวลาเตรียมค่ายก่อน",fx:G=>{G.flags.fahRetry=absWeek(G)+6;G.seen.fah_join=false;add(G,"fah","trust",2);},then:[{n:"fah",f:"pout",l:"casual",t:"ก็ได้! ฟ้าไม่ได้รีบสักหน่อย! …อีกเดือนนึงฟ้ามาถามใหม่นะ"}]}]}]},
  {id:"prodigy_intro",look:"fight",bg:"ring",when:G=>!!(G.prodigy&&G.prodigy.B)&&G.flags.fahJoined!=null&&G.week>G.flags.fahJoined,steps:[
-  {n:"nar",t:"เวทีมวยอำเภอ ค่ายพยัคฆ์ทองเปิดตัวนักมวยใหม่ ผู้หญิงผมสั้นเกรียน หน้านิ่งไม่มีอารมณ์ เตะกระสอบโชว์จนโซ่สั่น"},
+  {n:"nar",t:"เวทีมวยอำเภอ ค่ายพยัคฆ์ทองเปิดตัวนักมวยใหม่ ผมทองมัดสูงแบบเดียวกับที่ฟ้าเคยทำ ชุดดำขลิบทอง หน้านิ่งไม่มีอารมณ์ เตะกระสอบโชว์จนโซ่สั่น"},
   {n:"npc",who:"โค้ชเกรียงไกร",t:"ใบหยก ศิษย์พยัคฆ์ทอง ซ้อมวันละสิบชั่วโมง ไม่ยิ้ม ไม่โชว์ ไม่แพ้ …คนที่ทิ้งค่ายไป จะได้รู้ว่าเสียอะไรไป"},
-  {n:"fah",f:"sad",l:"casual",t:"ใบหยก… ตอนฟ้าอยู่ที่นั่น เขาไม่เคยได้พักเลย ไม่เคยมีใครชวนเขาไปกินข้าวด้วย"},
+  {n:"fah",f:"sad",l:"casual",t:"ใบหยก… ตอนฟ้าอยู่ที่นั่น เขาไม่เคยได้พักเลย ไม่เคยมีใครชวนเขาไปกินข้าวด้วย"},{n:"fah",f:"angry",l:"casual",t:"แล้วโค้ชยังสั่งให้ย้อมผมทองเหมือนฟ้าอีก! ผมทองคือของฟ้านะ! …ไม่ใช่เครื่องแบบ"},
   {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"angry",l:"train",t:"คู่ปรับใหม่ของหนูสินะ …ดีเลย หนูจะไม่แพ้คนที่ชกโดยไม่มีความสุขหรอก!"}]:[]},
   {n:"nar",t:"(ใบหยกขึ้นเป็นคู่ปรับตัวท็อปของรุ่น B แทนฟ้า)"}]},
  {id:"fah_settle",look:"casual",bg:"camp",when:G=>inCamp(G,"fah")&&G.flags.fahJoined!=null&&G.week>=G.flags.fahJoined+2,steps:[
@@ -4310,11 +4310,12 @@ function sheetFor(f){
   if(f.canon)return img(f.id+"_sheet.webp");
   if(f.sprite)return img(f.sprite+"_sheet.webp"); // v1.23: gang, roosters, bulls
   if(TINTS[f.id])return TINTS[f.id];
-  const {base,hue,dark}=npcBase(f.id);const src=img(base+"_sheet.webp");if(!src.complete||!src.naturalWidth)return src;
+  const nb=npcBase(f.id),base=nb.base,blonde=!!(f.prodigy||(f.id||"").startsWith("prod_")),hue=blonde?42:nb.hue,dark=blonde?true:nb.dark;const src=img(base+"_sheet.webp"); /* v1.56: Golden Tiger prodigies: blond hair, black-gold kit */if(!src.complete||!src.naturalWidth)return src;
   const c=document.createElement("canvas");c.width=src.naturalWidth;c.height=src.naturalHeight;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(src,0,0);
   try{const d=x.getImageData(0,0,c.width,c.height),p=d.data,th=hue/360;
-    for(let i=0;i<p.length;i+=4){if(p[i+3]<10)continue;let r=p[i]/255,g=p[i+1]/255,b=p[i+2]/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let l=(mx+mn)/2;if(mx===mn)continue;
+    for(let i=0;i<p.length;i+=4){if(p[i+3]<10)continue;let r=p[i]/255,g=p[i+1]/255,b=p[i+2]/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let l=(mx+mn)/2;const gold=()=>{const L2=Math.min(.82,l*1.55+.2),S2=.78,H2=.12;const q2=L2<.5?L2*(1+S2):L2+S2-L2*S2,p2=2*L2-q2;const f2=t=>{t=(t+1)%1;return t<1/6?p2+(q2-p2)*6*t:t<1/2?q2:t<2/3?p2+(q2-p2)*(2/3-t)*6:p2;};p[i]=f2(H2+1/3)*255;p[i+1]=f2(H2)*255;p[i+2]=f2(H2-1/3)*255;};if(mx===mn){if(blonde&&l>.07&&l<.42)gold();continue;}
       const dd=mx-mn;let s=l>.5?dd/(2-mx-mn):dd/(mx+mn);let h=mx===r?(g-b)/dd+(g<b?6:0):mx===g?(b-r)/dd+2:(r-g)/dd+4;h/=6;
+      if(blonde&&l>.07&&l<.42&&!(h>.53&&h<.74&&s>.25)&&!((h<.035||h>.93)&&s>.38)&&(s<.45||(h>.02&&h<.16))){gold();continue;}
       const red=(h<.035||h>.93)&&s>.38&&l>.12&&l<.8,blue=h>.53&&h<.74&&s>.25&&l>.1;if(!red&&!blue)continue; // outfit only: skin & hair stay
       h=th;if(dark){s*=.15;l*=.55;}
       const q=l<.5?l*(1+s):l+s-l*s,pp=2*l-q;const fn=t=>{t=(t+1)%1;return t<1/6?pp+(q-pp)*6*t:t<1/2?q:t<2/3?pp+(q-pp)*(2/3-t)*6:pp;};
@@ -4741,7 +4742,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.55.1";
+const VERSION="1.56";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -8806,18 +8807,18 @@ EVENTS.push(
 const leaveSteps=(G,why,wk,post)=>[{inject:G2=>{G2.coachAway=G2.week+wk;G2.flags.coachBack=false;if(typeof addMail==="function")addMail(G2,{kind:"letter",from:"Coach Daeng",title:post[0],body:post[1]});return [];}},
   {n:"nar",t:`Coach Daeng is away ${wk} weeks · no coach advice for now.${inCamp(G,"rin")?" Only Rin's observations":""}`}];
 EVENTS.push(
- {id:"daeng_leave_monk",look:"fight",when:G=>G.week>=17,bg:"camp",steps:[
+ {id:"daeng_leave_monk",look:"fight",when:G=>G.week>=17&&G.week<=19&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"Boss, my nephew is entering the monkhood. I have to help at the temple for two weeks: the procession, the head shaving, sitting through the chanting"},
   {n:"kati",f:"surprised",l:"casual",t:"Coach Daeng is shaving his head too?!"},
   {n:"coach",t:"I'm not ordaining! …But if I lose the football bet with the boy's father, I might shave"},
   {n:"rin",f:"happy",l:"casual",t:"In the meantime I'll record everything for you. But I can't decide for you, I only analyze"},
   {inject:G=>leaveSteps(G,"monk",2,["News from the ordination","My nephew's ordination went well. I lost a football bet with his father, so I had to shave my head too. Don't laugh when I get back. Make the kids do their morning runs. — Coach Daeng"])}]},
- {id:"daeng_leave_knee",look:"fight",when:G=>G.week>=40,bg:"camp",steps:[
+ {id:"daeng_leave_knee",look:"fight",when:G=>G.week>=40&&G.week<=42&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"The doctor scheduled a small knee surgery; I'll be in hospital two weeks. Don't worry, the doctor says my knee is as strong as a fifty-year-old's"},
   {n:"mali",f:"sad",l:"casual",t:"Coach Daeng, you're sixty-eight…"},
   {n:"coach",t:"Exactly, eighteen years younger than my real age! This is a crucial stretch, make good decisions. I'll watch the livestream from bed"},
   {inject:G=>leaveSteps(G,"knee",2,["From a hospital bed","The nurses won't let me cheer at the livestream, so I cheer in my head until my blood pressure spikes. Don't visit, spend the time training. If you do visit, bring som tam. — Coach Daeng"])}]});
-EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29,bg:"camp",steps:[
+EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29&&G.week<=31&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"Boss, I'm taking two weeks' leave to go home to Surin. My niece is getting married"},
   {n:"coach",t:"I've written the training schedule on the wall. For now you make all the calls. I trust you"},
   {n:"kati",f:"surprised",t:"Huh! Two whole weeks! …It's fine, I'll keep everyone training myself!"},{inject:G=>{G.coachAway=G.week+2;G.flags.coachBack=false;if(typeof addMail==="function")addMail(G,{kind:"letter",from:"Coach Daeng (Surin)",title:"A postcard from Surin",body:"To the kids of Sirichai Camp: my grandniece's wedding was great fun. I did a Muay Thai dance for the guests and threw my back out. Always wrap your hands before training, don't let Kati order more than ten laps a day, and don't let Mali play luk thung too loud. — Coach Daeng (P.S. please water the mango tree)"});return [];}},
@@ -9438,9 +9439,9 @@ EVENTS.push(
       :[{n:"nar",t:"The camp doesn't have enough for the contract buyout yet. Fah says she'll wait, and ask again."},{n:"fah",f:"pout",l:"casual",t:"…It's okay. I can wait. Just not too long!"}]}]},
    {t:"Give me time to get the camp ready first.",fx:G=>{G.flags.fahRetry=absWeek(G)+6;G.seen.fah_join=false;add(G,"fah","trust",2);},then:[{n:"fah",f:"pout",l:"casual",t:"Fine! I'm not in a hurry anyway! …I'll ask again in a month."}]}]}]},
  {id:"prodigy_intro",look:"fight",bg:"ring",when:G=>!!(G.prodigy&&G.prodigy.B)&&G.flags.fahJoined!=null&&G.week>G.flags.fahJoined,steps:[
-  {n:"nar",t:"At the district stadium, Golden Tiger unveils a new fighter: buzz-cut hair, expressionless face, kicking the bag so hard the chain rattles."},
+  {n:"nar",t:"At the district stadium, Golden Tiger unveils a new fighter: a high blond ponytail just like Fah used to wear, black kit with gold trim, a face without expression. She kicks the bag so hard the chain rattles."},
   {n:"npc",who:"Coach Kraingkrai",t:"Baiyok, Golden Tiger disciple. Trains ten hours a day. Doesn't smile, doesn't show off, doesn't lose. …Those who left the camp will see what they gave up."},
-  {n:"fah",f:"sad",l:"casual",t:"Baiyok… When I was there, she never got a day off. Nobody ever asked her to eat with them."},
+  {n:"fah",f:"sad",l:"casual",t:"Baiyok… When I was there, she never got a day off. Nobody ever asked her to eat with them."},{n:"fah",f:"angry",l:"casual",t:"And the coach made her dye her hair blond like mine! Blond is MY thing! …It's not a uniform."},
   {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"angry",l:"train",t:"My new rival, huh… Good. I won't lose to someone who fights without joy!"}]:[]},
   {n:"nar",t:"(Baiyok becomes the top rival in Division B, taking Fah's place)"}]},
  {id:"fah_settle",look:"casual",bg:"camp",when:G=>inCamp(G,"fah")&&G.flags.fahJoined!=null&&G.week>=G.flags.fahJoined+2,steps:[
@@ -9555,11 +9556,12 @@ function sheetFor(f){
   if(f.canon)return img(f.id+"_sheet.webp");
   if(f.sprite)return img(f.sprite+"_sheet.webp"); // v1.23: gang, roosters, bulls
   if(TINTS[f.id])return TINTS[f.id];
-  const {base,hue,dark}=npcBase(f.id);const src=img(base+"_sheet.webp");if(!src.complete||!src.naturalWidth)return src;
+  const nb=npcBase(f.id),base=nb.base,blonde=!!(f.prodigy||(f.id||"").startsWith("prod_")),hue=blonde?42:nb.hue,dark=blonde?true:nb.dark;const src=img(base+"_sheet.webp"); /* v1.56: Golden Tiger prodigies: blond hair, black-gold kit */if(!src.complete||!src.naturalWidth)return src;
   const c=document.createElement("canvas");c.width=src.naturalWidth;c.height=src.naturalHeight;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(src,0,0);
   try{const d=x.getImageData(0,0,c.width,c.height),p=d.data,th=hue/360;
-    for(let i=0;i<p.length;i+=4){if(p[i+3]<10)continue;let r=p[i]/255,g=p[i+1]/255,b=p[i+2]/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let l=(mx+mn)/2;if(mx===mn)continue;
+    for(let i=0;i<p.length;i+=4){if(p[i+3]<10)continue;let r=p[i]/255,g=p[i+1]/255,b=p[i+2]/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let l=(mx+mn)/2;const gold=()=>{const L2=Math.min(.82,l*1.55+.2),S2=.78,H2=.12;const q2=L2<.5?L2*(1+S2):L2+S2-L2*S2,p2=2*L2-q2;const f2=t=>{t=(t+1)%1;return t<1/6?p2+(q2-p2)*6*t:t<1/2?q2:t<2/3?p2+(q2-p2)*(2/3-t)*6:p2;};p[i]=f2(H2+1/3)*255;p[i+1]=f2(H2)*255;p[i+2]=f2(H2-1/3)*255;};if(mx===mn){if(blonde&&l>.07&&l<.42)gold();continue;}
       const dd=mx-mn;let s=l>.5?dd/(2-mx-mn):dd/(mx+mn);let h=mx===r?(g-b)/dd+(g<b?6:0):mx===g?(b-r)/dd+2:(r-g)/dd+4;h/=6;
+      if(blonde&&l>.07&&l<.42&&!(h>.53&&h<.74&&s>.25)&&!((h<.035||h>.93)&&s>.38)&&(s<.45||(h>.02&&h<.16))){gold();continue;}
       const red=(h<.035||h>.93)&&s>.38&&l>.12&&l<.8,blue=h>.53&&h<.74&&s>.25&&l>.1;if(!red&&!blue)continue; // outfit only: skin & hair stay
       h=th;if(dark){s*=.15;l*=.55;}
       const q=l<.5?l*(1+s):l+s-l*s,pp=2*l-q;const fn=t=>{t=(t+1)%1;return t<1/6?pp+(q-pp)*6*t:t<1/2?q:t<2/3?pp+(q-pp)*(2/3-t)*6:pp;};
@@ -9986,7 +9988,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.55.1";
+const VERSION="1.56";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}

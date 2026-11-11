@@ -727,18 +727,18 @@ EVENTS.push(
 const leaveSteps=(G,why,wk,post)=>[{inject:G2=>{G2.coachAway=G2.week+wk;G2.flags.coachBack=false;if(typeof addMail==="function")addMail(G2,{kind:"letter",from:"Coach Daeng",title:post[0],body:post[1]});return [];}},
   {n:"nar",t:`Coach Daeng is away ${wk} weeks · no coach advice for now.${inCamp(G,"rin")?" Only Rin's observations":""}`}];
 EVENTS.push(
- {id:"daeng_leave_monk",look:"fight",when:G=>G.week>=17,bg:"camp",steps:[
+ {id:"daeng_leave_monk",look:"fight",when:G=>G.week>=17&&G.week<=19&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"Boss, my nephew is entering the monkhood. I have to help at the temple for two weeks: the procession, the head shaving, sitting through the chanting"},
   {n:"kati",f:"surprised",l:"casual",t:"Coach Daeng is shaving his head too?!"},
   {n:"coach",t:"I'm not ordaining! …But if I lose the football bet with the boy's father, I might shave"},
   {n:"rin",f:"happy",l:"casual",t:"In the meantime I'll record everything for you. But I can't decide for you, I only analyze"},
   {inject:G=>leaveSteps(G,"monk",2,["News from the ordination","My nephew's ordination went well. I lost a football bet with his father, so I had to shave my head too. Don't laugh when I get back. Make the kids do their morning runs. — Coach Daeng"])}]},
- {id:"daeng_leave_knee",look:"fight",when:G=>G.week>=40,bg:"camp",steps:[
+ {id:"daeng_leave_knee",look:"fight",when:G=>G.week>=40&&G.week<=42&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"The doctor scheduled a small knee surgery; I'll be in hospital two weeks. Don't worry, the doctor says my knee is as strong as a fifty-year-old's"},
   {n:"mali",f:"sad",l:"casual",t:"Coach Daeng, you're sixty-eight…"},
   {n:"coach",t:"Exactly, eighteen years younger than my real age! This is a crucial stretch, make good decisions. I'll watch the livestream from bed"},
   {inject:G=>leaveSteps(G,"knee",2,["From a hospital bed","The nurses won't let me cheer at the livestream, so I cheer in my head until my blood pressure spikes. Don't visit, spend the time training. If you do visit, bring som tam. — Coach Daeng"])}]});
-EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29,bg:"camp",steps:[
+EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29&&G.week<=31&&!(G.coachAway&&G.week<G.coachAway),bg:"camp",steps:[
   {n:"coach",t:"Boss, I'm taking two weeks' leave to go home to Surin. My niece is getting married"},
   {n:"coach",t:"I've written the training schedule on the wall. For now you make all the calls. I trust you"},
   {n:"kati",f:"surprised",t:"Huh! Two whole weeks! …It's fine, I'll keep everyone training myself!"},{inject:G=>{G.coachAway=G.week+2;G.flags.coachBack=false;if(typeof addMail==="function")addMail(G,{kind:"letter",from:"Coach Daeng (Surin)",title:"A postcard from Surin",body:"To the kids of Sirichai Camp: my grandniece's wedding was great fun. I did a Muay Thai dance for the guests and threw my back out. Always wrap your hands before training, don't let Kati order more than ten laps a day, and don't let Mali play luk thung too loud. — Coach Daeng (P.S. please water the mango tree)"});return [];}},
@@ -1359,9 +1359,9 @@ EVENTS.push(
       :[{n:"nar",t:"The camp doesn't have enough for the contract buyout yet. Fah says she'll wait, and ask again."},{n:"fah",f:"pout",l:"casual",t:"…It's okay. I can wait. Just not too long!"}]}]},
    {t:"Give me time to get the camp ready first.",fx:G=>{G.flags.fahRetry=absWeek(G)+6;G.seen.fah_join=false;add(G,"fah","trust",2);},then:[{n:"fah",f:"pout",l:"casual",t:"Fine! I'm not in a hurry anyway! …I'll ask again in a month."}]}]}]},
  {id:"prodigy_intro",look:"fight",bg:"ring",when:G=>!!(G.prodigy&&G.prodigy.B)&&G.flags.fahJoined!=null&&G.week>G.flags.fahJoined,steps:[
-  {n:"nar",t:"At the district stadium, Golden Tiger unveils a new fighter: buzz-cut hair, expressionless face, kicking the bag so hard the chain rattles."},
+  {n:"nar",t:"At the district stadium, Golden Tiger unveils a new fighter: a high blond ponytail just like Fah used to wear, black kit with gold trim, a face without expression. She kicks the bag so hard the chain rattles."},
   {n:"npc",who:"Coach Kraingkrai",t:"Baiyok, Golden Tiger disciple. Trains ten hours a day. Doesn't smile, doesn't show off, doesn't lose. …Those who left the camp will see what they gave up."},
-  {n:"fah",f:"sad",l:"casual",t:"Baiyok… When I was there, she never got a day off. Nobody ever asked her to eat with them."},
+  {n:"fah",f:"sad",l:"casual",t:"Baiyok… When I was there, she never got a day off. Nobody ever asked her to eat with them."},{n:"fah",f:"angry",l:"casual",t:"And the coach made her dye her hair blond like mine! Blond is MY thing! …It's not a uniform."},
   {inject:G=>inCamp(G,"mali")?[{n:"mali",f:"angry",l:"train",t:"My new rival, huh… Good. I won't lose to someone who fights without joy!"}]:[]},
   {n:"nar",t:"(Baiyok becomes the top rival in Division B, taking Fah's place)"}]},
  {id:"fah_settle",look:"casual",bg:"camp",when:G=>inCamp(G,"fah")&&G.flags.fahJoined!=null&&G.week>=G.flags.fahJoined+2,steps:[
