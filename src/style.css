@@ -1327,3 +1327,5 @@ body.hasnews .rinnote+.homegrid{margin-top:0}
 .tapebtn{width:100%;margin-top:8px}
 
 .trustx{margin:4px 0 0;font-size:11.5px;color:var(--gold)}
+/* v1.35.1: smaller mail dot */
+.mbadge{top:3px!important;right:3px!important;width:7px!important;height:7px!important;box-shadow:0 0 0 1px #fff,0 0 0 2px #000!important}
