@@ -1231,3 +1231,9 @@ details.skhelp summary{color:var(--muted);font-size:13px}
 .tdd{margin:0;font-size:13px}.rqs{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.rqs small{color:var(--muted);width:100%}
 .rq{font-size:12.5px;padding:2px 7px;background:var(--bg2);box-shadow:inset 0 0 0 2px var(--line)}.rq.ok{box-shadow:inset 0 0 0 2px var(--green);color:var(--green)}.rq.no{box-shadow:inset 0 0 0 2px var(--red);color:#ff9aa6}
 .tda{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+
+/* v1.29.1 mail alert you can actually see */
+.mbadge{width:13px;height:13px;top:-5px;right:-5px;background:#ff3b4e;box-shadow:0 0 0 2px #fff,0 0 0 4px #000;animation:mblink2 .9s steps(2) infinite;z-index:3}
+@keyframes mblink2{50%{background:#ffd23f;transform:scale(1.25)}}
+.mailbtn.has{box-shadow:inset 0 0 0 2px var(--gold),0 0 10px rgba(242,193,78,.55);overflow:visible}
+@media (prefers-reduced-motion:reduce){.mbadge{animation:none}}

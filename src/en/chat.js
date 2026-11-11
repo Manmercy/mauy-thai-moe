@@ -185,3 +185,4 @@ function chatHTML(){const C=UI.chat;if(!C)return {body:"",foot:true};const f=G.F
      :C.done?`<p class="cend">${C.gain?`Great conversation · bond increased`:"A short chat today. She'll text again sometime"}</p><button class="btn primary" data-act="closeModal">Close chat</button>`:`<small class="meta">…</small>`}</div></div>`};}
 XMODAL.chat=()=>chatHTML();
 Object.assign(ACT,{chat:d=>chatOpen(d.id),chatpick:d=>chatPick(+d.v)});
+XMODAL.confirm=m=>({body:`<h2>${m.title}</h2><p>${m.text}</p><div class="mfoot"><button class="btn ghost" data-act="closeModal">No</button><button class="btn primary" data-act="${m.yes}">Confirm</button></div>`,foot:false});

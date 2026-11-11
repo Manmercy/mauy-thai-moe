@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.29.0";
+const VERSION="1.29.1";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -44,7 +44,13 @@ const coachOn=()=>SETTINGS.coach&&!(G&&G.coachAway&&G.week<G.coachAway);
 // v1.6: three save slots (the old single save moves into slot 1)
 const SLOTS=3;const slotKey=i=>`${SAVE_KEY}-s${i}`;
 try{const old=localStorage.getItem(SAVE_KEY);if(old&&!localStorage.getItem(slotKey(1))){localStorage.setItem(slotKey(1),old);}if(old)localStorage.removeItem(SAVE_KEY);}catch(e){}
-function save(){try{if(G&&UI.slot){G.savedAt=Date.now();G._lang=CUR_LANG;localStorage.setItem(slotKey(UI.slot),JSON.stringify(G));cloudPush(UI.slot);}}catch(e){}}
+// v1.29.1: every save carries the game version; before an older save is upgraded, the untouched copy is kept as a backup
+const bakKey=i=>`${slotKey(i)}-bak`;
+function backupSlot(i){try{const raw=localStorage.getItem(slotKey(i));if(!raw)return;const o=JSON.parse(raw);if(o.ver===VERSION)return;
+  localStorage.setItem(bakKey(i),JSON.stringify({ver:o.ver||"?",week:o.week,at:Date.now(),raw}));}catch(e){}}
+function bakInfo(i){try{const b=JSON.parse(localStorage.getItem(bakKey(i))||"null");return b&&b.raw?b:null;}catch(e){return null;}}
+function safeFix(s){try{return fixSave(s);}catch(e){console.error(e);return null;}}
+function save(){try{if(G&&UI.slot){G.savedAt=Date.now();G._lang=CUR_LANG;G.ver=VERSION;localStorage.setItem(slotKey(UI.slot),JSON.stringify(G));cloudPush(UI.slot);}}catch(e){}}
 // v1.19 cloud save: browser storage can be wiped (other browser/device, private mode, cleared data), so each slot is
 // mirrored to this viewer's private space in the artifact's database; on open, whichever copy is newer wins
 const CLOUD={db:null,uid:null,ready:false,state:"off",timer:null,busy:false,again:new Set()};
@@ -167,6 +173,7 @@ function titleHTML(){const sv=loadSave();
 function settingsHTML(){const t=(k,label,desc)=>`<label class="set"><span><b>${label}</b><small>${desc}</small></span><input type="checkbox" data-act="setopt" data-k="${k}" ${SETTINGS[k]?"checked":""}></label>`;
   return `<h2>ตั้งค่า</h2><div class="sets"><div class="set"><span><b>ภาษา · Language</b><small>สลับแล้วเกมจะโหลดใหม่ เซฟยังอยู่</small></span>${langSwitch()}</div>${t("music","เพลงประกอบ","ปี่ชวา กลองแขก ฉิ่ง ระหว่างชก")}${t("sfx","เอฟเฟกต์เสียง","เสียงต่อย เตะ ระฆัง เสียงเชียร์")}${t("coach","ครูแดงแนะนำ","ครูคอยไกด์ในหน้าค่าย ข้อเสนอไฟต์ และช่วงพักยก")}${t("quick","เล่นเร็ว","ข้ามฉากฝึกซ้อมตอนจบสัปดาห์ ไปสรุปผลทันที")}</div>
    ${!G&&loadSave()?`<div class="set danger"><span><b>จัดการช่องเซฟ</b><small>ดู โหลด หรือลบเซฟแต่ละช่อง</small></span><button class="btn sm" data-act="openload">เปิด</button></div>`:""}${G?`<p class="meta">กำลังเล่นช่องเซฟ ${UI.slot} · บันทึกอัตโนมัติทุกครั้งที่มีความคืบหน้า${CLOUD.ready?" · สำรองบนคลาวด์แล้ว":" · ยังไม่ได้เชื่อมคลาวด์ (เซฟอยู่ในเบราว์เซอร์นี้เท่านั้น)"}</p>
+   ${G&&UI.slot&&bakInfo(UI.slot)?`<div class="set"><span><b>เซฟก่อนอัปเดต</b><small>เก็บไว้ตอนเกมอัปเดต · v${esc(String(bakInfo(UI.slot).ver))} สัปดาห์ ${bakInfo(UI.slot).week}</small></span><button class="btn sm" data-act="bakrestore">กู้คืน</button></div>`:""}
    <div class="set"><span><b>สำรองเซฟเป็นไฟล์</b><small>เก็บไฟล์ไว้เอง ย้ายเครื่องหรือเบราว์เซอร์ก็นำเข้าได้</small></span><span class="obtns"><button class="btn sm" data-act="exportsave">ส่งออก</button><label class="btn sm">นำเข้า<input type="file" accept=".json,application/json" data-act="importsave" hidden></label></span></div>`:`<div class="set"><span><b>นำเข้าเซฟจากไฟล์</b><small>ไฟล์ที่เคยส่งออกไว้ จะลงช่อง 1</small></span><label class="btn sm">นำเข้า<input type="file" accept=".json,application/json" data-act="importsave" hidden></label></div>`}
    <details class="gloss"><summary><b>คำศัพท์ในเกม</b></summary><dl>${GLOSS.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></details>
    <p class="meta">Muay Thai Moe v${VERSION}</p>`;}
@@ -239,7 +246,7 @@ function hubHTML(){
     <div class="brand">MUAY THAI <b>MOE</b></div>
     <div class="wk"><strong class="num">สัปดาห์ ${Math.min(G.week,52)}<small>/52</small></strong><span>${G.season>1?`ฤดูกาล ${G.season} · `:""}${stageLabel()}</span></div>
     <div class="stats"><button class="stat cashbtn" data-act="cashflow"><span>เงินสด ▸</span><b class="num ${G.cash<0||weeksLeft()<=4?"neg":""}">${fmt(G.cash)}${weeksLeft()<=6?`<i class="cashwarn" title="เงินจะหมดในราว ${weeksLeft()} สัปดาห์">⚠</i>`:""}</b></button><button class="stat repbtn" data-act="repgraph"><span>ชื่อเสียง ▸</span><b class="num">${G.rep.toFixed(1)}</b></button></div>
-    <div class="hbtns"><button class="iconbtn mailbtn" data-act="mail" aria-label="ตู้จดหมาย${mailBadge()?` มี ${mailBadge()} ฉบับใหม่`:""}">${MAILBOX_PX}${mailBadge()?`<i class="mbadge">${mailBadge()}</i>`:""}</button><button class="iconbtn" data-act="settings" aria-label="ตั้งค่า">${icon("gear")}</button></div>
+    <div class="hbtns"><button class="iconbtn mailbtn ${mailBadge()?"has":""}" data-act="mail" aria-label="ตู้จดหมาย${mailBadge()?` มี ${mailBadge()} ฉบับใหม่`:""}">${MAILBOX_PX}${mailBadge()?`<i class="mbadge">${mailBadge()}</i>`:""}</button><button class="iconbtn" data-act="settings" aria-label="ตั้งค่า">${icon("gear")}</button></div>
     <button class="btn primary endweek ${weekTodo().length?"":"ready"}" data-act="endweek">${weekTodo().length?`จบสัปดาห์ ▸ <small>(เหลือ ${weekTodo().length} อย่าง)</small>`:"พร้อมแล้ว · จบสัปดาห์ ▸"}</button>
   </div>
   <nav class="tabs" aria-label="เมนู">${TABS.map(([k,t])=>`<button data-act="tab" data-v="${k}" ${UI.tab===k?'aria-current="page"':""}>${icon(k)}<span>${t}</span>${dots[k]?'<i class="dot" aria-hidden="true"></i>':""}</button>`).join("")}</nav></header>
@@ -1011,7 +1018,7 @@ const ACT={
   pickslot:d=>{const i=+d.v;if(loadSlot(i)){UI.owSlot=i;render();return;}ACT.beginNew(i);},
   confirmow:()=>{const i=UI.owSlot;UI.owSlot=null;ACT.beginNew(i);},cancelow:()=>{UI.owSlot=null;render();},
   openload:()=>{UI.delSlot=null;UI.owSlot=null;UI.modal={type:"slots",mode:"load"};render();},
-  loadslot:d=>{const s=loadSlot(+d.v);if(!s)return;G=fixSave(s);const pk=G.F.ploy&&G.F.ploy.skills;if(pk&&pk.korat){G.F.ploy.skills={kr_swing:2,captain:1};}UI.slot=+d.v;UI.tab="home";UI.modal=null;UI.advCache={};AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
+  loadslot:d=>{backupSlot(+d.v);const s0=loadSlot(+d.v);if(!s0)return;const s=safeFix(s0);if(!s){toast("เซฟนี้เปิดกับเวอร์ชันนี้ไม่ได้ ข้อมูลยังอยู่ครบ ไม่ถูกลบ");return;}G=s;const pk=G.F.ploy&&G.F.ploy.skills;if(pk&&pk.korat){G.F.ploy.skills={kr_swing:2,captain:1};}UI.slot=+d.v;UI.tab="home";UI.modal=null;UI.advCache={};AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   askdelslot:d=>{UI.delSlot=+d.v;render();},canceldel:()=>{UI.delSlot=null;render();},
   delslot:()=>{clearSave(UI.delSlot);UI.delSlot=null;if(!loadSave())UI.modal=null;render();},
   beginNew:i=>{UI.slot=i;UI.modal=null;AU.startMusic("hub");UI.creator={name:"",...CHIBI.randomManager(Math.random),gender:"m",diff:"normal",outfit:"tee",hat:"none",glasses:"none"};UI.modal=null;render();},
@@ -1022,8 +1029,10 @@ const ACT={
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"ต้น":"ดาว");
     const {name,diff,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look});genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
     playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"night",look:"train"});},
-  continue:()=>{G=loadSave();if(!G)return;fixSave(G);UI.slot=UI.slot||1;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
+  continue:()=>{let si=0;for(let i=1;i<=SLOTS;i++)if(loadSlot(i)){si=i;break;}if(!si)return;backupSlot(si);const s=safeFix(loadSlot(si));if(!s){toast("เซฟนี้เปิดกับเวอร์ชันนี้ไม่ได้ ข้อมูลยังอยู่ครบ ไม่ถูกลบ");return;}G=s;UI.slot=si;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
+  bakrestore:()=>{const b=bakInfo(UI.slot);if(!b)return;UI.modal={type:"confirm",title:"กู้เซฟก่อนอัปเดต?",text:`จะย้อนกลับไปสัปดาห์ ${b.week} (v${b.ver}) ความคืบหน้าหลังจากนั้นในช่องนี้จะหายไป`,yes:"bakyes"};render();},
+  bakyes:()=>{const b=bakInfo(UI.slot);if(!b)return;try{const i=UI.slot;const cur=localStorage.getItem(slotKey(i));localStorage.setItem(slotKey(i),b.raw);const s=safeFix(loadSlot(i));if(!s){localStorage.setItem(slotKey(i),cur);toast("กู้คืนไม่สำเร็จ เซฟปัจจุบันยังอยู่");return;}G=s;UI.modal=null;UI.tab="home";save();render();toast("กู้คืนเซฟแล้ว");}catch(e){}},
   setlang:(d)=>{const v=d.v;if(v===CUR_LANG)return;try{if(G)save();localStorage.setItem("mtm_lang",v);}catch(e){}try{location.hash="lang="+v;}catch(e){}location.reload();},
   settings:()=>{UI.confirmDel=false;UI.modal={type:"settings"};render();},
   setopt:d=>{SETTINGS[d.k]=!SETTINGS[d.k];saveSettings();if(d.k==="music"){if(!SETTINGS.music)AU.stopMusic();else AU.startMusic(!G?"title":UI.fight&&UI.fight.stage==="playing"?"fight":"hub");}render();},
