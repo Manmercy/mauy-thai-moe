@@ -2,7 +2,9 @@
 // Scene step: {n:speaker, f:face, t:text|fn} | {choice:[{t,fx,then:[...]}]} | {fx:fn} | {bg:key}
 // v1.38: rotate through variants so recurring scenes do not repeat word for word
 const vary=(key,arr)=>{if(typeof G==="undefined"||!G)return arr[0];G.vary=G.vary||{};const i=G.vary[key]||0;G.vary[key]=i+1;return arr[i%arr.length];};
-const ME=G=>G.player.name, PR=G=>G.player.gender==="m"?"":"", PA=G=>G.player.gender==="m"?"":"";
+const ME=G=>G.player.name,
+ // v1.41: the girls call you "ผู้จัดการ" — your name slips out now and then once close, and always once very close
+ CALL=(G,id)=>{const f=G.F[id],b=f?f.bond||0:0;if(G.romance===id||b>=75)return G.player.name;if(b>=40&&Math.random()<.35)return G.player.name;return "Manager";}, PR=G=>G.player.gender==="m"?"":"", PA=G=>G.player.gender==="m"?"":"";
 const SPK={kati:{name:"Kati",color:"#e23b4e"},mali:{name:"Mali",color:"#4a7fe0"},rin:{name:"Rin",color:"#3fae6a"},
   ploy:{name:"Ploy",color:"#9b62e0"},fah:{name:"Fah",color:"#e7b443"},coach:{name:"Coach Daeng",color:"#c98a5a"},nar:{name:""},me:{name:"(You)"}};
 // v1.7: bonds deepen by chapter — the ceiling rises as the season's story moves on
@@ -233,7 +235,7 @@ const EVENTS=[
   {choice:[{t:"Check the class area",fx:G=>{if(typeof UI!=="undefined"){UI.tab="camp";UI.csub="fac";}},then:[{n:"nar",t:"The boy in pink gloves waves goodbye and promises to come back"}]},
    {t:"Sorry, maybe next time",then:[{n:"nar",t:"The boy nods, but keeps punching the air at the camp gate all the way out"}]}]}]},
  {id:"up_lv2",look:"casual",when:G=>G.week>=14&&campLevel(G)===1&&facTotal(G)>=3,bg:"gym",steps:[
-  {n:"kati",f:"happy",l:"casual",t:G=>`${ME(G)}, I counted! Just ${5-facTotal(G)} more upgrades and our camp becomes a 'Camp on the mend'!`},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}, I counted! Just ${5-facTotal(G)} more upgrades and our camp becomes a 'Camp on the mend'!`},
   {n:"coach",t:"Once we level up, class fees go up twenty percent, more people want to join, and we can hire one more assistant coach. The gym will look better too"},
   {n:"kati",f:"happy",l:"casual",t:"And I'll get to train in a room where the roof doesn't leak!"}]},
  {id:"coach_money",look:"casual",when:G=>G.week>=6&&G.cash<15000&&weeklyNet(G)<0,bg:"camp",steps:[
@@ -245,7 +247,7 @@ const EVENTS=[
    {t:"Coach, have you ever borrowed?",then:[{n:"coach",t:"…Just once. When Kati was born. The hospital bill was steep, and it took three years to pay back. Don't tell Kati"}]}]}]},
  {id:"fame20",look:"casual",when:G=>G.rep>=20,bg:"camp",steps:[
   {n:"nar",t:"The district paper is on the camp table. A small headline: 'Old Sirichai Camp Breathes Again'"},
-  {n:"kati",f:"happy",l:"casual",t:G=>`${ME(G)}! We're on page 3, right next to the fertilizer ad!`},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}! We're on page 3, right next to the fertilizer ad!`},
   {n:"coach",t:"Page three is still page three. More people read it than you'd think"},
   {inject:G=>{G.stu=Math.min(studentCap(G),(G.stu||1)+2);return [{n:"nar",t:"That week, parents bring two more kids to sign up"}];}}]},
  {id:"fame36",look:"casual",when:G=>G.rep>=36,bg:"camp",steps:[
@@ -607,24 +609,24 @@ EVENTS.push(
  {id:"trust_explain",look:"train",when:G=>G.week>=5,bg:"gym",steps:[
   {n:"coach",t:G=>`${ME(G)}, do you know why some fighters follow the corner instantly, and others just stand there confused?`},
   {n:"coach",t:"It's trust. If they trust us, corner orders turn into real weapons, and a loss doesn't break their spirit. Check the fighter info, that gold bar"},
-  {n:"kati",f:"happy",l:"train",t:G=>`I already trust ${ME(G)}! …Except when you say 'just one more lap'`},
+  {n:"kati",f:"happy",l:"train",t:G=>`I already trust ${CALL(G,"kati")}! …Except when you say 'just one more lap'`},
   {n:"coach",t:"Trust comes from making merit together, wai khru, not training until you break, and a camp that isn't in the red. It builds up slowly"},{fx:G=>add(G,"kati","trust",2)}]},
  {id:"trust_merit_kati",look:"casual",when:G=>G.week>=9&&inCamp(G,"kati"),bg:"temple",steps:[
   {n:"nar",t:"5:30 a.m. Kati knocks on the door with a bowl of hot rice. Today is Grandpa Chai's birthday"},
   {n:"npc",who:"Grandma Pen, by the temple",t:"Oh, little Kati! And who's this… ah, the new manager Grandpa Chai left the camp to? He used to praise you to me all the time"},
-  {n:"kati",f:"flustered",l:"casual",t:G=>`Grandma, you're exaggerating! …But I'm glad ${ME(G)} came along. Every year I give alms by myself`},
+  {n:"kati",f:"flustered",l:"casual",t:G=>`Grandma, you're exaggerating! …But I'm glad ${CALL(G,"kati")} came along. Every year I give alms by myself`},
   {choice:[{t:"Let's come together again next year",fx:G=>{add(G,"kati","trust",6);add(G,"kati","bond",2);},then:[{n:"kati",f:"happy",l:"casual",t:"It's a promise! I'm writing it on the calendar"},{n:"npc",who:"Grandma Pen, by the temple",t:"Good, good. Grandma has leftover mango sticky rice, take some back to camp"}]},
    {t:"Grandpa Chai must be proud of you, Kati",fx:G=>{add(G,"kati","trust",4);add(G,"kati","morale",6);},then:[{n:"kati",f:"sad",l:"casual",t:"…Thank you. I'll fight lots more for Grandpa to see"}]}]},
   {n:"nar",t:"(Kati's trust went up)"}]},
  {id:"trust_fish_mali",look:"casual",when:G=>G.week>=12&&inCamp(G,"mali"),bg:"river",steps:[
   {n:"nar",t:"Mali brings home a bag of three eels from the market, saying she'll release them to make merit"},
-  {n:"mali",f:"happy",l:"casual",t:G=>`Back home in Chaiya, Mom takes me to release fish every year. She can't come this year… ${ME(G)}, would you stand in for Mom?`},
+  {n:"mali",f:"happy",l:"casual",t:G=>`Back home in Chaiya, Mom takes me to release fish every year. She can't come this year… ${CALL(G,"mali")}, would you stand in for Mom?`},
   {n:"nar",t:"The third eel refuses to go in the water and wraps around Mali's leg instead. The scream reaches the bridge"},
-  {choice:[{t:"(calmly help catch the eel)",fx:G=>{add(G,"mali","trust",6);},then:[{n:"mali",f:"flustered",l:"casual",t:G=>`${ME(G)}, you're so good at this… I'm telling Mom someone caught an eel for me`}]},
+  {choice:[{t:"(calmly help catch the eel)",fx:G=>{add(G,"mali","trust",6);},then:[{n:"mali",f:"flustered",l:"casual",t:G=>`${CALL(G,"mali")}, you're so good at this… I'm telling Mom someone caught an eel for me`}]},
    {t:"(laugh until your stomach hurts)",fx:G=>{add(G,"mali","trust",3);add(G,"mali","bond",3);},then:[{n:"mali",f:"pout",l:"casual",t:"It's not funny! …Hehe, okay, it's a little funny"}]}]},
   {n:"nar",t:"(Mali's trust went up)"}]},
  {id:"trust_plan_rin",look:"casual",when:G=>G.week>=16&&inCamp(G,"rin"),bg:"cafe",steps:[
-  {n:"rin",f:"happy",l:"casual",t:G=>`${ME(G)}, I made a three-page fight plan myself, the first one Coach Daeng hasn't checked. Will you let me use it?`},
+  {n:"rin",f:"happy",l:"casual",t:G=>`${CALL(G,"rin")}, I made a three-page fight plan myself, the first one Coach Daeng hasn't checked. Will you let me use it?`},
   {n:"nar",t:"The pages are full of arrows, numbers, and doodles of round fighters that look like steamed buns"},
   {choice:[{t:"I trust your plan. Use it",fx:G=>{add(G,"rin","trust",8);add(G,"rin","morale",5);},then:[{n:"rin",f:"flustered",l:"casual",t:"…I can't measure 'trust', but I can feel it. Thank you"}]},
    {t:"Let Coach Daeng look it over first",fx:G=>{add(G,"rin","trust",1);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.2);},then:[{n:"rin",f:"sad",l:"casual",t:"Understood. Caution makes sense… I'll do better"},{n:"nar",t:"(Coach Daeng fixes two spots; Rin writes down every word. Her ring IQ improves a little)"}]}]}]});
@@ -635,20 +637,20 @@ EVENTS.push(
   {n:"kati",f:"surprised",l:"train",t:"Rin… what is this? Why does my picture have eleven arrows pointing at my left elbow?"},
   {n:"rin",f:"happy",l:"train",t:"Kati's left elbow drops when she's tired, three times a round on average. I drew one arrow for every time she got countered"},
   {n:"coach",t:"Twenty years teaching Muay Thai and I only just learned a dropped elbow can have a graph"},
-  {n:"rin",f:"flustered",l:"train",t:G=>`${ME(G)}, am I overdoing it? At my old camp they used these sheets to wrap fried bananas`},
+  {n:"rin",f:"flustered",l:"train",t:G=>`${CALL(G,"rin")}, am I overdoing it? At my old camp they used these sheets to wrap fried bananas`},
   {choice:[{t:"Keep going, our camp needs this",fx:G=>{add(G,"rin","trust",4);add(G,"rin","bond",3);G.F.kati.a.guard=Math.min(20,G.F.kati.a.guard+.3);},then:[{n:"rin",f:"happy",l:"train",t:"…Thank you. I'll make a color version too"},{n:"nar",t:"(Kati's guard improved a little)"}]},
    {t:"Can we cut it to ten sheets? The wall's about to collapse",fx:G=>{add(G,"rin","bond",2);},then:[{n:"rin",f:"pout",l:"train",t:"Ten sheets… the font will be a little smaller"},{n:"nar",t:"The next day there are ten sheets, the text the size of ants"}]}]}]},
  {id:"rin_glasses",look:"train",when:G=>G.week>=22&&inCamp(G,"rin"),bg:"gym",steps:[
   {n:"nar",t:"Crack! Rin's glasses fly off and land under Mali's foot during pad work; the left lens shatters like a spiderweb"},
   {n:"rin",f:"sad",l:"train",t:"It's fine… I can see… that's Mali, right?"},
   {n:"mali",f:"flustered",l:"train",t:"That's the sandbag, Rin! Mali's over here!"},
-  {n:"rin",f:"flustered",l:"train",t:G=>`${ME(G)}… Fine, I'll confess. I'm quite nearsighted. I take my glasses off to fight, so I have to memorize everything before I step in the ring. That's where all the data comes from`},
+  {n:"rin",f:"flustered",l:"train",t:G=>`${CALL(G,"rin")}… Fine, I'll confess. I'm quite nearsighted. I take my glasses off to fight, so I have to memorize everything before I step in the ring. That's where all the data comes from`},
   {choice:[{t:"(Take her to an optician in town and pay, ฿1,500)",fx:G=>{G.cash-=1500;add(G,"rin","bond",5);add(G,"rin","trust",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"…This frame is half the weight of the old one. I'll pay you back. Can I pay in installments?"},{n:"nar",t:"On the way back Rin walks closer than usual, because her eyes haven't adjusted yet… probably"}]},
    {t:"That makes you even better. You fight from memory",fx:G=>{add(G,"rin","morale",6);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.3);},then:[{n:"rin",f:"happy",l:"train",t:"…Nobody's ever seen it that way. Thank you. I'll remember that too"},{n:"nar",t:"(Rin's ring IQ improved a little)"}]}]}]},
  {id:"rin_dad",look:"casual",when:G=>G.week>=26&&inCamp(G,"rin"),bg:"night",steps:[
   {n:"nar",t:"9 p.m. Rin sits outside the camp, her phone buzzing nonstop. The screen reads 'Dad (Prof. Dr.)'"},
   {n:"rin",f:"sad",l:"casual",t:"My dad is a university professor. He wants me to do a PhD, not box out in the provinces"},
-  {n:"rin",f:"sad",l:"casual",t:G=>`Dad says boxing has nothing worth analyzing. ${ME(G)}, do you think… he's right?`},
+  {n:"rin",f:"sad",l:"casual",t:G=>`Dad says boxing has nothing worth analyzing. ${CALL(G,"rin")}, do you think… he's right?`},
   {choice:[{t:"Send your dad your fight stats. Let the numbers speak",fx:G=>{add(G,"rin","trust",5);add(G,"rin","bond",3);},then:[{n:"nar",t:"Rin types for twenty minutes, attaches three files, and hits send"},{n:"nar",t:"Ten minutes later, the reply: 'Table three has the SD wrong, but… interesting. I'd like to watch the next fight live'"},{n:"rin",f:"flustered",l:"casual",t:"…Dad's going to watch the livestream. He's never watched anything of mine"}]},
    {t:"You don't have to prove anything to anyone. Being here is enough",fx:G=>{add(G,"rin","morale",8);add(G,"rin","bond",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"…There's no variable in that sentence to analyze. But I understand"}]}]}]},
  {id:"rin_cook",look:"casual",when:G=>G.week>=33&&inCamp(G,"rin")&&inCamp(G,"mali"),bg:"camp",steps:[
@@ -660,20 +662,20 @@ EVENTS.push(
    {t:"Taste Mali's first",fx:G=>{add(G,"mali","bond",3);add(G,"rin","bond",1);},then:[{n:"nar",t:"So salty your eyes cross, but weirdly delicious"},{n:"rin",f:"happy",l:"casual",t:"…Noted. 'Heart and hands' is a variable I can't measure yet"}]}]}]});
 // v1.37: when the camp is flush, bad luck comes for the money (students stay home, repairs cost)
 EVENTS.push(
- {id:"dis_storm",look:"casual",when:G=>G.week>=14&&G.week<=30&&G.cash>=90000,bg:"camp",steps:[
+ {id:"dis_storm",look:"casual",when:G=>G.week>=14&&G.week<=30&&G.cash>=45000,bg:"camp",steps:[
   {n:"nar",t:"A summer storm hits at 2 a.m.; sheets of tin roofing fly off and slam into the mango tree next door"},
-  {n:"kati",f:"surprised",l:"casual",t:G=>`${ME(G)}! Half the training room roof is gone! The rain's soaking all the sandbags!`},
+  {n:"kati",f:"surprised",l:"casual",t:G=>`${CALL(G,"kati")}! Half the training room roof is gone! The rain's soaking all the sandbags!`},
   {n:"coach",t:"Kids can't train in a room with no roof. How do we fix it?"},
   {choice:[{t:"Repair it properly, fast (฿25,000)",fx:G=>{G.cash-=25000;},then:[{n:"nar",t:"A full crew arrives and finishes in two days; a shiny new roof, and classes carry on without a hitch"}]},
    {t:"Patch it up for now (฿8,000)",fx:G=>{G.cash-=8000;G.disaster={name:"The temporary roof",until:G.week+3,inc:.5};roster(G).forEach(f=>f.morale=Math.max(0,f.morale-3));},then:[{n:"nar",t:"A blue tarp covers the roof. Every time it rains, water drips onto the middle of the ring; only half the students come for three weeks"}]}]}]},
- {id:"dis_flood",look:"casual",when:G=>G.week>=30&&G.week<=44&&G.cash>=70000,bg:"camp",steps:[
+ {id:"dis_flood",look:"casual",when:G=>G.week>=30&&G.week<=44&&G.cash>=40000,bg:"camp",steps:[
   {n:"nar",t:"Three days and nights of heavy rain. The river bursts its banks and floods the whole subdistrict; knee-deep water in camp, training mats drifting against the door"},
   {n:"mali",f:"sad",l:"casual",t:"Mali's gloves floated away! …Oh, there's a fish swimming into the camp!"},
   {n:"rin",f:"sad",l:"casual",t:"The road into the subdistrict is cut off. Students definitely can't come for at least three weeks. The generator and mats need replacing"},
   {n:"coach",t:G=>`${ME(G)}, the villagers' homes are flooded worse than ours. Do we send the girls to help them first, or rush to fix our camp?`},
   {choice:[{t:"Help the villagers move their things first (camp repairs ฿12,000)",fx:G=>{G.cash-=12000;G.rep+=3;G.disaster={name:"The flood",until:G.week+4,inc:0};roster(G).forEach(f=>{f.trust=Math.min(100,f.trust+4);f.fatigue=Math.min(100,f.fatigue+8);});},then:[{n:"nar",t:"Sirichai's fighters haul sandbags all day; the local paper puts their photo on the front page"},{n:"npc",who:"Auntie Sri, vegetable vendor",t:"This camp has the kindest hearts in the district! When the water goes down I'm sending three grandkids to train!"}]},
    {t:"Rush the camp repairs to reopen ASAP (฿25,000)",fx:G=>{G.cash-=25000;G.disaster={name:"The flood",until:G.week+2,inc:0};},then:[{n:"nar",t:"Three rented pumps; our camp dries out faster than anyone's, but the road stays cut off for two more weeks"}]}]}]},
- {id:"dis_termite",look:"train",when:G=>G.week>=36&&G.cash>=120000&&G.F.fah.met,bg:"gym",steps:[
+ {id:"dis_termite",look:"train",when:G=>G.week>=36&&G.cash>=55000&&G.F.fah.met,bg:"gym",steps:[
   {n:"nar",t:"Crack! The corner post snaps while Fah is leaning on it… wait, what is Fah doing at our camp?"},
   {n:"fah",f:"surprised",l:"casual",t:"Fah was just passing by! Not spying on training! …And this post is hollow, termites ate all of it!"},
   {n:"coach",t:"Termites ate the camp's whole timber frame. It has to be rebuilt, ฿18,000. During the work, only half the students can come for two weeks"},{fx:G=>{G.cash-=18000;G.disaster={name:"Termite repairs",until:G.week+2,inc:.5};}},
@@ -683,7 +685,7 @@ EVENTS.push(
  {id:"me_photo",look:"casual",when:G=>G.week>=5,bg:"night",steps:[
   {n:"nar",t:"Clearing out Grandpa's room, you find an old shoebox full of faded photos"},
   {n:"nar",t:"One photo shows a small kid in gloves too big for their hands, standing next to Grandpa Chai by the ring, a little girl with pigtails flashing a peace sign behind them"},
-  {n:"kati",f:"surprised",l:"casual",t:G=>`That's me! And that's ${ME(G)}! Back then you were barely as tall as a ring post`},
+  {n:"kati",f:"surprised",l:"casual",t:G=>`That's me! And that's ${CALL(G,"kati")}! Back then you were barely as tall as a ring post`},
   {n:"kati",f:"happy",l:"casual",t:"Grandma was still with us then. She made mango sticky rice every evening, and Grandpa always snuck some of ours"},
   {choice:[{t:"I never thought I'd be living here again",fx:G=>{add(G,"kati","bond",4);add(G,"kati","trust",3);},then:[{n:"kati",f:"flustered",l:"casual",t:"I did… I always thought you'd come back someday, like Grandpa said"}]},
    {t:"Who won the bike race back then?",fx:G=>{add(G,"kati","bond",3);},then:[{n:"kati",f:"pout",l:"casual",t:"A tie! We fell in the ditch together, and Grandma spanked us both"}]}]},
