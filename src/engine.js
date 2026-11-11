@@ -580,7 +580,7 @@ function genOffers(G){
     const X=CROSS_OF[f.id];if(X&&SPECIAL_WEEKS.includes(G.week)){const o=G.F[X],wk=G.week+3;
       if(o&&o.camp==="rival"&&!o.injury&&!isBooked(G,o.id,wk)&&!myB.some(x=>Math.abs(x-wk)<=1)&&wk<=47)G.offers.push({id:`o${G.week}_${f.id}_sp`,a:f.id,b:o.id,week:wk,tier:"special",win:TIER.special.win,lose:TIER.special.lose});}
     // v1.23: grudge match — in the district round the promoter keeps asking for the rivalry everyone wants to see
-    const RV0=RIVAL_OF[f.id],RV=RV0&&G.F[RV0]&&G.F[RV0].camp!=="rival"&&G.prodigy&&G.prodigy[G.F[RV0].div]?G.prodigy[G.F[RV0].div]:RV0;if(RV&&(RIVAL_WEEKS.includes(G.week)||(RIVAL_EARLY[f.id]||[]).includes(G.week))){const o=G.F[RV],wk=G.week+3;
+    const RV0=RIVAL_OF[f.id],RV=RV0&&G.F[RV0]&&G.prodigy&&G.prodigy[G.F[RV0].div]?G.prodigy[G.F[RV0].div]:RV0;if(RV&&(RIVAL_WEEKS.includes(G.week)||(RIVAL_EARLY[f.id]||[]).includes(G.week))){const o=G.F[RV],wk=G.week+3;
       if(o&&o.camp==="rival"&&!o.injury&&!isBooked(G,o.id,wk)&&!myB.some(x=>Math.abs(x-wk)<=1)&&!G.offers.some(x=>x.b===RV&&x.a===f.id)){const tier=eligible(G,f)&&eligible(G,o)&&wk<=40?"district":"special";
         G.offers.push({id:`o${G.week}_${f.id}_rv`,a:f.id,b:o.id,week:wk,tier,rv:1,win:Math.round(TIER[tier].win*1.6/100)*100,lose:Math.round(TIER[tier].lose*1.4/100)*100});}}
   }
@@ -662,7 +662,7 @@ function stageTransition(G){ // called after week's results, before week++
 // and are seeded on opposite halves, so they can only meet in the final
 const LEADS={A:["kati","ploy"],B:["mali","fah"]};
 // v1.53: when a Golden Tiger star joins us, their camp's new prodigy takes over as the division's top rival
-const leadRival=(G,div)=>{const rv=LEADS[div][1];if(G.F[rv]&&G.F[rv].camp==="rival")return rv;const p=G.prodigy&&G.prodigy[div];return p&&G.F[p]&&G.F[p].camp==="rival"?p:rv;};
+const leadRival=(G,div)=>{const p=G.prodigy&&G.prodigy[div];if(p&&G.F[p]&&G.F[p].camp==="rival")return p;return LEADS[div][1];};
 function makeProdigy(G,div,from){G.prodigy=G.prodigy||{};if(G.prodigy[div])return G.F[G.prodigy[div]];const id="prod_"+div,src=G.F[from];
   const names={A:["เพชรา ศิษย์พยัคฆ์ทอง","เพชรา"],B:["ใบหยก ศิษย์พยัคฆ์ทอง","ใบหยก"]};
   const f=baseFighter(id,{name:names[div][1],full:names[div][0],div,camp:"rival",color:"#3b3f8f",potential:Math.min(20,(src?src.potential:17)+2),a:{}});

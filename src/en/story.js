@@ -1372,3 +1372,50 @@ EVENTS.push(
   {choice:[{t:"Smile all you want. This is your home now.",fx:G=>{add(G,"fah","bond",5);add(G,"fah","morale",10);},then:[{n:"fah",f:"happy",l:"casual",t:"Then I'll smile till everyone's sick of it!"}]},
    {t:"Just don't steal Mali's towel.",fx:G=>{add(G,"fah","bond",3);if(G.F.mali)add(G,"mali","bond",2);},then:[{n:"fah",f:"pout",l:"casual",t:"Fine~ I'll steal Kati's instead!"}]}]}]}
 );
+
+// ===== v1.54: Ploy — hard to win over. Needs bond 60+, at least one official win over her, and year 3 (or year 2 with bond 70+) =====
+const ployRival=G=>G.F.ploy&&G.F.ploy.camp==="rival";
+const ployBeaten=G=>((G.h2h||{}).ploy||{}).w>0;
+const ployOpen=G=>ployRival(G)&&G.F.ploy.met&&(G.F.ploy.bond||0)>=60&&ployBeaten(G)&&((G.season||1)>=3||((G.season||1)>=2&&(G.F.ploy.bond||0)>=70));
+const pv=G=>(G.flags||{}).ployV||0;
+EVENTS.push(
+ {id:"ploy_respect",look:"fight",bg:"ring",when:G=>(G.season||1)>=2&&G.week>=8&&ployRival(G)&&G.F.ploy.met&&(G.F.ploy.bond||0)>=50&&!ployBeaten(G),steps:[
+  {n:"nar",t:"After a fight at the district stadium, Ploy passes you at the exit and stops beside you for a moment."},
+  {n:"ploy",f:"angry",l:"fight",t:"You've been talking to me a lot lately… But remember. I don't open up to a camp that's never beaten me in the ring."},
+  {n:"nar",t:"(Ploy only respects those who can actually beat her · you need at least one official win over Ploy)"}]},
+ {id:"ploy_injury",look:"casual",bg:"night",when:G=>ployOpen(G)&&G.week>=6&&G.week<=40,steps:[
+  {n:"nar",t:"Word spreads through the market: Ploy tore a knee ligament in sparring after Coach Kraingkrai made her keep going while hurt. The doctor ordered a long rest."},
+  {n:"nar",t:"Golden Tiger announces their new fighter, 'Petcha', will take her place the very next day."},
+  {n:"nar",t:"District hospital. A long, quiet corridor. Ploy sits alone in a wheelchair outside the physiotherapy room."},
+  {n:"ploy",f:"angry",l:"casual",t:"…Why are you here? To see your rival wrecked?"},
+  {choice:[{t:"(Hand her the hot tea she likes, without a word)",fx:G=>{add(G,"ploy","bond",4);add(G,"ploy","trust",4);},then:[{n:"ploy",f:"flustered",l:"casual",t:"…You remember what tea I drink?"}]},
+   {t:"I came because you're the rival I respect most.",fx:G=>{add(G,"ploy","trust",6);},then:[{n:"ploy",f:"sad",l:"casual",t:"Respect… Nobody at my camp uses that word for the injured."}]}]},
+  {fx:G=>{const f=G.F.ploy;f.injury=Math.max(f.injury||0,12);G.bookings=G.bookings.filter(b=>b.a!=="ploy"&&b.b!=="ploy");makeProdigy(G,"A","ploy");G.flags.ployV=1;G.flags.ployW=absWeek(G);}},
+  {n:"nar",t:"(Ploy is out injured · Petcha, Golden Tiger disciple, becomes Division A's top rival in her place)"}]},
+ {id:"ploy_visit2",look:"casual",bg:"river",when:G=>pv(G)===1&&ployRival(G)&&absWeek(G)>=G.flags.ployW+3,steps:[
+  {n:"nar",t:"Evening by the Ping River. Ploy, in a knee brace, slowly tries kicking the air, a little at a time, then sinks down to sit."},
+  {n:"ploy",f:"sad",l:"casual",t:"I've fought since I was nine. Everyone said I was born for this. …If the knee doesn't come back, I have nothing left."},
+  {choice:[{t:"You're more than a knee. You have the best fight IQ in the province.",fx:G=>{add(G,"ploy","trust",6);add(G,"ploy","bond",3);},then:[{n:"ploy",f:"flustered",l:"casual",t:"…You really have no shame complimenting people, huh."}]},
+   {t:"(Sit beside her and watch the river until dark)",fx:G=>{add(G,"ploy","bond",5);},then:[{n:"ploy",f:"sad",l:"casual",t:"…Thanks for not saying 'it'll heal soon.' Everyone says that."}]}]},
+  {fx:G=>{G.flags.ployV=2;G.flags.ployW=absWeek(G);}}]},
+ {id:"ploy_visit3",look:"casual",bg:"gym",when:G=>pv(G)===2&&ployRival(G)&&absWeek(G)>=G.flags.ployW+3,steps:[
+  {n:"nar",t:"Saturday morning, someone leans on crutches outside the Sirichai fence, watching Kati kick the bag for a long time."},
+  {n:"kati",f:"surprised",l:"train",t:"Ploy!? …Come inside, it's hot out there."},
+  {n:"ploy",f:"sad",l:"casual",t:"Golden Tiger didn't renew my contract. Injured fighters are worthless to Coach Kraingkrai. …I just stopped by to see how the little camp that beat me trains."},
+  {n:"kati",f:"happy",l:"train",t:"Then come watch up close! And critique me, please. I still remember every knee you landed on me."},
+  {fx:G=>{add(G,"ploy","bond",4);if(G.F.kati)add(G,"kati","bond",2);G.flags.ployV=3;G.flags.ployW=absWeek(G);}},
+  {n:"nar",t:"Ploy watches until evening and points out more than ten things. Kati writes every one down."}]},
+ {id:"ploy_join",look:"casual",bg:"camp",when:G=>pv(G)===3&&ployRival(G)&&absWeek(G)>=Math.max(G.flags.ployW+2,(G.flags||{}).ployRetry||0),steps:[
+  {n:"nar",t:"Ploy comes to the manager's office. She can walk without crutches now, though she still limps a little."},
+  {n:"ploy",f:"flustered",l:"casual",t:"Can I recover here? …Not because I'm weak. Because this is the only place where nobody sees me as just a stat line."},
+  {n:"ploy",f:"angry",l:"casual",t:"And if I can fight again, I'll fight under the Sirichai name. …Don't make me regret choosing this."},
+  {choice:[
+   {t:"Welcome aboard (no buyout · wage ฿2,200/week)",fx:G=>{joinCamp(G,"ploy",2200);add(G,"ploy","trust",10);G.flags.ployJoined=G.week;},then:[{n:"ploy",f:"happy",l:"casual",t:"…Thanks, Manager."},{n:"nar",t:"(Ploy has joined Sirichai Camp · still rehabbing her knee)"}]},
+   {t:"Let me talk with everyone in the camp first.",fx:G=>{G.flags.ployRetry=absWeek(G)+4;G.seen.ploy_join=false;},then:[{n:"ploy",f:"sad",l:"casual",t:"…I understand. I used to be everyone's enemy here. It's not strange."}]}]}]},
+ {id:"ploy_back",look:"fight",bg:"gym",when:G=>inCamp(G,"ploy")&&G.flags.ployJoined!=null&&!(G.F.ploy.injury>0),steps:[
+  {n:"nar",t:"One morning, the boom of a knee slamming the heavy bag shakes the camp. Everyone runs out to look."},
+  {n:"ploy",f:"happy",l:"fight",t:"…It's back. My knee is back!"},
+  {inject:G=>inCamp(G,"kati")?[{n:"kati",f:"happy",l:"train",t:"Ploy! Then spar with me today! Don't hold back!"},{n:"ploy",f:"angry",l:"fight",t:"Hold back? That's not in my dictionary. Get in the ring, sparring partner."}]:[]},
+  {fx:G=>{add(G,"ploy","morale",20);add(G,"ploy","bond",4);if(G.F.kati&&inCamp(G,"kati"))add(G,"kati","morale",8);}},
+  {n:"nar",t:"(Last year's rival is now the camp's sparring partner)"}]}
+);

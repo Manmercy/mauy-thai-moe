@@ -1372,3 +1372,50 @@ EVENTS.push(
   {choice:[{t:"ยิ้มให้เต็มที่ ที่นี่บ้านเธอแล้ว",fx:G=>{add(G,"fah","bond",5);add(G,"fah","morale",10);},then:[{n:"fah",f:"happy",l:"casual",t:"งั้นฟ้าจะยิ้มจนทุกคนรำคาญเลย!"}]},
    {t:"แต่ห้ามแย่งผ้าเช็ดตัวมะลินะ",fx:G=>{add(G,"fah","bond",3);if(G.F.mali)add(G,"mali","bond",2);},then:[{n:"fah",f:"pout",l:"casual",t:"ก็ได้~ ฟ้าจะแย่งของกะทิแทน!"}]}]}]}
 );
+
+// ===== v1.54: Ploy — hard to win over. Needs bond 60+, at least one official win over her, and year 3 (or year 2 with bond 70+) =====
+const ployRival=G=>G.F.ploy&&G.F.ploy.camp==="rival";
+const ployBeaten=G=>((G.h2h||{}).ploy||{}).w>0;
+const ployOpen=G=>ployRival(G)&&G.F.ploy.met&&(G.F.ploy.bond||0)>=60&&ployBeaten(G)&&((G.season||1)>=3||((G.season||1)>=2&&(G.F.ploy.bond||0)>=70));
+const pv=G=>(G.flags||{}).ployV||0;
+EVENTS.push(
+ {id:"ploy_respect",look:"fight",bg:"ring",when:G=>(G.season||1)>=2&&G.week>=8&&ployRival(G)&&G.F.ploy.met&&(G.F.ploy.bond||0)>=50&&!ployBeaten(G),steps:[
+  {n:"nar",t:"หลังไฟต์ที่เวทีอำเภอ พลอยเดินสวนมาตรงทางออก หยุดอยู่ข้าง ๆ คุณครู่หนึ่ง"},
+  {n:"ploy",f:"angry",l:"fight",t:"นายคุยกับฉันบ่อยขึ้นนะช่วงนี้ …แต่จำไว้ ฉันไม่เปิดใจให้ค่ายที่ยังไม่เคยล้มฉันได้บนเวทีหรอก"},
+  {n:"nar",t:"(พลอยเคารพแต่คนที่ชนะเธอได้จริง · ต้องชนะพลอยในไฟต์ทางการอย่างน้อยหนึ่งครั้ง)"}]},
+ {id:"ploy_injury",look:"casual",bg:"night",when:G=>ployOpen(G)&&G.week>=6&&G.week<=40,steps:[
+  {n:"nar",t:"ข่าวลือไปทั่วตลาด พลอยเอ็นเข่าฉีกระหว่างซ้อมสปาร์ริ่งที่โค้ชเกรียงไกรสั่งให้ซ้อมต่อทั้งที่เจ็บ หมอสั่งพักยาว"},
+  {n:"nar",t:"ค่ายพยัคฆ์ทองประกาศดันนักมวยใหม่ 'เพชรา' ขึ้นแทนทันทีในวันรุ่งขึ้น"},
+  {n:"nar",t:"โรงพยาบาลอำเภอ ทางเดินยาวเงียบ พลอยนั่งรถเข็นอยู่คนเดียวหน้าห้องกายภาพ"},
+  {n:"ploy",f:"angry",l:"casual",t:"…มาทำไม มาดูคู่ปรับตัวเองหมดสภาพเหรอ"},
+  {choice:[{t:"(ยื่นชาร้อนที่เธอชอบให้ ไม่พูดอะไร)",fx:G=>{add(G,"ploy","bond",4);add(G,"ploy","trust",4);},then:[{n:"ploy",f:"flustered",l:"casual",t:"…จำได้ด้วยเหรอว่าฉันกินชาอะไร"}]},
+   {t:"มาเพราะเธอเป็นคู่ปรับที่ฉันเคารพที่สุด",fx:G=>{add(G,"ploy","trust",6);},then:[{n:"ploy",f:"sad",l:"casual",t:"เคารพ… ที่ค่ายฉันไม่มีใครใช้คำนี้กับคนเจ็บหรอก"}]}]},
+  {fx:G=>{const f=G.F.ploy;f.injury=Math.max(f.injury||0,12);G.bookings=G.bookings.filter(b=>b.a!=="ploy"&&b.b!=="ploy");makeProdigy(G,"A","ploy");G.flags.ployV=1;G.flags.ployW=absWeek(G);}},
+  {n:"nar",t:"(พลอยพักรักษาตัว · เพชรา ศิษย์พยัคฆ์ทองขึ้นเป็นคู่ปรับตัวท็อปของรุ่น A แทน)"}]},
+ {id:"ploy_visit2",look:"casual",bg:"river",when:G=>pv(G)===1&&ployRival(G)&&absWeek(G)>=G.flags.ployW+3,steps:[
+  {n:"nar",t:"ริมแม่น้ำปิงตอนเย็น พลอยใส่ที่ล็อกเข่า พยายามยกขาเตะลมช้า ๆ ทีละนิด แล้วก็ทรุดลงนั่ง"},
+  {n:"ploy",f:"sad",l:"casual",t:"ฉันชกมาตั้งแต่เก้าขวบ ทุกคนบอกว่าฉันเกิดมาเพื่อสิ่งนี้ …ถ้าเข่ามันไม่กลับมา ฉันก็ไม่มีอะไรเหลือเลย"},
+  {choice:[{t:"เธอไม่ได้มีแค่เข่า เธอมีหัวที่อ่านเกมเก่งที่สุดในจังหวัด",fx:G=>{add(G,"ploy","trust",6);add(G,"ploy","bond",3);},then:[{n:"ploy",f:"flustered",l:"casual",t:"…นายนี่ชมคนแบบไม่อายเลยนะ"}]},
+   {t:"(นั่งลงข้าง ๆ ดูน้ำไหลด้วยกันจนมืด)",fx:G=>{add(G,"ploy","bond",5);},then:[{n:"ploy",f:"sad",l:"casual",t:"…ขอบใจที่ไม่พูดว่า 'เดี๋ยวก็หาย' ทุกคนพูดแบบนั้นหมด"}]}]},
+  {fx:G=>{G.flags.ployV=2;G.flags.ployW=absWeek(G);}}]},
+ {id:"ploy_visit3",look:"casual",bg:"gym",when:G=>pv(G)===2&&ployRival(G)&&absWeek(G)>=G.flags.ployW+3,steps:[
+  {n:"nar",t:"เช้าวันเสาร์ มีคนยืนพิงไม้ค้ำอยู่นอกรั้วค่ายศิริชัย มองกะทิซ้อมเตะกระสอบอยู่นาน"},
+  {n:"kati",f:"surprised",l:"train",t:"พี่พลอย!? …เข้ามาข้างในสิคะ ข้างนอกแดดร้อน"},
+  {n:"ploy",f:"sad",l:"casual",t:"ค่ายพยัคฆ์ทองไม่ต่อสัญญาฉันแล้ว คนเจ็บไม่มีค่าสำหรับโค้ชเกรียงไกร …ฉันแค่แวะมาดูว่าค่ายเล็ก ๆ ที่ล้มฉันได้ ซ้อมกันยังไง"},
+  {n:"kati",f:"happy",l:"train",t:"งั้นมาดูใกล้ ๆ เลยค่ะ! แล้วช่วยติหนูด้วย หนูยังโดนเข่าพี่จนจำได้ทุกครั้งเลย"},
+  {fx:G=>{add(G,"ploy","bond",4);if(G.F.kati)add(G,"kati","bond",2);G.flags.ployV=3;G.flags.ployW=absWeek(G);}},
+  {n:"nar",t:"พลอยยืนดูจนเย็น ติไปสิบกว่าจุด กะทิจดตามได้ทุกข้อ"}]},
+ {id:"ploy_join",look:"casual",bg:"camp",when:G=>pv(G)===3&&ployRival(G)&&absWeek(G)>=Math.max(G.flags.ployW+2,(G.flags||{}).ployRetry||0),steps:[
+  {n:"nar",t:"พลอยมาหาคุณที่ห้องผู้จัดการ เดินได้โดยไม่ต้องใช้ไม้ค้ำแล้ว แต่ยังกะเผลกนิด ๆ"},
+  {n:"ploy",f:"flustered",l:"casual",t:"ฉันขอมาฟื้นตัวที่นี่ได้ไหม …ไม่ใช่เพราะอ่อนแอ แต่เพราะที่นี่เป็นที่เดียวที่ไม่มีใครมองฉันเป็นแค่สถิติ"},
+  {n:"ploy",f:"angry",l:"casual",t:"และถ้ากลับมาชกได้ ฉันจะชกในนามค่ายศิริชัย …อย่าให้ฉันเสียใจที่เลือก"},
+  {choice:[
+   {t:"ยินดีต้อนรับ (ไม่มีค่าไถ่สัญญา · ค่าจ้าง ฿2,200/สัปดาห์)",fx:G=>{joinCamp(G,"ploy",2200);add(G,"ploy","trust",10);G.flags.ployJoined=G.week;},then:[{n:"ploy",f:"happy",l:"casual",t:"…ขอบใจ ผู้จัดการ"},{n:"nar",t:"(พลอยเข้าค่ายศิริชัยแล้ว · ยังพักรักษาเข่าอยู่)"}]},
+   {t:"ขอคุยกับทุกคนในค่ายก่อน",fx:G=>{G.flags.ployRetry=absWeek(G)+4;G.seen.ploy_join=false;},then:[{n:"ploy",f:"sad",l:"casual",t:"…เข้าใจ ฉันเคยเป็นศัตรูของทุกคนที่นี่ ไม่แปลกหรอก"}]}]}]},
+ {id:"ploy_back",look:"fight",bg:"gym",when:G=>inCamp(G,"ploy")&&G.flags.ployJoined!=null&&!(G.F.ploy.injury>0),steps:[
+  {n:"nar",t:"เช้าวันหนึ่ง เสียงเข่ากระแทกกระสอบดังสนั่นค่าย ทุกคนวิ่งออกมาดู"},
+  {n:"ploy",f:"happy",l:"fight",t:"…มันกลับมาแล้ว เข่าฉันกลับมาแล้ว!"},
+  {inject:G=>inCamp(G,"kati")?[{n:"kati",f:"happy",l:"train",t:"พี่พลอย! งั้นวันนี้สปาร์ริ่งกับหนูนะคะ ไม่ต้องออมมือ!"},{n:"ploy",f:"angry",l:"fight",t:"ออมมือ? ไม่เคยมีในพจนานุกรมฉันหรอก ขึ้นเวทีมา คู่ซ้อมของฉัน"}]:[]},
+  {fx:G=>{add(G,"ploy","morale",20);add(G,"ploy","bond",4);if(G.F.kati&&inCamp(G,"kati"))add(G,"kati","morale",8);}},
+  {n:"nar",t:"(คู่ปรับตลอดปีที่แล้ว กลายเป็นคู่ซ้อมประจำค่าย)"}]}
+);
