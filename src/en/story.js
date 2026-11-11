@@ -213,6 +213,30 @@ const EVENTS=[
  {id:"lover_final",look:"fight",when:G=>G.week>=48&&G.romance&&LOVER_FINAL[G.romance]&&G.bookings.some(b=>b.tier==="final"&&G.F[b.a].camp==="player"&&(b.a===G.romance||G.romance==="rin")),bg:"ring",
   steps:[{inject:G2=>{const b=G2.bookings.find(b=>b.tier==="final"&&G2.F[b.a].camp==="player"&&(b.a===G2.romance||G2.romance==="rin"));if(b)add(G2,b.a,"morale",8);return LOVER_FINAL[G2.romance]||[];}}]},
  // v1.32 fame milestones: something visible happens when the camp's name grows
+ // v1.33: the camp itself nudges you toward upgrades, and the coach sits down to talk money
+ {id:"up_rope",look:"train",when:G=>G.week>=7&&facTotal(G)<3,bg:"gym",steps:[
+  {n:"nar",t:"Snap! The top rope breaks mid-session; Kati, leaning on it, flips backward off the ring into the sandbags"},
+  {n:"kati",f:"flustered",l:"train",t:"I'm okay! …But the sandbag burst. There's sand all over the floor"},
+  {n:"coach",t:G=>`The gear in this camp is older than ${ME(G)}. New training gear would help the kids a lot. Five upgrades and the camp moves up a level, and class fees go up too`},
+  {choice:[{t:"Go to camp upgrades",fx:G=>{if(typeof UI!=="undefined"){UI.tab="camp";UI.csub="fac";}},then:[{n:"coach",t:"Good, take a look first. Save up and buy one piece at a time"}]},
+   {t:"Tape it up for now",then:[{n:"nar",t:"Three rolls of duct tape do the job better than expected… until next week"}]}]}]},
+ {id:"up_full",look:"casual",when:G=>G.week>=10&&studentDemand(G)>studentCap(G)+2,bg:"camp",steps:[
+  {n:"nar",t:"A mother and son have been waiting at the gate since morning; the boy's pink gloves are bigger than his head"},
+  {n:"npc",who:"Mother",t:"Is it full already? My son really wants to learn from the girls on TV"},
+  {n:"coach",t:"More people want to learn than we can take. Expand the class area and the fees come in every week"},
+  {choice:[{t:"Check the class area",fx:G=>{if(typeof UI!=="undefined"){UI.tab="camp";UI.csub="fac";}},then:[{n:"nar",t:"The boy in pink gloves waves goodbye and promises to come back"}]},
+   {t:"Sorry, maybe next time",then:[{n:"nar",t:"The boy nods, but keeps punching the air at the camp gate all the way out"}]}]}]},
+ {id:"up_lv2",look:"casual",when:G=>G.week>=14&&campLevel(G)===1&&facTotal(G)>=3,bg:"gym",steps:[
+  {n:"kati",f:"happy",l:"casual",t:G=>`${ME(G)}, I counted! Just ${5-facTotal(G)} more upgrades and our camp becomes a 'Camp on the mend'!`},
+  {n:"coach",t:"Once we level up, class fees go up twenty percent, more people want to join, and we can hire one more assistant coach. The gym will look better too"},
+  {n:"kati",f:"happy",l:"casual",t:"And I'll get to train in a room where the roof doesn't leak!"}]},
+ {id:"coach_money",look:"casual",when:G=>G.week>=6&&G.cash<15000&&weeklyNet(G)<0,bg:"camp",steps:[
+  {n:"nar",t:"That night Coach Daeng sets Grandpa Chai's old ledger on the table, the page full of red numbers"},
+  {n:"coach",t:G=>`${ME(G)}, listen to me. More money goes out than comes in every week. Leave it a few more weeks and the camp won't make it`},
+  {n:"coach",t:"There are three ways out: take more fights, temple-fair fights count too; check the mail, there's often money waiting to collect; and upgrade the class area so fees come in every week"},
+  {n:"coach",t:"There's also the Gold Helmet loan… but please, don't. Grandpa Chai borrowed from them once, and the interest ate half the camp"},
+  {choice:[{t:"I'll find a way, Coach",fx:G=>{G.F.kati.trust=Math.min(100,(G.F.kati.trust||0)+1);},then:[{n:"coach",t:"Coach believes in you. So did Grandpa Chai"}]},
+   {t:"Coach, have you ever borrowed?",then:[{n:"coach",t:"…Just once. When Kati was born. The hospital bill was steep, and it took three years to pay back. Don't tell Kati"}]}]}]},
  {id:"fame20",look:"casual",when:G=>G.rep>=20,bg:"camp",steps:[
   {n:"nar",t:"The district paper is on the camp table. A small headline: 'Old Sirichai Camp Breathes Again'"},
   {n:"kati",f:"happy",l:"casual",t:G=>`${ME(G)}! We're on page 3, right next to the fertilizer ad!`},
@@ -331,7 +355,7 @@ function revealFact(G,f,key){if(!key||f.know[key])return null;f.know[key]=true;c
 function dateScene(G,id,act){
   const f=G.F[id],A=ACTIVITIES[act],P=ACT_PREF[id];const rng=Math.random;
   const pref=P.like.includes(act)?"like":P.dislike.includes(act)?"dislike":"ok";
-  G.cash-=A.cost;G.freeUsed=true;const D={score:pref==="like"?3:pref==="dislike"?-2:0,facts:[]};G._date=D;
+  G.cash-=A.cost;G.freeUsed=true;f.hangWk=G.week;const D={score:pref==="like"?3:pref==="dislike"?-2:0,facts:[]};G._date=D;
   if(pref!=="ok"){const key="act_"+act;if(!f.know[key]){f.know[key]=pref;}}
   const look=act==="spar"?"train":"casual";
   const shuffle=a=>{const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;};

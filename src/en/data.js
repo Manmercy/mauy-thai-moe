@@ -47,10 +47,14 @@ const ACTIVITIES={
   temple:{name:"Making merit at the temple near camp",cost:0,bg:"temple",intro:["The temple grounds are calm; only the wind chimes on the chapel eaves can be heard","The sun has just set; candlelight in the hall glints off the golden Buddha"]},
   cafe:{name:"Cafe and fight replays",cost:250,bg:"cafe",intro:["A tiny alley cafe with plugs at every table, perfect for long fight-tape sessions","The smell of light-roast coffee drifts by; the shop TV plays Muay Thai on mute"]},
   river:{name:"Evening bike ride along the river",cost:100,bg:"river",intro:["A cool breeze blows along the riverside bike path as the sky turns orange","Kids chase each other on the bank; someone is fishing under the bridge"]},
+  jog:{name:"Morning run around the reservoir",cost:0,bg:"river",intro:["Mist still hangs over the reservoir; running shoes thud on the dirt path in rhythm","Dawn is just breaking; the patongo uncle is heating his wok for the runners"]},
+  cat:{name:"Feed the cats behind the temple",cost:0,bg:"temple",intro:["Five tabby cats wait by the monks' quarters as if they know the time","A fat orange cat rolls on a haystack behind the temple and jumps up at the sound of a snack bag"]},
+  stars:{name:"Stargaze on the camp roof",cost:0,bg:"camp",campOnly:true,intro:["All the camp lights are off; on the tin roof there's just a cool breeze and a sky full of stars","An old mat spread on the roof, a thermos of hot tea beside it"]},
+  cook:{name:"Make som tam together at camp",cost:0,bg:"camp",campOnly:true,intro:["Grandpa Chai's big wooden mortar comes out of the kitchen; the pounding echoes down the whole lane","Two papayas from the tree behind camp are being shredded into strips"]},
   spar:{name:"One-on-one extra training",cost:0,bg:"camp",campOnly:true,intro:["Classes are done; only the fan and a still-swinging heavy bag remain","The gym lights are half on, just enough to see shadows on the ring"]},
 };
-const ACT_PREF={kati:{like:["eat","spar"],dislike:["cafe"]},mali:{like:["market","eat"],dislike:["temple"]},rin:{like:["cafe","temple"],dislike:["market"]},
-  ploy:{like:["temple","river"],dislike:["market"]},fah:{like:["market","river"],dislike:["temple"]}};
+const ACT_PREF={kati:{like:["eat","spar","jog"],dislike:["cafe"]},mali:{like:["market","eat","cook"],dislike:["temple"]},rin:{like:["cafe","temple","stars"],dislike:["market"]},
+  ploy:{like:["temple","river","jog"],dislike:["market"]},fah:{like:["market","river","cat"],dislike:["temple"]}};
 const OPENERS={
  kati:{like:["Yay! You brought me here, you really get me!","This place! I've wanted to come since practice ended"],ok:["Anywhere's fine, as long as I don't have to sit still too long"],dislike:["Hmm… it's so quiet here. I'm not great at sitting still, hehe"]},
  mali:{like:["Wow~ I love this place the most! Come on, hurry!","How did you know I love it! Snacks are on me today!"],ok:["That was fun! Anywhere with you is fun"],dislike:["Ah… this place… it's kind of dark. Can I hold your arm?"]},

@@ -213,6 +213,30 @@ const EVENTS=[
  {id:"lover_final",look:"fight",when:G=>G.week>=48&&G.romance&&LOVER_FINAL[G.romance]&&G.bookings.some(b=>b.tier==="final"&&G.F[b.a].camp==="player"&&(b.a===G.romance||G.romance==="rin")),bg:"ring",
   steps:[{inject:G2=>{const b=G2.bookings.find(b=>b.tier==="final"&&G2.F[b.a].camp==="player"&&(b.a===G2.romance||G2.romance==="rin"));if(b)add(G2,b.a,"morale",8);return LOVER_FINAL[G2.romance]||[];}}]},
  // v1.32 fame milestones: something visible happens when the camp's name grows
+ // v1.33: the camp itself nudges you toward upgrades, and the coach sits down to talk money
+ {id:"up_rope",look:"train",when:G=>G.week>=7&&facTotal(G)<3,bg:"gym",steps:[
+  {n:"nar",t:"ผึง! เชือกเวทีเส้นบนขาดกลางคันระหว่างซ้อม กะทิที่พิงเชือกอยู่หงายหลังตกเวทีไปกองกับกระสอบทราย"},
+  {n:"kati",f:"flustered",l:"train",t:"หนูไม่เป็นไรค่ะ! …แต่กระสอบทรายแตกแล้วค่ะ ทรายเต็มพื้นเลย"},
+  {n:"coach",t:G=>`ของในค่ายมันเก่ากว่าอายุ${ME(G)}อีกนะ ถ้าได้อุปกรณ์ซ้อมใหม่ เด็ก ๆ จะฝึกได้ผลขึ้นเยอะ อัปครบห้าขั้น ค่ายก็จะเลื่อนระดับ ค่าเรียนขึ้นด้วย`},
+  {choice:[{t:"ไปดูหน้าอัปเกรดค่าย",fx:G=>{if(typeof UI!=="undefined"){UI.tab="camp";UI.csub="fac";}},then:[{n:"coach",t:"ดี ดูไว้ก่อน เก็บเงินแล้วค่อยซื้อทีละชิ้น"}]},
+   {t:"เอาเทปพันไว้ก่อน",then:[{n:"nar",t:"เทปกาวสามม้วนทำหน้าที่ได้ดีเกินคาด …จนถึงสัปดาห์หน้า"}]}]}]},
+ {id:"up_full",look:"casual",when:G=>G.week>=10&&studentDemand(G)>studentCap(G)+2,bg:"camp",steps:[
+  {n:"nar",t:"แม่ลูกคู่หนึ่งยืนรออยู่หน้าค่ายตั้งแต่เช้า ลูกชายใส่นวมสีชมพูที่ใหญ่กว่าหัว"},
+  {n:"npc",who:"คุณแม่",t:"ลานเต็มแล้วเหรอคะ ลูกอยากเรียนกับพี่ ๆ ที่ออกทีวีมากเลย"},
+  {n:"coach",t:"คนอยากมาเรียนเกินที่เรารับไหวแล้ว ขยายลานสอนคอร์ส เงินค่าเรียนจะเข้าทุกสัปดาห์เลยนะ"},
+  {choice:[{t:"ไปดูลานสอนคอร์ส",fx:G=>{if(typeof UI!=="undefined"){UI.tab="camp";UI.csub="fac";}},then:[{n:"nar",t:"เด็กชายนวมชมพูโบกมือลา สัญญาว่าจะกลับมาใหม่"}]},
+   {t:"ขอโทษนะครับ ไว้คราวหน้า",then:[{n:"nar",t:"เด็กชายพยักหน้า แต่ยังชกลมใส่ประตูค่ายไปตลอดทาง"}]}]}]},
+ {id:"up_lv2",look:"casual",when:G=>G.week>=14&&campLevel(G)===1&&facTotal(G)>=3,bg:"gym",steps:[
+  {n:"kati",f:"happy",l:"casual",t:G=>`${ME(G)}คะ หนูนับดูแล้ว อัปอีก ${5-facTotal(G)} อย่าง ค่ายเราจะเลื่อนเป็นค่ายที่กำลังฟื้นตัวแล้วนะคะ!`},
+  {n:"coach",t:"เลื่อนระดับแล้ว ค่าเรียนขึ้นยี่สิบเปอร์เซ็นต์ คนอยากมาเรียนเพิ่ม และจ้างครูผู้ช่วยได้อีกคน ห้องซ้อมก็จะดูดีขึ้น"},
+  {n:"kati",f:"happy",l:"casual",t:"แล้วหนูจะได้ซ้อมในห้องที่หลังคาไม่รั่วแล้ว!"}]},
+ {id:"coach_money",look:"casual",when:G=>G.week>=6&&G.cash<15000&&weeklyNet(G)<0,bg:"camp",steps:[
+  {n:"nar",t:"คืนนั้นครูแดงเอาสมุดบัญชีเก่าของปู่ชัยมาวางบนโต๊ะ ตัวเลขแดงเต็มหน้า"},
+  {n:"coach",t:G=>`${ME(G)} ฟังครูนะ เงินเราไหลออกมากกว่าเข้าทุกสัปดาห์ ถ้าปล่อยไว้ไม่กี่สัปดาห์ค่ายจะไปไม่รอด`},
+  {n:"coach",t:"ทางรอดมีสามทาง รับไฟต์ให้บ่อยขึ้น ไฟต์งานวัดก็ได้ ดูจดหมาย มักมีเงินรอให้กดรับ แล้วก็อัปลานสอนคอร์สให้ค่าเรียนเข้าทุกสัปดาห์"},
+  {n:"coach",t:"อีกทางคือเงินกู้หมวกทอง …แต่ครูขอเถอะ ปู่ชัยเคยกู้พวกนั้น ดอกมันกินค่ายไปครึ่งหนึ่ง"},
+  {choice:[{t:"ผมจะหาทางครับครู",fx:G=>{G.F.kati.trust=Math.min(100,(G.F.kati.trust||0)+1);},then:[{n:"coach",t:"ครูเชื่อ ปู่ชัยก็เชื่อ"}]},
+   {t:"ครูเคยกู้ไหมครับ",then:[{n:"coach",t:"…ครั้งเดียว ตอนกะทิเกิด ค่าคลอดแพง แล้วก็ใช้คืนอยู่สามปี อย่าบอกกะทินะ"}]}]}]},
  {id:"fame20",look:"casual",when:G=>G.rep>=20,bg:"camp",steps:[
   {n:"nar",t:"หนังสือพิมพ์ประจำอำเภอวางอยู่บนโต๊ะหน้าค่าย หัวข่าวเล็ก ๆ: 'ค่ายมวยเก่าศิริชัย กลับมาหายใจอีกครั้ง'"},
   {n:"kati",f:"happy",l:"casual",t:G=>`${ME(G)}! เราอยู่หน้า 3 ข้าง ๆ โฆษณาปุ๋ยเลยค่ะ!`},
@@ -331,7 +355,7 @@ function revealFact(G,f,key){if(!key||f.know[key])return null;f.know[key]=true;c
 function dateScene(G,id,act){
   const f=G.F[id],A=ACTIVITIES[act],P=ACT_PREF[id];const rng=Math.random;
   const pref=P.like.includes(act)?"like":P.dislike.includes(act)?"dislike":"ok";
-  G.cash-=A.cost;G.freeUsed=true;const D={score:pref==="like"?3:pref==="dislike"?-2:0,facts:[]};G._date=D;
+  G.cash-=A.cost;G.freeUsed=true;f.hangWk=G.week;const D={score:pref==="like"?3:pref==="dislike"?-2:0,facts:[]};G._date=D;
   if(pref!=="ok"){const key="act_"+act;if(!f.know[key]){f.know[key]=pref;}}
   const look=act==="spar"?"train":"casual";
   const shuffle=a=>{const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;};

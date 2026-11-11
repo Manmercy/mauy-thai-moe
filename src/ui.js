@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.32.0";
+const VERSION="1.33.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -265,7 +265,10 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
     if(skReady(f))T.push({p:6,t:`${f.name}มีแต้มสกิล ${f.sp} แต้ม ไปเลือกสกิลได้เลย`,act:{k:"fighter",id:f.id,v:"skill",label:"เลือกสกิล"}});
     if(f.plan.intensity==="heavy"&&f.fatigue>50)T.push({p:5,t:`${f.name}ซ้อมหนักต่อเนื่อง ระวังบาดเจ็บนะ`});}
   if(!G.bookings.some(b=>G.F[b.a].camp==="player")&&G.offers.length)T.push({p:5,t:"ยังไม่มีไฟต์ในตาราง ครูดูข้อเสนอให้แล้ว มีสีบอกว่าคู่ไหนง่ายหรือเสี่ยง",act:{k:"tab",v:"fights",label:"ดูข้อเสนอ"}});
-  if(weeksLeft()<=6){if(weeksLeft()<=3||G.week%3===0)T.push({p:10,t:`⚠ ถ้ารายรับเท่าเดิม เงินจะหมดในราว ${weeksLeft()} สัปดาห์! รับไฟต์ สอนคลาสพิเศษ หรือลดค่าจ้าง`,act:{k:"tab",v:"fights",label:"ดูไฟต์"}});}
+  if(G.loan>0)T.push({p:G.cash>=G.loan?8:4,t:`ยังติดเงินกู้หมวกทอง ${fmt(G.loan)} ดอกขึ้น 10% ทุก 4 สัปดาห์ และพวกมันจะมาวนเวียนแถวตลาดบ่อยขึ้น${G.cash>=G.loan?" ตอนนี้มีเงินพอคืนแล้วนะ":""}`,act:{k:"tab",v:"camp",label:"ไปหน้าการเงิน"}});
+  if(loanOk(G))T.push({p:11,t:"เงินจะไม่พอจ่ายแล้ว ถ้าจำเป็นจริง ๆ ยังมีเงินกู้ด่วน แต่ครูไม่ชอบเลย ดอกแพงและพวกหมวกกันน็อกจะมาวุ่นวาย",act:{k:"loan",label:"ดูเงินกู้ด่วน"}});
+  if(weeksLeft()<=6){if(true)T.push({p:10,t:`⚠ ถ้ารายรับเท่าเดิม เงินจะหมดในราว ${weeksLeft()} สัปดาห์! รับไฟต์ สอนคลาสพิเศษ หรือลดค่าจ้าง`,act:{k:"tab",v:"fights",label:"ดูไฟต์"}});}
+  else if(weeksLeft()<=10)T.push({p:7,t:`ครูเตือนไว้ก่อน: ถ้ารายรับเท่านี้ เงินจะหมดในราว ${weeksLeft()} สัปดาห์ ลองรับไฟต์เพิ่มหรือดูจดหมายที่มีเงินรออยู่`,act:{k:"tab",v:"fights",label:"ดูข้อเสนอ"}});
   else if(weeklyNet(G)<0){const full=studentDemand(G)>studentCap(G);T.push({p:6,t:full?`รายจ่ายมากกว่ารายรับ ${fmt(-weeklyNet(G))}/สัปดาห์ คนอยากเรียนเกินที่รับไหว จ้างผู้ช่วยครูหรือขยายลานสอนจะได้เงินเพิ่ม`:`รายจ่ายมากกว่ารายรับ ${fmt(-weeklyNet(G))}/สัปดาห์ ลองสอนคลาสพิเศษหรือรับไฟต์เพิ่ม`,act:full?{k:"tab",v:"camp",sub:"staff",label:"ไปจ้างผู้ช่วยครู"}:{k:"campacts",label:"เลือกกิจกรรมค่าย"}});}
   if(G.cash<0)T.push({p:10,t:`เงินติดลบมา ${G.negWeeks} สัปดาห์ ถ้าติดลบ 4 สัปดาห์จนเกิน ฿10,000 ค่ายจะล้มละลาย`});
   if(studentDemand(G)>studentCap(G)+2)T.push({p:5,t:`นักเรียนเต็มค่ายแล้ว ยังมีคนอยากเรียนอีก ${studentDemand(G)-studentCap(G)} คน อัปลานสอนคอร์สจะรับเพิ่มได้ทีละ 3 คน`,act:{k:"tab",v:"camp",sub:"fac",label:"ไปอัปลานสอน"}});
@@ -440,10 +443,10 @@ function offersHTML(){const mine=G.bookings.filter(b=>G.F[b.a].camp==="player").
        <span class="pill ${b.week===G.week?"red":"gold"}">${b.week===G.week?"สัปดาห์นี้":`อีก ${b.week-G.week} สด.`}</span></div><div class="bk-btns">${b.planSet?`<button class="btn sm done" data-act="fplan" data-id="${b.id}">✓ แผน: ${PLANS[b.plan||"balanced"].name}</button>`:`<button class="btn sm red" data-act="fplan" data-id="${b.id}">ตั้งแผนไฟต์</button>`}${scouted(o.id)?`<button class="btn sm done" disabled>${G.F.rin.camp==="player"?"✓ รินวิเคราะห์แล้ว":"✓ ดูเทปแล้ว"}</button>`:`<button class="btn sm" data-act="scout" data-v="${o.id}" ${G.cash<scoutCost()?"disabled":""}>${scoutLabel()}</button>`}</div></div>`;}).join("")}</div></section>`:""}
    <section class="px card"><div class="card-h"><h3>ข้อเสนอสัปดาห์นี้</h3>${G.losses&&G.losses.length?`<button class="btn sm" data-act="lossrev">ทบทวนความพ่ายแพ้</button>`:`<span class="legend"><i class="dot green"></i>อ่อนกว่า <i class="dot gold"></i>สูสี <i class="dot red"></i>เก่งกว่า</span>`}</div><div class="list">${
      [...G.offers].sort((x,y)=>(y.rv||y.beast||y.hard||y.tier==="special"?1:0)-(x.rv||x.beast||x.hard||x.tier==="special"?1:0)).map(o=>{const op=G.F[o.b],me=G.F[o.a];const A=adviseCached(o.a,o.b,3);const v=verdictOf(A.bestRate);
-       const sp=o.rv?["rv","ศึกล้างตา · ทั้งจังหวัดรอดู"]:o.beast?["beast",QK[o.beast].grp==="rooster"?"ศึกพิสดาร · คนปะทะไก่ชน":"ศึกพิสดาร · ล้มวัวฉบับมวยไทย"]:o.tier==="special"?["sp","ศึกพิเศษข้ามรุ่น"]:o.hard?["hard","ท้าชนคู่เหนือชั้น · ค่าตัว ×1.5"]:null;
+       const sp=o.rv?["rv","ศึกล้างตา · ทั้งจังหวัดรอดู"]:o.beast?["beast",QK[o.beast].grp==="rooster"?"ศึกพิสดาร · คนปะทะไก่ชน":"ศึกพิสดาร · ล้มวัวฉบับมวยไทย"]:o.tier==="special"?["sp","ศึกพิเศษข้ามรุ่น"]:o.hard?["hard","ท้าชนคู่เหนือชั้น · ค่าตัว ×1.5"]:o.fair?["fair",o.cross?"งานวัด · ดาราข้ามรุ่น!":"ไฟต์งานวัด · ไม่นับอันดับ"]:null;
        return `<div class="item offer ${v.c} ${sp?"spx "+sp[0]:""}">${sp?`<span class="ribbon">${sp[1]}</span>`:""}<button class="oxbtn" data-act="declo" data-v="${o.id}" aria-label="ปฏิเสธข้อเสนอนี้">✕</button><div class="l"><span class="vdot ${v.c}" aria-label="${v.t}"></span>${faceImg(op,"sm")}<div>
        <div class="t">${esc(me.name)} vs ${esc(op.name)}</div>
-       <div class="meta">สด.${o.week} · ${TIER[o.tier].name}${o.beast?" · ไม่นับสถิติ":""} · ${styleOf(op.a)}${op.camp==="rival"?" · พยัคฆ์ทอง":""}${personaOf(op)?` · ${personaOf(op).tag}`:""}</div>${h2hText(op)?`<div class="meta goldt">${h2hText(op)}</div>`:""}
+       <div class="meta">สด.${o.week} · ${TIER[o.tier].name}${o.beast?" · ไม่นับสถิติ":""}${o.fair?" · ไม่นับอันดับ · ค่าตัวส่งทางจดหมาย":""} · ${styleOf(op.a)}${op.camp==="rival"?" · พยัคฆ์ทอง":""}${personaOf(op)?` · ${personaOf(op).tag}`:""}</div>${h2hText(op)?`<div class="meta goldt">${h2hText(op)}</div>`:""}
        <div class="meta">ค่าตัว ${fmt(o.lose)} · <b class="goldt">ชนะ +${fmt(o.win-o.lose)}</b> · <b class="${v.c}t">${v.t}</b>${ovr(op.a)-ovr(me.a)>.4?` · <b class="goldt">ชนะได้โบนัสแต้ม/ชื่อเสียง</b>`:""}</div>
        </div></div>
        <div class="obtns3"><button class="btn sm" data-act="consider" data-v="${o.id}">${scouted(o.b)?"ข้อมูลคู่ชก":"ดูเทป"}</button>${coachOn()?`<button class="btn sm" data-act="otip" data-v="${o.id}">คำแนะนำครู</button>`:""}<button class="btn sm gold" data-act="accept" data-v="${o.id}">รับไฟต์</button></div></div>`;}).join("")||`<p class="lead">${G.bookings.length?"รับไฟต์แล้ว ข้อเสนอใหม่จะเข้ามาสัปดาห์หน้า":"ไม่มีข้อเสนอ (บาดเจ็บ หรือหมดฤดูกาล)"}</p>`}</div></section>`;}
@@ -456,17 +459,24 @@ function rankHTML(){const st=stageOf(G.week),cut=st==="local"?4:st==="district"?
    </tbody></table></div></section>${calendarHTML()}`;}
 
 function peopleHTML(){const met=CANON_IDS.map(id=>G.F[id]).filter(f=>f.met);
-  return `<div class="card-h"><p class="meta">ใช้เวลาด้วยกันสัปดาห์ละ 1 ครั้ง · พอสนิทกัน เธอจะทักแชทมาเองเป็นครั้งคราว</p>${G.freeUsed?'<span class="pill">เวลาว่าง: ใช้แล้ว</span>':'<span class="pill gold">เวลาว่าง: เหลือ 1</span>'}</div>
+  return `<div class="card-h"><p class="meta">ใช้เวลาด้วยกันได้ทุกคน คนละ 1 ครั้งต่อสัปดาห์ · พอสนิทกัน เธอจะทักแชทมาเองเป็นครั้งคราว</p>${(()=>{const n=met.filter(f=>f.hangWk!==G.week).length;return n?`<span class="pill gold">ยังว่าง ${n} คน</span>`:'<span class="pill">ไปมาครบแล้ว</span>';})()}</div>
    <div class="plist">${met.map(f=>`<section class="px pcard"><button class="pthumb" data-act="fighter" data-id="${f.id}" data-v="rel" aria-label="ดูโปรไฟล์${esc(f.name)}"><img src="${stand(f.id,"casual")}" alt="" loading="lazy"></button>
      <div class="pbody"><div class="pnm"><b class="nm">${esc(f.name)}</b><span class="meta">${f.camp==="player"?"ค่ายศิริชัย":f.camp==="rival"?"พยัคฆ์ทอง":"อิสระ"}${G.romance===f.id?" · คนรัก ♥":G.promise&&G.promise[f.id]!=null?" · สัญญาไว้ ♡":""}</span></div>${hearts(f.bond)}
-      <div class="pbtns"><button class="btn sm" data-act="fighter" data-id="${f.id}" data-v="rel">ประวัติ</button><button class="btn sm primary" data-act="hang" data-id="${f.id}" ${G.freeUsed?"disabled":""}>ใช้เวลาด้วยกัน</button><button class="btn sm gold giftb" data-act="giftpick" data-id="${f.id}" ${f.giftWeek===G.week?"disabled":""}>${PIX.gift}<span>${f.giftWeek===G.week?"ให้แล้ว":"ของขวัญ"}</span></button><button class="btn sm chatb" data-act="chat" data-id="${f.id}" ${canChat(f)?"":"disabled"}>${CHAT_PX}<span>${canChat(f)?"แชทใหม่":(f.bond||0)<CHAT_BOND?"ยังไม่สนิท":"ไม่มีข้อความ"}</span>${canChat(f)?'<i class="dot"></i>':""}</button></div></div></section>`).join("")}</div>`;}
+      <div class="pbtns"><button class="btn sm" data-act="fighter" data-id="${f.id}" data-v="rel">ประวัติ</button><button class="btn sm primary" data-act="hang" data-id="${f.id}" ${f.hangWk===G.week?"disabled":""}>ใช้เวลาด้วยกัน</button><button class="btn sm gold giftb" data-act="giftpick" data-id="${f.id}" ${f.giftWeek===G.week?"disabled":""}>${PIX.gift}<span>${f.giftWeek===G.week?"ให้แล้ว":"ของขวัญ"}</span></button><button class="btn sm chatb" data-act="chat" data-id="${f.id}" ${canChat(f)?"":"disabled"}>${CHAT_PX}<span>${canChat(f)?"แชทใหม่":(f.bond||0)<CHAT_BOND?"ยังไม่สนิท":"ไม่มีข้อความ"}</span>${canChat(f)?'<i class="dot"></i>':""}</button></div></div></section>`).join("")}</div>`;}
 function hangHTML(id){const f=G.F[id];const pref=k=>f.know["act_"+k]==="like"?'<i class="likeb">ชอบ</i>':f.know["act_"+k]==="dislike"?'<i class="disb">ไม่ชอบ</i>':"";
-  return `<h2>ใช้เวลากับ${esc(f.name)}</h2><p class="meta">เลือกที่ที่อยากไปด้วยกัน</p><div class="acts">${Object.entries(ACTIVITIES).filter(([k,a])=>!a.campOnly||f.camp==="player").map(([k,a])=>`<button class="actbtn" data-act="date" data-id="${f.id}" data-v="${k}" ${G.freeUsed||G.cash<a.cost?"disabled":""}><b>${a.name}${pref(k)}</b><small>${a.cost?fmt(a.cost):"ฟรี"}</small></button>`).join("")}</div>`;}
+  return `<h2>ใช้เวลากับ${esc(f.name)}</h2><p class="meta">เลือกที่ที่อยากไปด้วยกัน</p><div class="acts">${Object.entries(ACTIVITIES).filter(([k,a])=>!a.campOnly||f.camp==="player").map(([k,a])=>`<button class="actbtn" data-act="date" data-id="${f.id}" data-v="${k}" ${f.hangWk===G.week||G.cash<a.cost?"disabled":""}><b>${a.name}${pref(k)}</b><small>${a.cost?fmt(a.cost):"ฟรี"}</small></button>`).join("")}</div>`;}
+// v1.33: what each camp level brings, so upgrades feel like a goal
+function campLvHTML(){const lv=campLevel(G),t=facTotal(G),need=[0,0,5,13];
+  const unlock=L=>[...Object.entries(FACILITIES).filter(([k,F])=>F.req&&F.req.lv===L).map(([k,F])=>F.name),...Object.entries(STAFF).filter(([k,S])=>S.req&&S.req.lv===L).map(([k,S])=>S.name)];
+  return `<h2>ระดับค่าย</h2><p class="meta">อัปเกรดอะไรก็ได้ในค่าย ครบจำนวนขั้นแล้วค่ายจะเลื่อนระดับ · ตอนนี้ ${t} ขั้น</p><div class="clv">${[1,2,3].map(L=>{const u=unlock(L);return `<div class="clvrow px ${L===lv?"now":L<lv?"done":"lock"}" style="background-image:linear-gradient(90deg,rgba(20,16,32,.94),rgba(20,16,32,.55)),url(${ASSET}gym${L}.webp)">
+    <div class="clvh"><b>Lv.${L} ${CAMP_LV_NAME[L]}</b><span class="pill ${L<=lv?"green":""}">${L<lv?"ผ่านแล้ว":L===lv?"ตอนนี้":`ต้องอัป ${need[L]} ขั้น (อีก ${need[L]-t})`}</span></div>
+    <ul><li>ค่าเรียน ${L>1?`+${(L-1)*20}%`:"ปกติ"}</li><li>คนอยากมาเรียน +${L*2}</li><li>จ้างครูผู้ช่วยได้ ${1+L} คน</li>${L>1?"<li>ห้องซ้อมเปลี่ยนโฉม</li>":""}${u.length?`<li class="goldt">ปลดล็อก: ${u.join(", ")}</li>`:""}</ul></div>`;}).join("")}</div>
+   <button class="btn primary" data-act="gofac">ไปหน้าอัปเกรดค่าย</button>`;}
 function campHTML(){const inc=classIncome(G),up=upkeep(G),wg=wages(G),lv=campLevel(G),cs=UI.csub||"money";
   const recs=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
   const dots=(n,m)=>`<span class="pips">${Array.from({length:m},(_,i)=>`<i class="${i<n?"on":""}"></i>`).join("")}</span>`;
-  return `<section class="px card camphead" style="background-image:linear-gradient(90deg,rgba(20,16,32,.95),rgba(20,16,32,.6)),url(${ASSET}${gymBg()})"><div><span class="pill gold">ค่าย Lv.${lv}</span><h3>${CAMP_LV_NAME[lv]}</h3>
-    <p class="meta">อัปเกรดรวม ${facTotal(G)} ขั้น · ${lv<3?`อีก ${lv===1?4-facTotal(G):10-facTotal(G)} ขั้นจะเลื่อนเป็น Lv.${lv+1} (ห้องซ้อมเปลี่ยนโฉม)`:"ระดับสูงสุดของเดโม"}</p></div></section>
+  return `<section class="px card camphead" style="background-image:linear-gradient(90deg,rgba(20,16,32,.95),rgba(20,16,32,.6)),url(${ASSET}${gymBg()})"><div><button class="pill gold lvbtn" data-act="camplv">ค่าย Lv.${lv} ▸</button><h3>${CAMP_LV_NAME[lv]}</h3>
+    <p class="meta">อัปเกรดรวม ${facTotal(G)} ขั้น · ${lv<3?`อีก ${lv===1?5-facTotal(G):13-facTotal(G)} ขั้นจะเลื่อนเป็น Lv.${lv+1} · กดดูว่าได้อะไร`:"ระดับสูงสุดของเดโม"}</p></div></section>
    <div class="seg subtabs csubs"><button data-act="csub" data-v="money" aria-pressed="${cs==="money"}">การเงิน</button><button data-act="csub" data-v="staff" aria-pressed="${cs==="staff"}">ครู & นักมวย</button><button data-act="csub" data-v="fac" aria-pressed="${cs==="fac"}">อัปเกรดค่าย</button></div>
    ${recruitHTML(recs)}
    <div class="grid g2">
@@ -475,7 +485,8 @@ function campHTML(){const inc=classIncome(G),up=upkeep(G),wg=wages(G),lv=campLev
     <div class="kv-row"><span>ค่าใช้จ่ายค่าย</span><b class="num neg">-${fmt(up)}</b></div>
     <div class="kv-row"><span>ค่าจ้างนักมวยและผู้ช่วยครู</span><b class="num neg">-${fmt(wg)}</b></div>
     <div class="kv-row"><b>สุทธิ</b><b class="num ${weeklyNet(G)<0?"neg":"pos"}">${fmt(weeklyNet(G))}</b></div>
-    <div class="kv-row"><span>หนี้ ${fmt(G.debt)} · ผ่อนทุก 4 สัปดาห์ ${fmt(Math.min(5000,G.debt))}</span><button class="btn sm" data-act="paydebt" ${G.cash<10000||G.debt<=0?"disabled":""}>โปะ ฿10,000</button></div></section>
+    <div class="kv-row"><span>หนี้ ${fmt(G.debt)} · ผ่อนทุก 4 สัปดาห์ ${fmt(Math.min(5000,G.debt))}</span><button class="btn sm" data-act="paydebt" ${G.cash<10000||G.debt<=0?"disabled":""}>โปะ ฿10,000</button></div>
+    ${G.loan>0?`<div class="kv-row loanrow"><span>เงินกู้หมวกทอง ${fmt(G.loan)} · ดอก 10% ทุก 4 สัปดาห์</span><button class="btn sm gold" data-act="repayloan" ${G.cash<G.loan?"disabled":""}>คืนทั้งหมด</button></div>`:loanOk(G)?`<div class="kv-row loanrow"><span>เงินใกล้หมด · มีเงินกู้ด่วนให้ยืม</span><button class="btn sm red" data-act="loan">ดูเงินกู้</button></div>`:""}</section>
    <section class="px card cpane ${cs==="staff"?"on":""}"><h3>ครูและนักเรียน</h3>
     <div class="kv-row"><span>คนอยากเรียน ${studentDemand(G)} · รับได้ ${studentCap(G)}</span><b class="${studentDemand(G)>studentCap(G)?"goldt":""}">${studentDemand(G)>studentCap(G)?"ล้น!":"พอดี"}</b></div>
     <div class="item nw"><div class="l"><img class="face sm" src="${faceSrc("coach")}" alt=""><div><div class="t">ครูแดง Lv.${G.fac.daeng}</div><div class="meta">รับนักเรียน +${(G.fac.daeng-1)*2} คน · ค่าเรียน +12%/ระดับ · ฝึก +5%/ระดับ</div></div></div>
@@ -632,6 +643,11 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
   if(m.type==="tpick"){body=tpickHTML(m.id);foot=false;}
   if(m.type==="fplan"){body=fplanHTML(m.id);foot=false;}
   if(m.type==="hang"){body=hangHTML(m.id);}
+  if(m.type==="camplv"){foot=false;body=campLvHTML();}
+  if(m.type==="loan"){foot=false;body=`<h2>เงินกู้ด่วน</h2><div class="loanbox px"><p>ลูกน้องหมวกทองยื่นนามบัตรสีทองมาให้ "เงินด่วน ไม่ต้องค้ำ ไม่ต้องรอ"</p></div>
+    <div class="kv-row"><span>ยืม</span><b class="num pos">${fmt(LOAN_AMT)}</b></div><div class="kv-row"><span>ดอกเบี้ย</span><b class="num neg">10% ทุก 4 สัปดาห์ (ทบต้น)</b></div><div class="kv-row"><span>ผลข้างเคียง</span><b class="warnt">พวกหมวกกันน็อกจะมาท้าที่ตลาดบ่อยขึ้น</b></div>
+    <p class="meta">คืนได้ทั้งก้อนที่หน้าการเงินเมื่อมีเงินพอ · ครูแดง: "กู้เงินพวกนี้ ปู่ชัยเคยเจ็บมาแล้วนะ"</p>
+    <div class="row2"><button class="btn" data-act="closeModal">ไม่เอาดีกว่า</button><button class="btn red" data-act="loanyes">กู้ ${fmt(LOAN_AMT)}</button></div>`;}
   if(m.type==="campres"){foot=false;const a=CAMP_ACTIONS[m.k];const C=CFX[m.k];body=`<div class="campres ${m.skip?"skip":""}">${C?`<div class="cfxwrap" data-act="cfxskip" role="button" aria-label="ข้ามฉาก"><canvas width="320" height="180" data-campfx="${m.k}"></canvas><span class="cfxcap">${esc(C.cap)}</span><i class="cfxbar"></i></div>`:""}
    <div class="cr-res"><h2>${esc(a.name)}</h2><p class="cr-note">${esc(m.note)}</p>${a.cost?`<p class="meta">ใช้เงิน ${fmt(a.cost)}</p>`:""}<div class="mfoot"><button class="btn primary" data-act="closeModal">เยี่ยม!</button></div></div></div>`;}
   if(m.type==="endwarn"){foot=false;body=`<h2>จบสัปดาห์เลยไหม?</h2><ul class="mlist">${m.todo.map(t=>`<li>${t}</li>`).join("")}</ul><p class="meta">ข้ามได้ ไม่มีโทษ แต่อาจเสียโอกาสในสัปดาห์นี้</p><div class="mfoot"><button class="btn ghost" data-act="closeModal">กลับไปทำต่อ</button><button class="btn primary" data-act="endgo">จบสัปดาห์เลย</button></div>`;}
@@ -1081,9 +1097,14 @@ const ACT={
   tipnext:()=>{UI.tipIdx++;render();},hideguide:()=>{G.guideHidden=G.week;save();render();},
   tipact:d=>{if(d.k==="setrest"||d.k==="setprep"){ACT.tab({v:"train"});if(!trLocked(G.F[d.id])){UI.modal={type:"tpick",id:d.id};render();}}
     else if(d.k==="tab"&&d.sub){UI.csub=d.sub;ACT.tab({v:d.v});}
-    else if(d.k==="fighter")ACT.fighter({id:d.id,v:d.v});else if(d.k==="tab")ACT.tab({v:d.v});else if(d.k==="campacts")ACT.campacts();else if(d.k==="endweek")ACT.endweek();},
+    else if(d.k==="fighter")ACT.fighter({id:d.id,v:d.v});else if(d.k==="tab")ACT.tab({v:d.v});else if(d.k==="campacts")ACT.campacts();else if(d.k==="loan")ACT.loan();else if(d.k==="endweek")ACT.endweek();},
   newsoff:()=>{UI.newsWeek=G.week;const el=document.querySelector(".newspop");if(el)el.remove();},
   hang:d=>{UI.modal={type:"hang",id:d.id};render();},
+  gofac:()=>{UI.modal=null;UI.csub="fac";ACT.tab({v:"camp"});},
+  camplv:()=>{UI.modal={type:"camplv"};render();},
+  loan:()=>{if(!loanOk(G)){toast(G.loan>0?"ยังมีเงินกู้ค้างอยู่":"ยังไม่ถึงขั้นต้องกู้");return;}UI.modal={type:"loan"};render();},
+  loanyes:()=>{if(!takeLoan(G))return;UI.modal=null;save();AU.sfx("coin");playScene([{n:"npc",who:"ลูกน้องหมวกทอง",t:"ขอบคุณที่ใช้บริการครับเฮีย ครบสี่อาทิตย์ดอกขึ้นนะ เดี๋ยวพวกเราแวะไปเยี่ยมแถวตลาดบ่อย ๆ"},{n:"coach",t:"…เอาเถอะ ได้เงินมาแล้วก็รีบหาทางคืน อย่าให้มันพอกหางหมู"}],()=>render(),{bg:"food",look:"casual"});},
+  repayloan:()=>{if(repayLoan(G)){save();AU.sfx("level");toast("คืนเงินกู้หมวกทองครบแล้ว หายใจโล่ง");render();}},
   advice:d=>{UI.modal={type:"advice",id:d.id};render();},
   mastersOpen:()=>{UI.modal={type:"masters"};render();},
   hiremaster:d=>{if(hireMaster(G,d.id,d.v)){AU.sfx("level");UI.modal=null;save();toast(`${G.F[d.id].name}ได้เรียนกับ${MASTERS[d.v].name} · แต้มสกิล +1`);}},

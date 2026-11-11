@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.32.0";
+const VERSION="1.33.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -265,7 +265,10 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
     if(skReady(f))T.push({p:6,t:`${f.name} has ${f.sp} skill point(s), go pick a skill`,act:{k:"fighter",id:f.id,v:"skill",label:"Pick skills"}});
     if(f.plan.intensity==="heavy"&&f.fatigue>50)T.push({p:5,t:`${f.name}: long stretch of hard training, watch for injuries`});}
   if(!G.bookings.some(b=>G.F[b.a].camp==="player")&&G.offers.length)T.push({p:5,t:"No fights scheduled. Coach has checked the offers; colors show which are easy or risky",act:{k:"tab",v:"fights",label:"See offers"}});
-  if(weeksLeft()<=6){if(weeksLeft()<=3||G.week%3===0)T.push({p:10,t:`⚠ At this rate, money runs out in about ${weeksLeft()} weeks! Take fights, teach special classes, or cut wages`,act:{k:"tab",v:"fights",label:"See fights"}});}
+  if(G.loan>0)T.push({p:G.cash>=G.loan?8:4,t:`Still owe the Gold Helmet loan ${fmt(G.loan)} Interest grows 10% every 4 weeks, and they'll hang around the market more often.${G.cash>=G.loan?" You have enough to repay it now":""}`,act:{k:"tab",v:"camp",label:"Go to finance"}});
+  if(loanOk(G))T.push({p:11,t:"There won't be enough money soon. If you're truly desperate there's a quick loan, but Coach hates it: steep interest, and the helmet gang will cause trouble",act:{k:"loan",label:"See quick loan"}});
+  if(weeksLeft()<=6){if(true)T.push({p:10,t:`⚠ At this rate, money runs out in about ${weeksLeft()} weeks! Take fights, teach special classes, or cut wages`,act:{k:"tab",v:"fights",label:"See fights"}});}
+  else if(weeksLeft()<=10)T.push({p:7,t:`Coach's heads-up: at this income, the money runs out in about ${weeksLeft()} weeks. Take more fights or check the mail for money waiting`,act:{k:"tab",v:"fights",label:"See offers"}});
   else if(weeklyNet(G)<0){const full=studentDemand(G)>studentCap(G);T.push({p:6,t:full?`Spending exceeds income by ${fmt(-weeklyNet(G))}/wk. More people want to learn than we can hold; hiring an assistant coach or expanding the class yard brings more money`:`Spending exceeds income by ${fmt(-weeklyNet(G))}/wk. Try a special class or more fights`,act:full?{k:"tab",v:"camp",sub:"staff",label:"Hire an assistant coach"}:{k:"campacts",label:"Choose a camp activity"}});}
   if(G.cash<0)T.push({p:10,t:`In the red for ${G.negWeeks} weeks. In the red 4 weeks and below ฿10,000, the camp goes bankrupt`});
   if(studentDemand(G)>studentCap(G)+2)T.push({p:5,t:`Classes are full and ${studentDemand(G)-studentCap(G)} more people want to join. Upgrading the class yard holds 3 more each level`,act:{k:"tab",v:"camp",sub:"fac",label:"Upgrade the class yard"}});
@@ -440,10 +443,10 @@ function offersHTML(){const mine=G.bookings.filter(b=>G.F[b.a].camp==="player").
        <span class="pill ${b.week===G.week?"red":"gold"}">${b.week===G.week?"This week":`${b.week-G.week} wk`}</span></div><div class="bk-btns">${b.planSet?`<button class="btn sm done" data-act="fplan" data-id="${b.id}">✓ Plan: ${PLANS[b.plan||"balanced"].name}</button>`:`<button class="btn sm red" data-act="fplan" data-id="${b.id}">Set fight plan</button>`}${scouted(o.id)?`<button class="btn sm done" disabled>${G.F.rin.camp==="player"?"✓ Rin analyzed":"✓ Scouted"}</button>`:`<button class="btn sm" data-act="scout" data-v="${o.id}" ${G.cash<scoutCost()?"disabled":""}>${scoutLabel()}</button>`}</div></div>`;}).join("")}</div></section>`:""}
    <section class="px card"><div class="card-h"><h3>This week's offers</h3>${G.losses&&G.losses.length?`<button class="btn sm" data-act="lossrev">Review the loss</button>`:`<span class="legend"><i class="dot green"></i>Weaker <i class="dot gold"></i>Even <i class="dot red"></i>Stronger</span>`}</div><div class="list">${
      [...G.offers].sort((x,y)=>(y.rv||y.beast||y.hard||y.tier==="special"?1:0)-(x.rv||x.beast||x.hard||x.tier==="special"?1:0)).map(o=>{const op=G.F[o.b],me=G.F[o.a];const A=adviseCached(o.a,o.b,3);const v=verdictOf(A.bestRate);
-       const sp=o.rv?["rv","Grudge match · the whole province is watching"]:o.beast?["beast",QK[o.beast].grp==="rooster"?"Wild bout · Human vs fighting rooster":"Wild bout · Bull wrestling, Muay Thai edition"]:o.tier==="special"?["sp","Special cross-division bout"]:o.hard?["hard","Punch up · purse ×1.5"]:null;
+       const sp=o.rv?["rv","Grudge match · the whole province is watching"]:o.beast?["beast",QK[o.beast].grp==="rooster"?"Wild bout · Human vs fighting rooster":"Wild bout · Bull wrestling, Muay Thai edition"]:o.tier==="special"?["sp","Special cross-division bout"]:o.hard?["hard","Punch up · purse ×1.5"]:o.fair?["fair",o.cross?"Temple fair · cross-division star!":"Temple fair bout · not ranked"]:null;
        return `<div class="item offer ${v.c} ${sp?"spx "+sp[0]:""}">${sp?`<span class="ribbon">${sp[1]}</span>`:""}<button class="oxbtn" data-act="declo" data-v="${o.id}" aria-label="Decline this offer">✕</button><div class="l"><span class="vdot ${v.c}" aria-label="${v.t}"></span>${faceImg(op,"sm")}<div>
        <div class="t">${esc(me.name)} vs ${esc(op.name)}</div>
-       <div class="meta">Wk ${o.week} · ${TIER[o.tier].name}${o.beast?" · off the record":""} · ${styleOf(op.a)}${op.camp==="rival"?" · Golden Tiger":""}${personaOf(op)?` · ${personaOf(op).tag}`:""}</div>${h2hText(op)?`<div class="meta goldt">${h2hText(op)}</div>`:""}
+       <div class="meta">Wk ${o.week} · ${TIER[o.tier].name}${o.beast?" · off the record":""}${o.fair?" · not ranked · purse paid by mail":""} · ${styleOf(op.a)}${op.camp==="rival"?" · Golden Tiger":""}${personaOf(op)?` · ${personaOf(op).tag}`:""}</div>${h2hText(op)?`<div class="meta goldt">${h2hText(op)}</div>`:""}
        <div class="meta">Purse ${fmt(o.lose)} · <b class="goldt">win +${fmt(o.win-o.lose)}</b> · <b class="${v.c}t">${v.t}</b>${ovr(op.a)-ovr(me.a)>.4?` · <b class="goldt">Win for bonus points/fame</b>`:""}</div>
        </div></div>
        <div class="obtns3"><button class="btn sm" data-act="consider" data-v="${o.id}">${scouted(o.b)?"Opponent info":"Scout"}</button>${coachOn()?`<button class="btn sm" data-act="otip" data-v="${o.id}">Coach's advice</button>`:""}<button class="btn sm gold" data-act="accept" data-v="${o.id}">Accept</button></div></div>`;}).join("")||`<p class="lead">${G.bookings.length?"Fight booked. New offers arrive next week":"No offers (injured, or season over)"}</p>`}</div></section>`;}
@@ -456,17 +459,24 @@ function rankHTML(){const st=stageOf(G.week),cut=st==="local"?4:st==="district"?
    </tbody></table></div></section>${calendarHTML()}`;}
 
 function peopleHTML(){const met=CANON_IDS.map(id=>G.F[id]).filter(f=>f.met);
-  return `<div class="card-h"><p class="meta">Hang out once a week · once you're close, she'll text you now and then</p>${G.freeUsed?"<span class=\"pill\">Free time: used</span>":"<span class=\"pill gold\">Free time: 1 left</span>"}</div>
+  return `<div class="card-h"><p class="meta">Spend time with anyone, once each per week · Once you're close, they'll sometimes text you first</p>${(()=>{const n=met.filter(f=>f.hangWk!==G.week).length;return n?`<span class="pill gold">Free: ${n} left</span>`:"<span class=\"pill\">Seen everyone</span>";})()}</div>
    <div class="plist">${met.map(f=>`<section class="px pcard"><button class="pthumb" data-act="fighter" data-id="${f.id}" data-v="rel" aria-label="View profile of ${esc(f.name)}"><img src="${stand(f.id,"casual")}" alt="" loading="lazy"></button>
      <div class="pbody"><div class="pnm"><b class="nm">${esc(f.name)}</b><span class="meta">${f.camp==="player"?"Sirichai Camp":f.camp==="rival"?"Golden Tiger":"Independent"}${G.romance===f.id?" · Sweetheart ♥":G.promise&&G.promise[f.id]!=null?" · Promised ♡":""}</span></div>${hearts(f.bond)}
-      <div class="pbtns"><button class="btn sm" data-act="fighter" data-id="${f.id}" data-v="rel">Profile</button><button class="btn sm primary" data-act="hang" data-id="${f.id}" ${G.freeUsed?"disabled":""}>Hang out</button><button class="btn sm gold giftb" data-act="giftpick" data-id="${f.id}" ${f.giftWeek===G.week?"disabled":""}>${PIX.gift}<span>${f.giftWeek===G.week?"Given":"Gift"}</span></button><button class="btn sm chatb" data-act="chat" data-id="${f.id}" ${canChat(f)?"":"disabled"}>${CHAT_PX}<span>${canChat(f)?"New chat":(f.bond||0)<CHAT_BOND?"Not close yet":"No messages"}</span>${canChat(f)?'<i class="dot"></i>':""}</button></div></div></section>`).join("")}</div>`;}
+      <div class="pbtns"><button class="btn sm" data-act="fighter" data-id="${f.id}" data-v="rel">Profile</button><button class="btn sm primary" data-act="hang" data-id="${f.id}" ${f.hangWk===G.week?"disabled":""}>Hang out</button><button class="btn sm gold giftb" data-act="giftpick" data-id="${f.id}" ${f.giftWeek===G.week?"disabled":""}>${PIX.gift}<span>${f.giftWeek===G.week?"Given":"Gift"}</span></button><button class="btn sm chatb" data-act="chat" data-id="${f.id}" ${canChat(f)?"":"disabled"}>${CHAT_PX}<span>${canChat(f)?"New chat":(f.bond||0)<CHAT_BOND?"Not close yet":"No messages"}</span>${canChat(f)?'<i class="dot"></i>':""}</button></div></div></section>`).join("")}</div>`;}
 function hangHTML(id){const f=G.F[id];const pref=k=>f.know["act_"+k]==="like"?"<i class=\"likeb\">Likes</i>":f.know["act_"+k]==="dislike"?"<i class=\"disb\">Dislikes</i>":"";
-  return `<h2>Time with ${esc(f.name)}</h2><p class="meta">Choose where to go together</p><div class="acts">${Object.entries(ACTIVITIES).filter(([k,a])=>!a.campOnly||f.camp==="player").map(([k,a])=>`<button class="actbtn" data-act="date" data-id="${f.id}" data-v="${k}" ${G.freeUsed||G.cash<a.cost?"disabled":""}><b>${a.name}${pref(k)}</b><small>${a.cost?fmt(a.cost):"Free"}</small></button>`).join("")}</div>`;}
+  return `<h2>Time with ${esc(f.name)}</h2><p class="meta">Choose where to go together</p><div class="acts">${Object.entries(ACTIVITIES).filter(([k,a])=>!a.campOnly||f.camp==="player").map(([k,a])=>`<button class="actbtn" data-act="date" data-id="${f.id}" data-v="${k}" ${f.hangWk===G.week||G.cash<a.cost?"disabled":""}><b>${a.name}${pref(k)}</b><small>${a.cost?fmt(a.cost):"Free"}</small></button>`).join("")}</div>`;}
+// v1.33: what each camp level brings, so upgrades feel like a goal
+function campLvHTML(){const lv=campLevel(G),t=facTotal(G),need=[0,0,5,13];
+  const unlock=L=>[...Object.entries(FACILITIES).filter(([k,F])=>F.req&&F.req.lv===L).map(([k,F])=>F.name),...Object.entries(STAFF).filter(([k,S])=>S.req&&S.req.lv===L).map(([k,S])=>S.name)];
+  return `<h2>Camp level</h2><p class="meta">Any upgrade counts; reach the total and the camp levels up · Now ${t} upgrades</p><div class="clv">${[1,2,3].map(L=>{const u=unlock(L);return `<div class="clvrow px ${L===lv?"now":L<lv?"done":"lock"}" style="background-image:linear-gradient(90deg,rgba(20,16,32,.94),rgba(20,16,32,.55)),url(${ASSET}gym${L}.webp)">
+    <div class="clvh"><b>Lv.${L} ${CAMP_LV_NAME[L]}</b><span class="pill ${L<=lv?"green":""}">${L<lv?"Done":L===lv?"Right now ":`Needs ${need[L]} upgrades (${need[L]-t})`}</span></div>
+    <ul><li>Class fees ${L>1?`+${(L-1)*20}%`:"Normal"}</li><li>People wanting to join +${L*2}</li><li>Assistant coach slots: ${1+L}</li>${L>1?"<li>Gym gets a makeover</li>":""}${u.length?`<li class="goldt">Unlocks: ${u.join(", ")}</li>`:""}</ul></div>`;}).join("")}</div>
+   <button class="btn primary" data-act="gofac">Go to camp upgrades</button>`;}
 function campHTML(){const inc=classIncome(G),up=upkeep(G),wg=wages(G),lv=campLevel(G),cs=UI.csub||"money";
   const recs=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
   const dots=(n,m)=>`<span class="pips">${Array.from({length:m},(_,i)=>`<i class="${i<n?"on":""}"></i>`).join("")}</span>`;
-  return `<section class="px card camphead" style="background-image:linear-gradient(90deg,rgba(20,16,32,.95),rgba(20,16,32,.6)),url(${ASSET}${gymBg()})"><div><span class="pill gold">Camp Lv.${lv}</span><h3>${CAMP_LV_NAME[lv]}</h3>
-    <p class="meta">Total upgrades ${facTotal(G)} levels · ${lv<3?`${lv===1?4-facTotal(G):10-facTotal(G)} levels to reach Lv.${lv+1} (the gym gets a makeover)`:"Max level for the demo"}</p></div></section>
+  return `<section class="px card camphead" style="background-image:linear-gradient(90deg,rgba(20,16,32,.95),rgba(20,16,32,.6)),url(${ASSET}${gymBg()})"><div><button class="pill gold lvbtn" data-act="camplv">Camp Lv.${lv} ▸</button><h3>${CAMP_LV_NAME[lv]}</h3>
+    <p class="meta">Total upgrades ${facTotal(G)} levels · ${lv<3?`${lv===1?5-facTotal(G):13-facTotal(G)} levels to reach Lv.${lv+1} · tap to see what you get`:"Max level for the demo"}</p></div></section>
    <div class="seg subtabs csubs"><button data-act="csub" data-v="money" aria-pressed="${cs==="money"}">Finance</button><button data-act="csub" data-v="staff" aria-pressed="${cs==="staff"}">Coaches & fighters</button><button data-act="csub" data-v="fac" aria-pressed="${cs==="fac"}">Upgrades</button></div>
    ${recruitHTML(recs)}
    <div class="grid g2">
@@ -475,7 +485,8 @@ function campHTML(){const inc=classIncome(G),up=upkeep(G),wg=wages(G),lv=campLev
     <div class="kv-row"><span>Camp upkeep</span><b class="num neg">-${fmt(up)}</b></div>
     <div class="kv-row"><span>Fighter & assistant wages</span><b class="num neg">-${fmt(wg)}</b></div>
     <div class="kv-row"><b>Net</b><b class="num ${weeklyNet(G)<0?"neg":"pos"}">${fmt(weeklyNet(G))}</b></div>
-    <div class="kv-row"><span>Debt ${fmt(G.debt)} · paid every 4 weeks ${fmt(Math.min(5000,G.debt))}</span><button class="btn sm" data-act="paydebt" ${G.cash<10000||G.debt<=0?"disabled":""}>Pay ฿10,000</button></div></section>
+    <div class="kv-row"><span>Debt ${fmt(G.debt)} · paid every 4 weeks ${fmt(Math.min(5000,G.debt))}</span><button class="btn sm" data-act="paydebt" ${G.cash<10000||G.debt<=0?"disabled":""}>Pay ฿10,000</button></div>
+    ${G.loan>0?`<div class="kv-row loanrow"><span>Gold Helmet loan ${fmt(G.loan)} · 10% interest every 4 weeks</span><button class="btn sm gold" data-act="repayloan" ${G.cash<G.loan?"disabled":""}>Repay all</button></div>`:loanOk(G)?`<div class="kv-row loanrow"><span>Cash is running out · a quick loan is available</span><button class="btn sm red" data-act="loan">See loan</button></div>`:""}</section>
    <section class="px card cpane ${cs==="staff"?"on":""}"><h3>Coaches & students</h3>
     <div class="kv-row"><span>Want to join ${studentDemand(G)}· capacity ${studentCap(G)}</span><b class="${studentDemand(G)>studentCap(G)?"goldt":""}">${studentDemand(G)>studentCap(G)?"Over!":"Just right"}</b></div>
     <div class="item nw"><div class="l"><img class="face sm" src="${faceSrc("coach")}" alt=""><div><div class="t">Coach Daeng Lv.${G.fac.daeng}</div><div class="meta">Students +${(G.fac.daeng-1)*2} · fees +12%/lv · training +5%/lv</div></div></div>
@@ -632,6 +643,11 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
   if(m.type==="tpick"){body=tpickHTML(m.id);foot=false;}
   if(m.type==="fplan"){body=fplanHTML(m.id);foot=false;}
   if(m.type==="hang"){body=hangHTML(m.id);}
+  if(m.type==="camplv"){foot=false;body=campLvHTML();}
+  if(m.type==="loan"){foot=false;body=`<h2>Quick loan</h2><div class="loanbox px"><p>A Gold Helmet goon hands over a gold business card: "Quick cash. No guarantor. No waiting."</p></div>
+    <div class="kv-row"><span>Borrow</span><b class="num pos">${fmt(LOAN_AMT)}</b></div><div class="kv-row"><span>Interest</span><b class="num neg">10% every 4 weeks (compounding)</b></div><div class="kv-row"><span>Side effect</span><b class="warnt">The helmet gang will challenge you at the market more often</b></div>
+    <p class="meta">Repay it all at once on the finance page when you have the cash · Coach Daeng: "Grandpa Chai got burned by these people"</p>
+    <div class="row2"><button class="btn" data-act="closeModal">Better not</button><button class="btn red" data-act="loanyes">Borrow ${fmt(LOAN_AMT)}</button></div>`;}
   if(m.type==="campres"){foot=false;const a=CAMP_ACTIONS[m.k];const C=CFX[m.k];body=`<div class="campres ${m.skip?"skip":""}">${C?`<div class="cfxwrap" data-act="cfxskip" role="button" aria-label="Skip scene"><canvas width="320" height="180" data-campfx="${m.k}"></canvas><span class="cfxcap">${esc(C.cap)}</span><i class="cfxbar"></i></div>`:""}
    <div class="cr-res"><h2>${esc(a.name)}</h2><p class="cr-note">${esc(m.note)}</p>${a.cost?`<p class="meta">Costs ${fmt(a.cost)}</p>`:""}<div class="mfoot"><button class="btn primary" data-act="closeModal">Great!</button></div></div></div>`;}
   if(m.type==="endwarn"){foot=false;body=`<h2>End the week now?</h2><ul class="mlist">${m.todo.map(t=>`<li>${t}</li>`).join("")}</ul><p class="meta">You can skip without penalty, but you might miss chances this week</p><div class="mfoot"><button class="btn ghost" data-act="closeModal">Go back</button><button class="btn primary" data-act="endgo">End week now</button></div>`;}
@@ -1081,9 +1097,14 @@ const ACT={
   tipnext:()=>{UI.tipIdx++;render();},hideguide:()=>{G.guideHidden=G.week;save();render();},
   tipact:d=>{if(d.k==="setrest"||d.k==="setprep"){ACT.tab({v:"train"});if(!trLocked(G.F[d.id])){UI.modal={type:"tpick",id:d.id};render();}}
     else if(d.k==="tab"&&d.sub){UI.csub=d.sub;ACT.tab({v:d.v});}
-    else if(d.k==="fighter")ACT.fighter({id:d.id,v:d.v});else if(d.k==="tab")ACT.tab({v:d.v});else if(d.k==="campacts")ACT.campacts();else if(d.k==="endweek")ACT.endweek();},
+    else if(d.k==="fighter")ACT.fighter({id:d.id,v:d.v});else if(d.k==="tab")ACT.tab({v:d.v});else if(d.k==="campacts")ACT.campacts();else if(d.k==="loan")ACT.loan();else if(d.k==="endweek")ACT.endweek();},
   newsoff:()=>{UI.newsWeek=G.week;const el=document.querySelector(".newspop");if(el)el.remove();},
   hang:d=>{UI.modal={type:"hang",id:d.id};render();},
+  gofac:()=>{UI.modal=null;UI.csub="fac";ACT.tab({v:"camp"});},
+  camplv:()=>{UI.modal={type:"camplv"};render();},
+  loan:()=>{if(!loanOk(G)){toast(G.loan>0?"You still have a loan outstanding":"Not desperate enough to borrow yet");return;}UI.modal={type:"loan"};render();},
+  loanyes:()=>{if(!takeLoan(G))return;UI.modal=null;save();AU.sfx("coin");playScene([{n:"npc",who:"Gold Helmet's goon",t:"Thanks for your business, boss. Interest goes up every four weeks. We'll drop by the market to visit often"},{n:"coach",t:"…Fine. You've got the money, now find a way to pay it back fast before it snowballs"}],()=>render(),{bg:"food",look:"casual"});},
+  repayloan:()=>{if(repayLoan(G)){save();AU.sfx("level");toast("Gold Helmet loan fully repaid. You can breathe again");render();}},
   advice:d=>{UI.modal={type:"advice",id:d.id};render();},
   mastersOpen:()=>{UI.modal={type:"masters"};render();},
   hiremaster:d=>{if(hireMaster(G,d.id,d.v)){AU.sfx("level");UI.modal=null;save();toast(`${G.F[d.id].name} learned from ${MASTERS[d.v].name} · skill point +1`);}},

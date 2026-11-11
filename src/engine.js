@@ -563,9 +563,16 @@ function genOffers(G){
       if(o&&o.camp==="rival"&&!o.injury&&!isBooked(G,o.id,wk)&&!myB.some(x=>Math.abs(x-wk)<=1)&&!G.offers.some(x=>x.b===RV&&x.a===f.id)){const tier=eligible(G,f)&&eligible(G,o)&&wk<=40?"district":"special";
         G.offers.push({id:`o${G.week}_${f.id}_rv`,a:f.id,b:o.id,week:wk,tier,rv:1,win:Math.round(TIER[tier].win*1.6/100)*100,lose:Math.round(TIER[tier].lose*1.4/100)*100});}}
   }
+  // v1.33: temple-fair bouts every other week: off the ranking, paid later by mail, now and then a cross-division star
+  if(G.week>=4&&G.week<=46&&G.week%2===0){const R=roster(G).filter(f=>!f.injury);if(R.length){const f=R[Math.floor(rng()*R.length)];
+    const myB=G.bookings.filter(b=>b.a===f.id).map(b=>b.week);const wk=[G.week+1,G.week+2,G.week+3].find(w=>!myB.some(x=>Math.abs(x-w)<=1)&&!G.offers.some(x=>x.a===f.id&&x.week===w));
+    if(wk){let o=null,cross=false;const X=G.F[CROSS_OF[f.id]];
+      if(G.week>=8&&X&&X.camp!=="player"&&!X.injury&&!isBooked(G,X.id,wk)&&rng()<.35){o=X;cross=true;}
+      else{const pool=Object.values(G.F).filter(x=>x.div===f.div&&x.camp!=="player"&&!x.canon&&!x.injury&&!isBooked(G,x.id,wk)).map(x=>[x,Math.abs(ovr(x.a)-ovr(f.a)-.1)]).sort((a,b)=>a[1]-b[1]).slice(0,4);if(pool.length)o=pool[Math.floor(rng()*pool.length)][0];}
+      if(o){const m=(1+Math.min(G.rep,50)/80)*(cross?1.6:1);G.offers.push({id:`o${G.week}_${f.id}_fair`,a:f.id,b:o.id,week:wk,tier:"exhibition",fair:1,cross:cross?1:0,win:Math.round(TIER.exhibition.win*m/100)*100,lose:Math.round(TIER.exhibition.lose*m/100)*100});}}}}
 }
 function acceptOffer(G,oid){const o=G.offers.find(x=>x.id===oid);if(!o)return;
-  G.bookings.push({id:"b"+oid,a:o.a,b:o.b,week:o.week,tier:o.tier,rounds:3,win:o.win,lose:o.lose});
+  G.bookings.push({id:"b"+oid,a:o.a,b:o.b,week:o.week,tier:o.tier,rounds:3,win:o.win,lose:o.lose,...(o.fair?{fair:1,cross:o.cross}:{})});
   G.offers=G.offers.filter(x=>!(x.a===o.a&&Math.abs(x.week-o.week)<=1)&&!(x.a===o.a&&x.b===o.b));}
 
 function applyResult(G,F,booking){
@@ -586,7 +593,7 @@ function applyResult(G,F,booking){
     const upset=res==="W"&&ovr(op.a)-ovr(me.a)>.4;
     if(!off&&booking.tier!=="exhibition"&&booking.tier!=="special"&&booking.tier!=="final"){const rk=G.rank[me.div][me.id];if(rk){rk.pts+=res==="W"?3+(upset?1:0):res==="D"?1:0;rk[res==="W"?"w":res==="L"?"l":"d"]++;}}
     if(me.camp==="player"){
-      const W=booking.win||tier.win,Lo=booking.lose||tier.lose;const pay=res==="W"?W:res==="D"?(W+Lo)/2:Lo;G.cash+=pay;G.wkFight=(G.wkFight||0)+pay;
+      const W=booking.win||tier.win,Lo=booking.lose||tier.lose;const pay=res==="W"?W:res==="D"?(W+Lo)/2:Lo;if(booking.fair){G.fairPay=G.fairPay||[];G.fairPay.push({amt:pay,op:op.name,res});}else{G.cash+=pay;G.wkFight=(G.wkFight||0)+pay;}
       G.rep=Math.max(0,G.rep+(res==="W"?tier.rep*(upset?1.5:1):res==="L"?0:.5)/(1+Math.max(0,G.rep-25)/25));
       if(res==="W"&&!G.flags.firstWin)G.flags.firstWin=me.id;
       if(res==="L"&&!G.flags.firstLoss)G.flags.firstLoss=me.id;
@@ -681,6 +688,7 @@ function weekFinish(G){if(G.rep>55)G.rep=55+(G.rep-55)*(.96+(G.fac.hall||0)*.01)
   const inc=classIncome(G),up=upkeep(G),wg=wages(G);
   G.cash+=inc-up-wg;let debtPay=0;
   if(G.week%4===0&&G.debt>0){debtPay=Math.min(5000,G.debt);G.cash-=debtPay;G.debt-=debtPay;}
+  if(G.loan>0&&G.week%4===0)G.loan=Math.round(G.loan*(1+LOAN_RATE)/100)*100; // v1.33: the helmet gang's quick cash grows 10% every 4 weeks
   for(const f of roster(G))if(G.cash>=0)f.trust=clamp(f.trust+.5,0,100);
   G.negWeeks=G.cash<0?G.negWeeks+1:0;
   const prog=(()=>{if(!G.snap){G.snap={week:G.week,a:Object.fromEntries(roster(G).map(f=>[f.id,{...f.a}]))};return null;}
@@ -716,5 +724,10 @@ function hireMaster(G,fid,school){const f=G.F[fid],M=MASTERS[school];if(!f||!M||
 const SHOW_COST=25000;
 function hostShow(G){const st=stageOf(G.week);if(G.cash<SHOW_COST||G.week<10||G.flags["show_"+st])return false;G.cash-=SHOW_COST;G.flags["show_"+st]=true;
   G.rep+=3;G.camp.beauty=Math.min(10,G.camp.beauty+1);roster(G).forEach(f=>f.morale=Math.min(100,f.morale+8));return true;}
+// v1.33: quick loan when cash runs dry; the helmet gang lends, and keeps coming round while it is unpaid
+const LOAN_AMT=20000,LOAN_RATE=.1;
+const loanOk=G=>!(G.loan>0)&&G.cash<3000&&!G.ended;
+function takeLoan(G){if(!loanOk(G))return false;G.loan=LOAN_AMT;G.cash+=LOAN_AMT;G.loanN=(G.loanN||0)+1;G.gang=G.gang||{st:0,next:0};G.gang.next=Math.min(G.gang.next||99,G.week+2);return true;}
+function repayLoan(G){if(!(G.loan>0)||G.cash<G.loan)return false;G.cash-=G.loan;G.loan=0;return true;}
 function clearDebt(G){if(G.debt<=0||G.cash<G.debt)return false;G.cash-=G.debt;G.debt=0;G.flags.debtCleared=true;G.rep+=2;return true;}
-if(typeof module!=="undefined")module.exports={cornerOdds,cloneFight,trainWeek,passiveMods,skillReqs,skillBlock,hasTree,DIFF,studentCap,studentDemand,studentFee,growStudents,storyTop4,RIVAL_OF,LEADS,upkeep,campActLocked,equipped,toggleEquip,MAX_EQUIP,roundBegin,fightEx,roundDone,roundFinish,useSkill,fightSkills,SKILL_KIND_NAME,fixSave,STAFF,hireStaff,fireStaff,staffSlots,staffLocked,facLocked,mainStyle,mastery,styleVal,STYLE_NAME,STYLE_ATTRS,MASTERY_AT,aiCorner,FACILITIES,SIGNATURE,hasSignature,counterPreset,oppTop,careNeeds,applyCare,throwTowel,CARE,MASTERS,hireMaster,hostShow,clearDebt,SHOW_COST,TAC,setTactics,finishBracket,mulberry32,newGame,weekTrain,weekFinish,genOffers,acceptOffer,buyFacility,upgradeDaeng,students,campLevel,newFight,fightRound,quickFight,applyResult,standings,roster,ovr,styleOf,stageOf,finishFinal,condition,ATTRS,isBooked,PRESETS,CANON,advise,doCampAction,learnSkill,SKILLS,SCHOOLS,campLook,newSeason};
+if(typeof module!=="undefined")module.exports={takeLoan,repayLoan,loanOk,LOAN_AMT,cornerOdds,cloneFight,trainWeek,passiveMods,skillReqs,skillBlock,hasTree,DIFF,studentCap,studentDemand,studentFee,growStudents,storyTop4,RIVAL_OF,LEADS,upkeep,campActLocked,equipped,toggleEquip,MAX_EQUIP,roundBegin,fightEx,roundDone,roundFinish,useSkill,fightSkills,SKILL_KIND_NAME,fixSave,STAFF,hireStaff,fireStaff,staffSlots,staffLocked,facLocked,mainStyle,mastery,styleVal,STYLE_NAME,STYLE_ATTRS,MASTERY_AT,aiCorner,FACILITIES,SIGNATURE,hasSignature,counterPreset,oppTop,careNeeds,applyCare,throwTowel,CARE,MASTERS,hireMaster,hostShow,clearDebt,SHOW_COST,TAC,setTactics,finishBracket,mulberry32,newGame,weekTrain,weekFinish,genOffers,acceptOffer,buyFacility,upgradeDaeng,students,campLevel,newFight,fightRound,quickFight,applyResult,standings,roster,ovr,styleOf,stageOf,finishFinal,condition,ATTRS,isBooked,PRESETS,CANON,advise,doCampAction,learnSkill,SKILLS,SCHOOLS,campLook,newSeason};

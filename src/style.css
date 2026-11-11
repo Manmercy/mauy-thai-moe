@@ -1303,3 +1303,17 @@ body.hasnews .rinnote+.homegrid{margin-top:0}
 .rclock{font:700 15px/1 var(--f-pixel,monospace);color:#fff;letter-spacing:.5px}
 .rcbar{display:block;width:56px;height:5px;margin:2px auto 0;background:var(--bg2);box-shadow:0 0 0 1px #000;position:relative}
 .rcbar::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--v);background:var(--gold)}
+
+/* v1.33 loan, camp levels, fair offers */
+.lvbtn{cursor:pointer;border:0;font:inherit}
+.loanrow span{color:var(--warn)}
+.loanbox{display:flex;gap:10px;align-items:center;padding:8px;background:var(--bg2);margin-bottom:8px}.loanbox p{margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.clv{display:grid;gap:8px;margin:8px 0}
+.clvrow{padding:8px 10px;background-size:cover;background-position:center}
+.clvrow.now{box-shadow:inset 0 0 0 3px var(--gold)}.clvrow.lock{filter:saturate(.4)}
+.clvh{display:flex;justify-content:space-between;gap:6px;align-items:center}
+.clvrow ul{margin:4px 0 0;padding-left:18px;font-size:12.5px}
+.item.offer.spx.fair{box-shadow:inset 0 0 0 3px #b77cff,0 0 0 2px #000,0 0 12px rgba(183,124,255,.4);background:linear-gradient(135deg,rgba(183,124,255,.18),transparent 55%),var(--surface);animation:none}
+.spx.fair .ribbon{background:#b77cff;color:#1d0b33}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:6px}.acts .actbtn{margin:0;min-height:0;padding:7px 8px}.acts .actbtn b{font-size:13px;line-height:1.25}
