@@ -1453,7 +1453,7 @@ const CARDS={
  f_r1:{c:"fah",r:"R",t:"แวมไพร์ริมแม่น้ำ",hint:"สนิทกับฟ้าถึงขั้นคนสนิท",bg:"river",need:G=>(G.F.fah.bond||0)>=40,steps:[
   {n:"nar",t:"คืนฮาโลวีน ฟ้าใส่ฟันแวมไพร์พลาสติกนั่งเล่นน้ำที่ท่าน้ำ"},{n:"fah",f:"happy",l:"casual",t:"ตอนเด็ก ๆ ไม่มีใครจัดวันเกิดให้ฟ้าเลย ฟ้าเลยแต่งเป็นผีเอง ฉลองเอง!"},
   {n:"fah",f:"flustered",l:"casual",t:"…ปีนี้มีคนมานั่งด้วยแล้ว แบบนี้ก็ไม่ต้องแต่งเป็นผีแล้วมั้ง"}]}};
-function cardCheck(G){G.cards=G.cards||{};const got=[];for(const id in CARDS){if(G.cards[id])continue;const C=CARDS[id];try{if(C.need(G)){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};got.push(id);}}catch(e){}}return got;}
+function cardCheck(G){G.cards=G.cards||{};const got=[];for(const id in CARDS){if(G.cards[id])continue;const C=CARDS[id];if(C.g)continue;try{if(C.need(G)){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};got.push(id);G.dust=(G.dust||0)+5;}}catch(e){}}return got;}
 
 // ===== v1.57: when the camp gets rich, funny little disasters eat some of the money =====
 const DRAIN_MIN=70000;
@@ -1474,3 +1474,25 @@ DRAINS.forEach((D,k)=>{
     then:[{inject:G2=>[{n:"nar",t:`จ่ายไป ${fmt(G2._drain)} · ${D.cul(G2)}ไปช่วยงานจนครบ แต่ก็บ่นทั้งสัปดาห์`}]}]});
   EVENTS.push({id:D.id,annual:true,look:"casual",bg:"camp",when:G=>D.need(G)&&drainOk(G,301+k*17),
     steps:[{inject:G=>D.steps(G).concat([{n:"nar",t:`ค่าเสียหายประมาณ ${fmt(drainAmt(G))}`},{choice:[optPay,optHalf(G)]}])}]});});
+
+// ===== v1.58: cards round 2 — gacha cards, stardust (✦), pity, duplicates upgrade then turn to dust =====
+Object.assign(CARDS,{
+ g_kati_n:{g:1,c:"kati",r:"N",t:"ผ้าพันมือตากแดด",bg:"camp",steps:[{n:"nar",t:"ราวตากผ้าหลังค่ายมีผ้าพันมือสีแดงเรียงเป็นแถว กะทิหนีบไม้หนีบทีละอันอย่างตั้งใจ"},{n:"kati",f:"happy",l:"casual",t:"ต้องตากให้แห้งสนิทนะคะ ไม่งั้นจะเหม็นอับ ปู่บอกว่านักมวยที่ดูแลผ้าพันมือไม่ดี ก็ดูแลตัวเองไม่ดี"}]},
+ g_mali_n:{g:1,c:"mali",r:"N",t:"ลูกอมในกระเป๋า",bg:"gym",steps:[{n:"nar",t:"มะลิล้วงกระเป๋ากางเกงมวย หยิบลูกอมออกมาหนึ่งกำมือ แจกทุกคนรอบเวที"},{n:"mali",f:"happy",l:"train",t:"ลูกอมมะขามจากบ้านค่ะ! กินแล้วตาสว่าง ซ้อมต่อได้อีกสามยก… หนูมั่วเอานะ แต่อร่อยจริง!"}]},
+ g_rin_n:{g:1,c:"rin",r:"N",t:"ปากกาสามสี",bg:"gym",steps:[{n:"nar",t:"รินจดสถิติด้วยปากกาสามสี แดงคือพลาด น้ำเงินคือเข้าเป้า เขียวคือ…"},{n:"rin",f:"flustered",l:"casual",t:"เขียวคือช่วงที่คุณยิ้มให้นักมวยค่ะ …ฉันแค่ทดลองดูว่ามันส่งผลต่อผลงานไหม ผลคือส่งค่ะ"}]},
+ g_ploy_n:{g:1,c:"ploy",r:"N",t:"แมวที่ไม่ยอมให้อุ้ม",bg:"river",steps:[{n:"nar",t:"แมวจรตัวหนึ่งเดินผ่าน พลอยนั่งยองลงยื่นมือช้า ๆ แมวสะบัดหน้าหนี"},{n:"ploy",f:"pout",l:"casual",t:"…มันไม่ชอบฉัน ไม่เป็นไร ฉันชินแล้ว คนที่แข็งเกินไปไม่ค่อยมีใครอยากเข้าใกล้หรอก"}]},
+ g_fah_n:{g:1,c:"fah",r:"N",t:"เซลฟี่สามสิบรูป",bg:"fair",steps:[{n:"nar",t:"งานวัด ฟ้ายื่นโทรศัพท์ให้ถ่ายรูปให้ แล้วเปลี่ยนท่าสามสิบท่าในหนึ่งนาที"},{n:"fah",f:"happy",l:"casual",t:"เอารูปที่ฟ้าดูเท่ที่สุด! …ไม่สิ ที่ดูน่ารักที่สุด! …ไม่สิ เอาทุกรูปเลย!"}]},
+ g_kati_sr:{g:1,c:"kati",r:"SR",t:"เข็มขัดในฝันของปู่",bg:"night",steps:[{n:"nar",t:"กะทิเปิดกล่องไม้เก่าใต้เตียงปู่ ข้างในมีภาพวาดดินสอรูปเข็มขัดแชมป์ที่ไม่เคยมีอยู่จริง"},{n:"kati",f:"sad",l:"casual",t:"ปู่วาดไว้ตอนเปิดค่าย บอกว่าวันหนึ่งค่ายนี้จะมีเข็มขัดเส้นนี้ …ปู่ไม่ได้เห็น"},{n:"kati",f:"happy",l:"casual",t:"แต่ผู้จัดการจะพาหนูไปเอามาให้ปู่ดูใช่ไหมคะ ปู่ต้องมองอยู่แน่ ๆ"}]},
+ g_mali_sr:{g:1,c:"mali",r:"SR",t:"จดหมายถึงแม่",bg:"camp",steps:[{n:"nar",t:"มะลิฟุบหลับบนโต๊ะ มีจดหมายเขียนค้างไว้ครึ่งหน้า"},{n:"nar",t:"'แม่จ๋า ที่นี่มีผู้จัดการใจดีมาก ไม่เคยดุ ซื้อขนมให้ ชมหนูทุกครั้งที่ชนะ หนูไม่ได้เหงาแล้วนะแม่…'"},{n:"mali",f:"flustered",l:"casual",t:"(ตื่นขึ้นมา) อ๊ะ! ห้ามอ่านค่ะ!! …อ่านไปถึงไหนแล้วคะ!?"}]},
+ g_rin_sr:{g:1,c:"rin",r:"SR",t:"สมการที่แก้ไม่ได้",bg:"cafe",steps:[{n:"nar",t:"กระดาษบนโต๊ะรินเต็มไปด้วยสมการ บรรทัดสุดท้ายเขียนว่า 'ตัวแปร X = ?'"},{n:"rin",f:"flustered",l:"casual",t:"X คือเหตุผลที่ฉันยังอยู่ค่ายนี้ทั้งที่มีข้อเสนอที่ดีกว่า …ฉันแก้มาสามเดือนแล้วค่ะ"},{n:"rin",f:"happy",l:"casual",t:"แต่พอคุณนั่งตรงนี้ คำตอบก็ชัดขึ้นมาเอง …ไม่ต้องถามนะคะว่าคืออะไร"}]},
+ g_ploy_sr:{g:1,c:"ploy",r:"SR",t:"รูปถ่ายใบเดียวในกระเป๋า",bg:"river",steps:[{n:"nar",t:"กระเป๋าสตางค์พลอยหล่นเปิด มีรูปถ่ายเก่าใบเดียว เด็กผู้หญิงผมสั้นใส่นวมใหญ่กว่าหัว ยืนข้างผู้หญิงคนหนึ่ง"},{n:"ploy",f:"sad",l:"casual",t:"แม่ฉันเอง วันแรกที่ฉันขึ้นเวที แม่ร้องไห้ทั้งไฟต์ …ทั้งที่ฉันชนะ"},{n:"ploy",f:"flustered",l:"casual",t:"ตอนนั้นไม่เข้าใจ ตอนนี้เข้าใจแล้ว …เวลามีคนที่เราห่วงขึ้นเวที มันน่ากลัวกว่าขึ้นเองอีก"}]},
+ g_fah_sr:{g:1,c:"fah",r:"SR",t:"ฟ้าหลังฝน",bg:"river",steps:[{n:"nar",t:"ฝนหยุด ฟ้าวิ่งออกไปกลางลานแล้วชี้ขึ้นข้างบน รุ้งกินน้ำพาดข้ามแม่น้ำ"},{n:"fah",f:"happy",l:"casual",t:"เห็นไหม! ชื่อฟ้าไม่ได้แปลว่าท้องฟ้าธรรมดานะ แม่บอกว่าฟ้าหลังฝน ฟ้าที่สวยที่สุด!"},{n:"fah",f:"flustered",l:"casual",t:"…ฟ้าไม่เคยเล่าให้ใครฟังเลยนะ เพราะมันเขินอ่ะ"}]},
+ g_team_ssr:{g:1,c:"kati",r:"SSR",t:"ค่ายศิริชัย ภาพหมู่",bg:"camp",steps:[{n:"nar",t:"เช้าวันพระ ทุกคนในค่ายมายืนเรียงหน้าป้ายที่ทาสีใหม่ ครูแดงตั้งกล้องเก่าของปู่ชัยบนขาตั้ง"},{n:"coach",t:"ทุกคนยิ้ม! กล้องตัวนี้ถ่ายรูปค่ายมาตั้งแต่รุ่นแรก ฟิล์มม้วนสุดท้ายแล้ว อย่าให้เสีย"},{n:"kati",f:"happy",l:"casual",t:"ผู้จัดการมายืนตรงกลางสิคะ! ตรงนั้นแหละ ที่เดิมของปู่"},{n:"nar",t:"แชะ — ภาพหมู่ใบแรกของค่ายศิริชัยรุ่นใหม่ ถูกใส่กรอบแขวนข้างรูปปู่ชัย"}]}});
+const GACHA_COST=30,GACHA_PITY=50,DUST_OF={N:5,R:10,SR:25,SSR:60};
+function gachaPull(G){if((G.dust||0)<GACHA_COST)return null;G.dust-=GACHA_COST;G.pity=(G.pity||0)+1;G.cards=G.cards||{};
+  const pool=Object.keys(CARDS).filter(k=>CARDS[k].g);const by=r=>pool.filter(k=>CARDS[k].r===r);const x=srand(G,(G.pity*131+(G.pulls||0)*7)|0);G.pulls=(G.pulls||0)+1;
+  let r=G.pity>=GACHA_PITY?"SSR":x<.03?"SSR":x<.30?"SR":"N";if(r==="SSR")G.pity=0;const L=by(r);const id=L[Math.floor(srand(G,G.pulls*97+11)*L.length)];
+  const o=G.cards[id];let res;if(!o){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};res={id,isNew:true};}
+  else if((o.lv||1)<3){o.lv=(o.lv||1)+1;o.n=(o.n||1)+1;if(G.F[CARDS[id].c])add(G,CARDS[id].c,"bond",3);res={id,up:o.lv};}
+  else{const d=DUST_OF[CARDS[id].r];G.dust+=d;o.n=(o.n||1)+1;res={id,dust:d};}
+  return res;}

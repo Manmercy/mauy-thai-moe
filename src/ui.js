@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.57";
+const VERSION="1.58";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -682,9 +682,13 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
   if(m.type==="petname"){const p=(G.pets||[])[m.i];if(!p){UI.modal=null;return "";}body=`<h2>ตั้งชื่อ${esc(PETS[p.k].name)}</h2><div class="petnm"><img class="peti" src="${petIcon(p.k)}" alt=""><input id="petname" maxlength="12" value="${esc(p.name)}" autocomplete="off"></div><p class="meta">ชื่อนี้จะโผล่ในฉากต่าง ๆ ของค่าย</p><button class="btn primary" data-act="petnamesave" data-v="${m.i}">ตั้งชื่อ</button>`;}
   if(m.type==="album"){const byC={};for(const id in CARDS)(byC[CARDS[id].c]=byC[CARDS[id].c]||[]).push(id);const own=G.cards||{};
     body=`<h2>อัลบั้มการ์ด</h2><p class="meta">เก็บได้ ${Object.keys(own).length}/${Object.keys(CARDS).length} ใบ · แตะการ์ดเพื่อดูเรื่องราว · ใบที่ยังไม่ได้แสดงเป็นเงาพร้อมคำใบ้</p>
+     <div class="gacha"><span><b class="goldt">✦ ${G.dust||0}</b> เศษดาว<small>ได้จากชนะไฟต์ การ์ดใหม่ และการ์ดซ้ำ · การันตี SSR อีก ${GACHA_PITY-(G.pity||0)} ครั้ง</small></span><button class="btn sm gold" data-act="gacha" ${(G.dust||0)<GACHA_COST?"disabled":""}>สุ่มการ์ด ${GACHA_COST}✦</button></div>
      ${CANON_IDS.filter(c=>byC[c]).map(c=>`<h4 class="albh">${esc(G.F[c].name)}</h4><div class="albg">${byC[c].map(id=>{const C=CARDS[id],o=own[id],R=CARD_R[C.r];
-       return o?`<button class="tcard" style="--rc:${R.c}" data-act="cardplay" data-v="${id}">${!o.seen?'<i class="ndot"></i>':""}<img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></button>`
-         :`<div class="tcard lock" style="--rc:${R.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>???</b><small>${esc(C.hint)}</small></div>`;}).join("")}</div>`).join("")}`;}
+       return o?`<button class="tcard" style="--rc:${R.c}" data-act="cardplay" data-v="${id}">${!o.seen?'<i class="ndot"></i>':""}<img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b><small>${C.r}${(o.lv||1)>1?` · Lv.${o.lv}`:""}</small></button>`
+         :`<div class="tcard lock" style="--rc:${R.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>???</b><small>${C.g?"ได้จากตู้กาชา":esc(C.hint)}</small></div>`;}).join("")}</div>`).join("")}`;}
+  if(m.type==="gacha"){const R=m.res,C=CARDS[R.id],RR=CARD_R[C.r];body=`<h2>ผลการสุ่ม</h2><div class="gres" style="--rc:${RR.c}"><div class="tcard big" style="--rc:${RR.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
+    <p class="center">${R.isNew?"<b class=\"goldt\">การ์ดใหม่!</b>":R.up?`การ์ดซ้ำ · อัปเกรดเป็น <b>Lv.${R.up}</b> · ความสนิท +`:`การ์ดเต็มระดับแล้ว · ย่อยเป็น <b class="goldt">✦ ${R.dust}</b>`}</p></div>
+    <div class="mfoot roadbtns">${R.isNew?`<button class="btn" data-act="cardplay" data-v="${R.id}">ดูเรื่องราว</button>`:""}<button class="btn gold" data-act="gacha" ${(G.dust||0)<GACHA_COST?"disabled":""}>สุ่มอีก ${GACHA_COST}✦ (มี ${G.dust||0})</button><button class="btn primary" data-act="album">กลับอัลบั้ม</button></div>`;foot=false;}
   if(m.type==="masters"){body=`<h2>เชิญครูมวยโบราณ</h2><p class="meta">${fmt(18000)} ต่อครั้ง · นักมวยแต่ละคนเรียนได้ครั้งเดียวต่อฤดูกาล</p><div class="mlist">${Object.entries(MASTERS).map(([k,M])=>`<div class="mrow"><b>${M.name}</b><small>เสริม ${M.attrs.map(a=>ATTR_LABEL[a]).join(" · ")}</small><div class="obtns">${roster(G).map(f=>`<button class="btn sm" data-act="hiremaster" data-id="${f.id}" data-v="${k}" ${G.cash<M.cost||f.masterSeason===(G.season||1)?"disabled":""}>${esc(f.name)}</button>`).join("")}</div></div>`).join("")}</div>`;}
   if(m.type==="advice"){body=adviceHTML(m.id);foot=false;}
   if(m.type==="drill"){body=drillHTML();foot=false;}
@@ -1137,6 +1141,7 @@ const ACT={
   petplay:d=>{const i=+d.v,p=(G.pets||[])[i];if(!p||!petPlay(G,i))return;AU.sfx&&AU.sfx("ui");const PL={cat:"นอนหงายให้เกาพุง",dog:"วิ่งไล่ลูกบอลรอบเวที",rooster:"ขันโชว์จนทุกคนหัวเราะ",turtle:"ยื่นหัวออกมาให้ลูบช้า ๆ"};
     toast(`${p.name} ${PL[p.k]} · ${PETS[p.k].eff}`);save();render();},
   petnamesave:d=>{const p=(G.pets||[])[+d.v];const v=((document.getElementById("petname")||{}).value||"").trim();if(p&&v)p.name=v.slice(0,12);UI.modal=null;save();render();},
+  gacha:()=>{const r=gachaPull(G);if(!r)return;AU.sfx&&AU.sfx(CARDS[r.id].r==="SSR"||CARDS[r.id].r==="SR"?"level":"ui");save();UI.modal={type:"gacha",res:r};render();},
   album:()=>{UI.modal={type:"album"};render();},
   cardplay:d=>{const C=CARDS[d.v],o=(G.cards||{})[d.v];if(!C||!o)return;o.seen=true;save();UI.modal=null;playScene(C.steps,()=>{UI.modal={type:"album"};render();},{bg:C.bg,look:"casual"});},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},

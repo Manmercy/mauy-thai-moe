@@ -1453,7 +1453,7 @@ const CARDS={
  f_r1:{c:"fah",r:"R",t:"Vampire by the River",hint:"Reach the Close stage with Fah",bg:"river",need:G=>(G.F.fah.bond||0)>=40,steps:[
   {n:"nar",t:"Halloween night. Fah, wearing plastic vampire fangs, dangles her feet in the water at the pier."},{n:"fah",f:"happy",l:"casual",t:"When I was a kid nobody threw me a birthday, so I dressed up as a ghost and celebrated myself!"},
   {n:"fah",f:"flustered",l:"casual",t:"…This year someone's sitting with me. Guess I don't need to dress as a ghost anymore."}]}};
-function cardCheck(G){G.cards=G.cards||{};const got=[];for(const id in CARDS){if(G.cards[id])continue;const C=CARDS[id];try{if(C.need(G)){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};got.push(id);}}catch(e){}}return got;}
+function cardCheck(G){G.cards=G.cards||{};const got=[];for(const id in CARDS){if(G.cards[id])continue;const C=CARDS[id];if(C.g)continue;try{if(C.need(G)){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};got.push(id);G.dust=(G.dust||0)+5;}}catch(e){}}return got;}
 
 // ===== v1.57: when the camp gets rich, funny little disasters eat some of the money =====
 const DRAIN_MIN=70000;
@@ -1474,3 +1474,25 @@ DRAINS.forEach((D,k)=>{
     then:[{inject:G2=>[{n:"nar",t:`Paid ${fmt(G2._drain)} · ${D.cul(G2)} pitches in until it's paid off, grumbling all week.`}]}]});
   EVENTS.push({id:D.id,annual:true,look:"casual",bg:"camp",when:G=>D.need(G)&&drainOk(G,301+k*17),
     steps:[{inject:G=>D.steps(G).concat([{n:"nar",t:`Damages come to about ${fmt(drainAmt(G))}`},{choice:[optPay,optHalf(G)]}])}]});});
+
+// ===== v1.58: cards round 2 — gacha cards, stardust (✦), pity, duplicates upgrade then turn to dust =====
+Object.assign(CARDS,{
+ g_kati_n:{g:1,c:"kati",r:"N",t:"Wraps in the Sun",bg:"camp",steps:[{n:"nar",t:"Behind the camp, red hand wraps hang in a row on the line. Kati pins each one carefully."},{n:"kati",f:"happy",l:"casual",t:"They have to dry completely, or they'll smell. Grandpa said a fighter who doesn't care for her wraps doesn't care for herself."}]},
+ g_mali_n:{g:1,c:"mali",r:"N",t:"Candy in Her Pocket",bg:"gym",steps:[{n:"nar",t:"Mali digs into her shorts pocket and pulls out a fistful of candy for everyone around the ring."},{n:"mali",f:"happy",l:"train",t:"Tamarind candy from home! Wakes you right up, good for three more rounds… I made that up, but they're really tasty!"}]},
+ g_rin_n:{g:1,c:"rin",r:"N",t:"The Three-Color Pen",bg:"gym",steps:[{n:"nar",t:"Rin logs stats with a three-color pen. Red for misses, blue for hits, green for…"},{n:"rin",f:"flustered",l:"casual",t:"Green is when you smile at the fighters. …I'm just testing whether it affects performance. It does."}]},
+ g_ploy_n:{g:1,c:"ploy",r:"N",t:"The Cat That Won't Be Held",bg:"river",steps:[{n:"nar",t:"A stray cat walks by. Ploy crouches and slowly holds out a hand. The cat turns its nose up."},{n:"ploy",f:"pout",l:"casual",t:"…It doesn't like me. It's fine, I'm used to it. Nobody wants to get close to someone too hard."}]},
+ g_fah_n:{g:1,c:"fah",r:"N",t:"Thirty Selfies",bg:"fair",steps:[{n:"nar",t:"At the temple fair, Fah hands over her phone for a photo, then strikes thirty poses in one minute."},{n:"fah",f:"happy",l:"casual",t:"Use the coolest one! …No, the cutest one! …No, use them all!"}]},
+ g_kati_sr:{g:1,c:"kati",r:"SR",t:"Grandpa's Dream Belt",bg:"night",steps:[{n:"nar",t:"Kati opens an old wooden box under Grandpa's bed. Inside is a pencil drawing of a championship belt that never existed."},{n:"kati",f:"sad",l:"casual",t:"Grandpa drew it when he opened the camp. Said one day this camp would have that belt. …He never got to see it."},{n:"kati",f:"happy",l:"casual",t:"But you'll take me to win it and show Grandpa, right? He's watching for sure."}]},
+ g_mali_sr:{g:1,c:"mali",r:"SR",t:"A Letter to Mom",bg:"camp",steps:[{n:"nar",t:"Mali has dozed off at the desk, a letter half-written beside her."},{n:"nar",t:"'Mom, there's a really kind manager here. Never scolds, buys us snacks, praises me every time I win. I'm not lonely anymore, Mom…'"},{n:"mali",f:"flustered",l:"casual",t:"(wakes up) Ah! Don't read that!! …How far did you get!?"}]},
+ g_rin_sr:{g:1,c:"rin",r:"SR",t:"The Unsolvable Equation",bg:"cafe",steps:[{n:"nar",t:"Rin's desk is covered in equations. The last line reads: 'Variable X = ?'"},{n:"rin",f:"flustered",l:"casual",t:"X is the reason I stay at this camp despite better offers. …I've been solving it for three months."},{n:"rin",f:"happy",l:"casual",t:"But when you sit here, the answer becomes clear on its own. …Don't ask what it is."}]},
+ g_ploy_sr:{g:1,c:"ploy",r:"SR",t:"The Only Photo in Her Wallet",bg:"river",steps:[{n:"nar",t:"Ploy's wallet falls open. Inside is a single old photo: a short-haired girl in gloves bigger than her head, standing beside a woman."},{n:"ploy",f:"sad",l:"casual",t:"That's my mom. My first fight, she cried the whole time… even though I won."},{n:"ploy",f:"flustered",l:"casual",t:"Back then I didn't get it. Now I do… When someone you care about steps into the ring, it's scarier than stepping in yourself."}]},
+ g_fah_sr:{g:1,c:"fah",r:"SR",t:"Sky After Rain",bg:"river",steps:[{n:"nar",t:"The rain stops. Fah runs into the yard and points up. A rainbow arcs over the river."},{n:"fah",f:"happy",l:"casual",t:"See!? My name doesn't mean just any sky. Mom said it's the sky after rain, the prettiest one!"},{n:"fah",f:"flustered",l:"casual",t:"…I've never told anyone that. It's embarrassing."}]},
+ g_team_ssr:{g:1,c:"kati",r:"SSR",t:"Sirichai Camp, Group Photo",bg:"camp",steps:[{n:"nar",t:"Holy-day morning. Everyone lines up in front of the freshly painted sign. Coach Daeng sets Grandpa Chai's old camera on a tripod."},{n:"coach",t:"Everyone smile! This camera has photographed the camp since the first generation. Last roll of film, don't waste it."},{n:"kati",f:"happy",l:"casual",t:"Manager, stand in the middle! Right there. Grandpa's old spot."},{n:"nar",t:"Click. The first group photo of the new Sirichai Camp goes into a frame, hung next to Grandpa Chai's portrait."}]}});
+const GACHA_COST=30,GACHA_PITY=50,DUST_OF={N:5,R:10,SR:25,SSR:60};
+function gachaPull(G){if((G.dust||0)<GACHA_COST)return null;G.dust-=GACHA_COST;G.pity=(G.pity||0)+1;G.cards=G.cards||{};
+  const pool=Object.keys(CARDS).filter(k=>CARDS[k].g);const by=r=>pool.filter(k=>CARDS[k].r===r);const x=srand(G,(G.pity*131+(G.pulls||0)*7)|0);G.pulls=(G.pulls||0)+1;
+  let r=G.pity>=GACHA_PITY?"SSR":x<.03?"SSR":x<.30?"SR":"N";if(r==="SSR")G.pity=0;const L=by(r);const id=L[Math.floor(srand(G,G.pulls*97+11)*L.length)];
+  const o=G.cards[id];let res;if(!o){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};res={id,isNew:true};}
+  else if((o.lv||1)<3){o.lv=(o.lv||1)+1;o.n=(o.n||1)+1;if(G.F[CARDS[id].c])add(G,CARDS[id].c,"bond",3);res={id,up:o.lv};}
+  else{const d=DUST_OF[CARDS[id].r];G.dust+=d;o.n=(o.n||1)+1;res={id,dust:d};}
+  return res;}
