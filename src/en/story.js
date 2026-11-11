@@ -701,10 +701,25 @@ EVENTS.push(
   {n:"kati",f:"sad",l:"casual",t:G=>`Grandpa, Grandma, ${ME(G)} is back, and not just for the summer this time`},
   {choice:[{t:G=>`Grandpa, ${PA(G)} I'll take the best care of the camp and Kati`,fx:G=>{add(G,"kati","trust",6);add(G,"kati","bond",3);},then:[{n:"nar",t:"A breeze passes through the bodhi tree; one leaf falls right onto the gloves"},{n:"kati",f:"happy",l:"casual",t:"Grandpa heard you. I believe that"}]},
    {t:"(Say nothing, just sit down beside Kati)",fx:G=>{add(G,"kati","bond",5);},then:[{n:"nar",t:"The two of you sit in silence for a long time, until the noon temple bell rings"}]}]}]});
+// v1.40: Kru Daeng takes leave more than once; while he is away only Rin's remarks are left
+const leaveSteps=(G,why,wk,post)=>[{inject:G2=>{G2.coachAway=G2.week+wk;G2.flags.coachBack=false;if(typeof addMail==="function")addMail(G2,{kind:"letter",from:"Coach Daeng",title:post[0],body:post[1]});return [];}},
+  {n:"nar",t:`Coach Daeng is away ${wk} weeks · no coach advice for now.${inCamp(G,"rin")?" Only Rin's observations":""}`}];
+EVENTS.push(
+ {id:"daeng_leave_monk",look:"fight",when:G=>G.week>=17,bg:"camp",steps:[
+  {n:"coach",t:"Boss, my nephew is entering the monkhood. I have to help at the temple for two weeks: the procession, the head shaving, sitting through the chanting"},
+  {n:"kati",f:"surprised",l:"casual",t:"Coach Daeng is shaving his head too?!"},
+  {n:"coach",t:"I'm not ordaining! …But if I lose the football bet with the boy's father, I might shave"},
+  {n:"rin",f:"happy",l:"casual",t:"In the meantime I'll record everything for you. But I can't decide for you, I only analyze"},
+  {inject:G=>leaveSteps(G,"monk",2,["News from the ordination","My nephew's ordination went well. I lost a football bet with his father, so I had to shave my head too. Don't laugh when I get back. Make the kids do their morning runs. — Coach Daeng"])}]},
+ {id:"daeng_leave_knee",look:"fight",when:G=>G.week>=40,bg:"camp",steps:[
+  {n:"coach",t:"The doctor scheduled a small knee surgery; I'll be in hospital two weeks. Don't worry, the doctor says my knee is as strong as a fifty-year-old's"},
+  {n:"mali",f:"sad",l:"casual",t:"Coach Daeng, you're sixty-eight…"},
+  {n:"coach",t:"Exactly, eighteen years younger than my real age! This is a crucial stretch, make good decisions. I'll watch the livestream from bed"},
+  {inject:G=>leaveSteps(G,"knee",2,["From a hospital bed","The nurses won't let me cheer at the livestream, so I cheer in my head until my blood pressure spikes. Don't visit, spend the time training. If you do visit, bring som tam. — Coach Daeng"])}]});
 EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29,bg:"camp",steps:[
   {n:"coach",t:"Boss, I'm taking two weeks' leave to go home to Surin. My niece is getting married"},
   {n:"coach",t:"I've written the training schedule on the wall. For now you make all the calls. I trust you"},
-  {n:"kati",f:"surprised",t:"Huh! Two whole weeks! …It's fine, I'll keep everyone training myself!"},{inject:G=>{G.coachAway=G.week+2;if(typeof addMail==="function")addMail(G,{kind:"letter",from:"Coach Daeng (Surin)",title:"A postcard from Surin",body:"To the kids of Sirichai Camp: my grandniece's wedding was great fun. I did a Muay Thai dance for the guests and threw my back out. Always wrap your hands before training, don't let Kati order more than ten laps a day, and don't let Mali play luk thung too loud. — Coach Daeng (P.S. please water the mango tree)"});return [];}},
+  {n:"kati",f:"surprised",t:"Huh! Two whole weeks! …It's fine, I'll keep everyone training myself!"},{inject:G=>{G.coachAway=G.week+2;G.flags.coachBack=false;if(typeof addMail==="function")addMail(G,{kind:"letter",from:"Coach Daeng (Surin)",title:"A postcard from Surin",body:"To the kids of Sirichai Camp: my grandniece's wedding was great fun. I did a Muay Thai dance for the guests and threw my back out. Always wrap your hands before training, don't let Kati order more than ten laps a day, and don't let Mali play luk thung too loud. — Coach Daeng (P.S. please water the mango tree)"});return [];}},
   {n:"nar",t:"Coach Daeng on leave for 2 weeks · his advice disappears until he returns"}]});
 
 // ================= v1.13.1 longer outings: a small shared moment at each place =================

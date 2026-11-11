@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.39.0";
+const VERSION="1.40.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -257,7 +257,7 @@ function hubHTML(){
 
 const DONE_LINES=["สัปดาห์นี้จัดการครบแล้ว กดจบสัปดาห์ได้เลย","เรียบร้อยหมดแล้ว ไปพักกินข้าวเหนียวหมูปิ้งกันเถอะ แล้วค่อยจบสัปดาห์","ทุกอย่างพร้อม ครูไม่มีอะไรจะติแล้ว จบสัปดาห์ได้","งานครบ ซ้อมครบ วางแผนครบ ไปจบสัปดาห์กันเลย"];
 const pickDone=()=>DONE_LINES[G.week%DONE_LINES.length];
-function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
+function coachTips(force){const T=[],R=roster(G);if(!coachOn()&&!force)return T;
   for(const f of R){const b=G.bookings.find(x=>x.a===f.id);
     if(f.injury)T.push({p:9,t:`${f.name}บาดเจ็บอีก ${f.injury} สัปดาห์ ร่างกายพักเองอัตโนมัติ อย่าเพิ่งรับไฟต์`});
     else if(f.fatigue>=52&&f.plan.preset!=="rest"&&!trLocked(f))T.push({p:9,t:`${f.name} ล้า ${Math.round(f.fatigue)} แล้ว สัปดาห์นี้ให้พักฟื้นเถอะ`,act:{k:"setrest",id:f.id,label:"ไปหน้าฝึก"}});
@@ -314,7 +314,9 @@ function homeHTML(){const R=roster(G);
       <div class="gact">${t.act?`<button class="btn sm gold" data-act="tipact" data-k="${t.act.k}" data-id="${t.act.id||""}" data-v="${t.act.v||""}">${t.act.label}</button>`:""}${T.length>1?`<button class="btn sm" data-act="tipnext">ถัดไป ${i+1}/${T.length} ▸</button>`:""}</div></div>
       <button class="xbtn" data-act="hideguide" aria-label="ปิดคำแนะนำสัปดาห์นี้">✕</button></section>`;}
   // v1.39: while Kru Daeng is on leave, Kati "runs" the camp and it shows
-  if(G.coachAway&&G.week<G.coachAway&&G.guideHidden!==G.week){const KS=["ครูแดงไม่อยู่ หนูให้ทุกคนวิ่งเพิ่มคนละสามรอบค่ะ …หนูก็วิ่งด้วยนะ","หนูลองเป่านกหวีดแบบครูแดงแล้ว เสียงออกมาเหมือนเป็ดเลยค่ะ","ครูแดงโทรมาถามว่าทุกคนกินข้าวหรือยัง วันละสี่รอบแล้วค่ะ","มะลิแอบเปลี่ยนเพลงในห้องซ้อมเป็นเพลงลูกทุ่ง หนูไม่ได้ห้าม… เพราะมันมันส์ดี","ตารางซ้อมของครูแดงติดอยู่ที่ผนัง แต่ลายมือครูอ่านไม่ออกเลยค่ะ"];
+  if(G.coachAway&&G.week<G.coachAway&&G.guideHidden!==G.week&&rinIn()){const T=coachTips(true).filter(t=>t.p>=4);const t=T.length?T[G.week%Math.min(2,T.length)]:null;
+    guide=`<section class="px guide away"><img class="gface" src="${faceSrc("rin","happy")}" alt="ริน"><div class="gtxt"><b>ข้อสังเกตของริน · ครูแดงกลับสัปดาห์ ${G.coachAway}</b><p>${t?esc("ตามข้อมูลที่ฉันเก็บไว้: "+t.t):"ข้อมูลสัปดาห์นี้ปกติดีค่ะ ไม่มีอะไรน่ากังวล"}</p><p class="meta">ไม่มีครูช่วยตัดสินใจ รินบอกได้แค่ข้อสังเกต</p></div><button class="xbtn" data-act="hideguide" aria-label="ปิด">✕</button></section>`;}
+  else if(G.coachAway&&G.week<G.coachAway&&G.guideHidden!==G.week){const KS=["ครูแดงไม่อยู่ หนูให้ทุกคนวิ่งเพิ่มคนละสามรอบค่ะ …หนูก็วิ่งด้วยนะ","หนูลองเป่านกหวีดแบบครูแดงแล้ว เสียงออกมาเหมือนเป็ดเลยค่ะ","ครูแดงโทรมาถามว่าทุกคนกินข้าวหรือยัง วันละสี่รอบแล้วค่ะ","มะลิแอบเปลี่ยนเพลงในห้องซ้อมเป็นเพลงลูกทุ่ง หนูไม่ได้ห้าม… เพราะมันมันส์ดี","ตารางซ้อมของครูแดงติดอยู่ที่ผนัง แต่ลายมือครูอ่านไม่ออกเลยค่ะ"];
     guide=`<section class="px guide away"><img class="gface" src="${faceSrc("kati","happy")}" alt="กะทิ"><div class="gtxt"><b>กะทิ (รักษาการครูแดง · ครูกลับสัปดาห์ ${G.coachAway})</b><p>${esc(KS[G.week%KS.length])}</p><p class="meta">ช่วงนี้ไม่มีคำแนะนำจากครู ต้องตัดสินใจเองทั้งหมด</p></div><button class="xbtn" data-act="hideguide" aria-label="ปิด">✕</button></section>`;}
   const lv=campLevel(G);
   return `${rinNoteHTML()}<div class="homegrid">${(()=>{const r=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");

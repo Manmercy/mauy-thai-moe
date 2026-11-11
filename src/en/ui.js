@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.39.0";
+const VERSION="1.40.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -257,7 +257,7 @@ function hubHTML(){
 
 const DONE_LINES=["Everything's handled this week. Go ahead and end the week","All done. Go grab some sticky rice and grilled pork, then end the week","Everything's ready, Coach has nothing to nitpick. End the week","Work done, training done, plans done. Let's end the week"];
 const pickDone=()=>DONE_LINES[G.week%DONE_LINES.length];
-function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
+function coachTips(force){const T=[],R=roster(G);if(!coachOn()&&!force)return T;
   for(const f of R){const b=G.bookings.find(x=>x.a===f.id);
     if(f.injury)T.push({p:9,t:`${f.name} is injured for ${f.injury} more weeks. The body rests automatically. Don't book fights yet`});
     else if(f.fatigue>=52&&f.plan.preset!=="rest"&&!trLocked(f))T.push({p:9,t:`${f.name}'s fatigue is ${Math.round(f.fatigue)} already. Let her recover this week`,act:{k:"setrest",id:f.id,label:"Go to training"}});
@@ -314,7 +314,9 @@ function homeHTML(){const R=roster(G);
       <div class="gact">${t.act?`<button class="btn sm gold" data-act="tipact" data-k="${t.act.k}" data-id="${t.act.id||""}" data-v="${t.act.v||""}">${t.act.label}</button>`:""}${T.length>1?`<button class="btn sm" data-act="tipnext">Next ${i+1}/${T.length} ▸</button>`:""}</div></div>
       <button class="xbtn" data-act="hideguide" aria-label="Hide this week's tips">✕</button></section>`;}
   // v1.39: while Kru Daeng is on leave, Kati "runs" the camp and it shows
-  if(G.coachAway&&G.week<G.coachAway&&G.guideHidden!==G.week){const KS=["Coach Daeng's away, so I made everyone run three extra laps …I ran too!","I tried blowing the whistle like Coach Daeng. It came out like a duck","Coach Daeng called to ask if everyone's eaten. Four times today","Mali secretly switched the gym music to luk thung. I didn't stop her… because it's actually great","Coach Daeng's training schedule is on the wall, but I can't read his handwriting at all"];
+  if(G.coachAway&&G.week<G.coachAway&&G.guideHidden!==G.week&&rinIn()){const T=coachTips(true).filter(t=>t.p>=4);const t=T.length?T[G.week%Math.min(2,T.length)]:null;
+    guide=`<section class="px guide away"><img class="gface" src="${faceSrc("rin","happy")}" alt="Rin"><div class="gtxt"><b>Rin's observations · Coach Daeng back in week ${G.coachAway}</b><p>${t?esc("According to my data: "+t.t):"The data looks normal this week. Nothing to worry about"}</p><p class="meta">No coach to help decide; Rin can only point things out</p></div><button class="xbtn" data-act="hideguide" aria-label="Close">✕</button></section>`;}
+  else if(G.coachAway&&G.week<G.coachAway&&G.guideHidden!==G.week){const KS=["Coach Daeng's away, so I made everyone run three extra laps …I ran too!","I tried blowing the whistle like Coach Daeng. It came out like a duck","Coach Daeng called to ask if everyone's eaten. Four times today","Mali secretly switched the gym music to luk thung. I didn't stop her… because it's actually great","Coach Daeng's training schedule is on the wall, but I can't read his handwriting at all"];
     guide=`<section class="px guide away"><img class="gface" src="${faceSrc("kati","happy")}" alt="Kati"><div class="gtxt"><b>Kati (acting coach · Coach Daeng back in week ${G.coachAway})</b><p>${esc(KS[G.week%KS.length])}</p><p class="meta">No coach advice for now; you make every call yourself</p></div><button class="xbtn" data-act="hideguide" aria-label="Close">✕</button></section>`;}
   const lv=campLevel(G);
   return `${rinNoteHTML()}<div class="homegrid">${(()=>{const r=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
