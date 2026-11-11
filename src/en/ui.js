@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.38.1";
+const VERSION="1.38.2";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -599,7 +599,7 @@ function giftHTML(id){const f=G.F[id];
   return `<h2>A gift for ${esc(f.name)}</h2><p class="meta">Bought and given right away · 1 per person per week · the closer you are, the more to choose ${E.hidden?` (${E.hidden} more hidden)`:""} · cash ${fmt(G.cash)}</p><div class="gifts">${E.map(([k,g])=>{const kn=f.know["gift_"+k],lk=(g.bond||0)>(f.bond||0);
    if(lk)return `<div class="giftbtn lockg"><b>???</b><small>Unlocks at bond ${g.bond}</small></div>`;
    const lw=f.giftL&&f.giftL[k],cd=lw&&G.week-lw<6&&(f.giftN||{})[k]?6-(G.week-lw):0;
-   return `<button class="giftbtn" data-act="give" data-id="${id}" data-v="${k}" ${G.cash<g.price?"disabled":""}><b>${g.name}${g.fun?" <i class=\"funb\">LOL</i>":""}</b><small>${fmt(g.price)}${cd?` · given recently`:""}</small></button>`;}).join("")}</div>
+   return `<button class="giftbtn" data-act="give" data-id="${id}" data-v="${k}" ${G.cash<g.price?"disabled":""}><b>${g.name}</b><small>${fmt(g.price)}${cd?` · given recently`:""}</small></button>`;}).join("")}</div>
    <p class="meta glegend">Watch how she reacts when you give it, or check her profile for what you've given before</p>`;}
 function considerHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,o.b,3);const pct=x=>Math.round(x*100);const v=verdictOf(A.bestRate);const sc=scouted(op.id);const P=personaOf(op);
   return `<h2>Fight info</h2><div class="vsrow"><div class="vsc">${faceImg(me)}<b>${esc(me.name)}</b><span class="meta">${styleOf(me.a)}</span></div><span class="vs">VS</span><div class="vsc">${faceImg(op)}<b>${esc(op.name)}</b><span class="meta">${styleOf(op.a)} · ${rec(op)}</span></div></div>
