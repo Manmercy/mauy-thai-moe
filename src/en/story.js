@@ -4,6 +4,7 @@
 const vary=(key,arr)=>{if(typeof G==="undefined"||!G)return arr[0];G.vary=G.vary||{};const i=G.vary[key]||0;G.vary[key]=i+1;return arr[i%arr.length];};
 const ME=G=>G.player.name,
  // v1.41: the girls call you "ผู้จัดการ" — your name slips out now and then once close, and always once very close
+ MEM=(G,k)=>{G.mem=G.mem||{};G.mem[k]=G.week;}, HAS=(G,k,gap)=>G.mem&&G.mem[k]!==undefined&&G.week-G.mem[k]>=(gap||0),
  CALL=(G,id)=>{const f=G.F[id],b=f?f.bond||0:0;if(G.romance===id||b>=75)return G.player.name;if(b>=40&&Math.random()<.35)return G.player.name;return "Manager";}, PR=G=>G.player.gender==="m"?"":"", PA=G=>G.player.gender==="m"?"":"";
 const SPK={kati:{name:"Kati",color:"#e23b4e"},mali:{name:"Mali",color:"#4a7fe0"},rin:{name:"Rin",color:"#3fae6a"},
   ploy:{name:"Ploy",color:"#9b62e0"},fah:{name:"Fah",color:"#e7b443"},coach:{name:"Coach Daeng",color:"#c98a5a"},nar:{name:""},me:{name:"(You)"}};
@@ -43,7 +44,7 @@ const EVENTS=[
   {n:"kati",f:"happy",t:"Just a little more… Manager, did you know Golden Tiger tried to recruit me three times? Way better pay than here"},
   {n:"kati",f:"sad",t:"But Grandpa Chai was the first to say I could fight, when nobody else believed in me"},
   {choice:[
-   {t:"Thank you for staying. I won't let you down",fx:G=>add(G,"kati","trust",6),then:[{n:"kati",f:"happy",t:"Then I'll remember that. No taking it back!"}]},
+   {t:"Thank you for staying. I won't let you down",fx:G=>{add(G,"kati","trust",6);MEM(G,"kati_promise");},then:[{n:"kati",f:"happy",t:"Then I'll remember that. No taking it back!"}]},
    {t:"And you? What do you fight for?",fx:G=>add(G,"kati","bond",6),then:[
      {n:"kati",f:"flustered",t:"…Nobody's ever asked me that"},
      {n:"kati",f:"happy",t:"I want people to see that a girl from an old camp can be champion. No money, no fame, just heart"}]}]}]},
@@ -95,7 +96,7 @@ const EVENTS=[
   {n:"mali",f:"happy",t:G=>`Oh, you're from Sirichai Camp? I'm Mali, from up-country. I tour temple fairs fighting to send money home`},
   {n:"mali",f:"sad",t:"No camp will take me. They say I'm too small for the big stage"},
   {choice:[
-   {t:"Our camp is small, but I'll give you real fights",fx:G=>{add(G,"mali","trust",8);add(G,"mali","bond",4);},then:[{n:"mali",f:"flustered",t:"Really? Then I'll come see the camp! (Sign Mali in the Camp & Finance tab)"}]},
+   {t:"Our camp is small, but I'll give you real fights",fx:G=>{add(G,"mali","trust",8);add(G,"mali","bond",4);MEM(G,"mali_promise");},then:[{n:"mali",f:"flustered",t:"Really? Then I'll come see the camp! (Sign Mali in the Camp & Finance tab)"}]},
    {t:"Beautiful kick. See you around",fx:G=>add(G,"mali","bond",3),then:[{n:"mali",f:"happy",t:"See you! If you change your mind and want a tiny fighter, find me at the temple fair!"}]}]},
   {fx:G=>{G.F.mali.met=true;G.flags.maliRecruit=true;}}]},
 
@@ -645,8 +646,8 @@ EVENTS.push(
   {n:"rin",f:"sad",l:"train",t:"It's fine… I can see… that's Mali, right?"},
   {n:"mali",f:"flustered",l:"train",t:"That's the sandbag, Rin! Mali's over here!"},
   {n:"rin",f:"flustered",l:"train",t:G=>`${CALL(G,"rin")}… Fine, I'll confess. I'm quite nearsighted. I take my glasses off to fight, so I have to memorize everything before I step in the ring. That's where all the data comes from`},
-  {choice:[{t:"(Take her to an optician in town and pay, ฿1,500)",fx:G=>{G.cash-=1500;add(G,"rin","bond",5);add(G,"rin","trust",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"…This frame is half the weight of the old one. I'll pay you back. Can I pay in installments?"},{n:"nar",t:"On the way back Rin walks closer than usual, because her eyes haven't adjusted yet… probably"}]},
-   {t:"That makes you even better. You fight from memory",fx:G=>{add(G,"rin","morale",6);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.3);},then:[{n:"rin",f:"happy",l:"train",t:"…Nobody's ever seen it that way. Thank you. I'll remember that too"},{n:"nar",t:"(Rin's ring IQ improved a little)"}]}]}]},
+  {choice:[{t:"(Take her to an optician in town and pay, ฿1,500)",fx:G=>{G.cash-=1500;add(G,"rin","bond",5);add(G,"rin","trust",4);MEM(G,"rin_glasses");},then:[{n:"rin",f:"flustered",l:"casual",t:"…This frame is half the weight of the old one. I'll pay you back. Can I pay in installments?"},{n:"nar",t:"On the way back Rin walks closer than usual, because her eyes haven't adjusted yet… probably"}]},
+   {t:"That makes you even better. You fight from memory",fx:G=>{add(G,"rin","morale",6);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.3);MEM(G,"rin_memory");},then:[{n:"rin",f:"happy",l:"train",t:"…Nobody's ever seen it that way. Thank you. I'll remember that too"},{n:"nar",t:"(Rin's ring IQ improved a little)"}]}]}]},
  {id:"rin_dad",look:"casual",when:G=>G.week>=26&&inCamp(G,"rin"),bg:"night",steps:[
   {n:"nar",t:"9 p.m. Rin sits outside the camp, her phone buzzing nonstop. The screen reads 'Dad (Prof. Dr.)'"},
   {n:"rin",f:"sad",l:"casual",t:"My dad is a university professor. He wants me to do a PhD, not box out in the provinces"},
@@ -688,7 +689,7 @@ EVENTS.push(
   {n:"kati",f:"surprised",l:"casual",t:G=>`That's me! And that's ${CALL(G,"kati")}! Back then you were barely as tall as a ring post`},
   {n:"kati",f:"happy",l:"casual",t:"Grandma was still with us then. She made mango sticky rice every evening, and Grandpa always snuck some of ours"},
   {choice:[{t:"I never thought I'd be living here again",fx:G=>{add(G,"kati","bond",4);add(G,"kati","trust",3);},then:[{n:"kati",f:"flustered",l:"casual",t:"I did… I always thought you'd come back someday, like Grandpa said"}]},
-   {t:"Who won the bike race back then?",fx:G=>{add(G,"kati","bond",3);},then:[{n:"kati",f:"pout",l:"casual",t:"A tie! We fell in the ditch together, and Grandma spanked us both"}]}]},
+   {t:"Who won the bike race back then?",fx:G=>{add(G,"kati","bond",3);MEM(G,"kati_bike");},then:[{n:"kati",f:"pout",l:"casual",t:"A tie! We fell in the ditch together, and Grandma spanked us both"}]}]},
   {n:"nar",t:"That night the photo goes up on the shrine shelf, next to Grandpa Chai's picture"}]},
  {id:"me_office",look:"casual",when:G=>G.week>=11,bg:"camp",steps:[
   {n:"nar",t:"A Bangkok number calls while you're watching the kids practice kicks. The screen says 'Boss (don't answer on weekends)'"},
@@ -1120,3 +1121,29 @@ const PERSONAL_END={
 function personalEnding(G){let id=G.romance;if(!id){const c=["kati","mali","rin","ploy","fah"].filter(k=>G.F[k]&&G.F[k].met&&(G.F[k].bond||0)>=40).sort((a,b)=>G.F[b].bond-G.F[a].bond);id=c[0];}
   const base=id&&PERSONAL_END[id]?PERSONAL_END[id]:[];if(G.romance===id&&LOVER_END[id])return [...base,...LOVER_END[id]];
   const pr=G.promise?Object.keys(G.promise).find(k=>PROMISE_END[k]):null;return [...base,...(pr&&pr!==id?[]:pr?PROMISE_END[pr]:[])];}
+
+// v1.41: they remember what you said — callbacks to earlier choices
+EVENTS.push(
+ {id:"mem_kati_bike",look:"casual",when:G=>G.week>=20&&HAS(G,"kati_bike",12)&&inCamp(G,"kati"),bg:"camp",steps:[
+  {n:"nar",t:"After evening training, Kati wheels a rusty old bicycle out from behind the shed. Two new tires, price tags still on."},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}, remember asking who won the bike race back then? So I put new tires on it… Rematch! No falling in the ditch this time!`},
+  {choice:[{t:"(Let her win, subtly)",fx:G=>{add(G,"kati","bond",4);},then:[{n:"kati",f:"pout",l:"casual",t:"You went easy on me, didn't you! I saw that! …I still won though. Yay!"}]},
+   {t:"(Pedal as hard as you can)",fx:G=>{add(G,"kati","bond",3);add(G,"kati","morale",5);},then:[{n:"nar",t:"On the last bend by the temple, both bikes skid into the ditch together, just like fifteen years ago."},{n:"kati",f:"happy",l:"casual",t:"Hahaha, a tie again! And Grandma's not here to spank us anymore…"}]}]}]},
+ {id:"mem_mali_promise",look:"train",when:G=>G.week>=30&&HAS(G,"mali_promise")&&inCamp(G,"mali")&&(G.F.mali.rec.w||0)>=4,bg:"gym",steps:[
+  {n:"mali",f:"flustered",l:"train",t:G=>`${CALL(G,"mali")}, the day we met at the temple fair, ${CALL(G,"mali")} said the camp was small, but you'd let me fight for real.`},
+  {n:"mali",f:"happy",l:"train",t:"I've won lots of fights now. Mom calls every week asking when I'm fighting next… Thank you for keeping your word."},
+  {fx:G=>{add(G,"mali","trust",5);add(G,"mali","bond",3);}},{n:"nar",t:"(Mali remembers that promise · Trust up)"}]},
+ {id:"mem_rin_repay",look:"casual",when:G=>HAS(G,"rin_glasses",8)&&inCamp(G,"rin"),bg:"camp",steps:[
+  {n:"nar",t:"Monday morning, a white envelope is tucked under the coffee cup on the desk. The handwriting is perfectly neat."},
+  {n:"rin",f:"flustered",l:"casual",t:"For the glasses. ฿1,500 exactly. I said I'd pay you back… Don't refuse. I already calculated that you'd try."},
+  {choice:[{t:"(Take it)",fx:G=>{G.cash+=1500;add(G,"rin","trust",4);},then:[{n:"rin",f:"happy",l:"casual",t:"Good. Exactly as planned."}]},
+   {t:"Keep it for scouting tapes.",fx:G=>{add(G,"rin","bond",5);},then:[{n:"rin",f:"flustered",l:"casual",t:"…This wasn't in the plan at all. Now I have to recalculate everything."}]}]}]},
+ {id:"mem_rin_memory",look:"train",when:G=>HAS(G,"rin_memory",10)&&inCamp(G,"rin"),bg:"gym",steps:[
+  {n:"rin",f:"happy",l:"train",t:G=>`${CALL(G,"rin")} once said I fight with my memory. Now I remember everything: every fight our camp has had, who threw what, in which round.`},
+  {n:"rin",f:"flustered",l:"train",t:"…including what you said that day."},
+  {fx:G=>{add(G,"rin","bond",3);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.2);}},{n:"nar",t:"(Rin still remembers what you said · Fight IQ up a little)"}]},
+ {id:"mem_kati_promise",look:"casual",when:G=>G.week>=44&&HAS(G,"kati_promise")&&inCamp(G,"kati"),bg:"night",steps:[
+  {n:"nar",t:"The night before the big bout, Kati sits outside the camp, slowly wrapping her hands."},
+  {n:"kati",f:"flustered",l:"casual",t:G=>`${CALL(G,"kati")}, remember? My second week here, you told me you'd never let me down.`},
+  {n:"kati",f:"happy",l:"casual",t:"I said I'd remember those words… Win or lose tomorrow, you never once took them back."},
+  {fx:G=>{add(G,"kati","trust",6);add(G,"kati","bond",3);}},{n:"nar",t:"(Kati remembers her first-week promise · Trust up)"}]});

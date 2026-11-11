@@ -4,6 +4,7 @@
 const vary=(key,arr)=>{if(typeof G==="undefined"||!G)return arr[0];G.vary=G.vary||{};const i=G.vary[key]||0;G.vary[key]=i+1;return arr[i%arr.length];};
 const ME=G=>G.player.name,
  // v1.41: the girls call you "ผู้จัดการ" — your name slips out now and then once close, and always once very close
+ MEM=(G,k)=>{G.mem=G.mem||{};G.mem[k]=G.week;}, HAS=(G,k,gap)=>G.mem&&G.mem[k]!==undefined&&G.week-G.mem[k]>=(gap||0),
  CALL=(G,id)=>{const f=G.F[id],b=f?f.bond||0:0;if(G.romance===id||b>=75)return G.player.name;if(b>=40&&Math.random()<.35)return G.player.name;return "ผู้จัดการ";}, PR=G=>G.player.gender==="m"?"ผม":"ฉัน", PA=G=>G.player.gender==="m"?"ครับ":"ค่ะ";
 const SPK={kati:{name:"กะทิ",color:"#e23b4e"},mali:{name:"มะลิ",color:"#4a7fe0"},rin:{name:"ริน",color:"#3fae6a"},
   ploy:{name:"พลอย",color:"#9b62e0"},fah:{name:"ฟ้า",color:"#e7b443"},coach:{name:"ครูแดง",color:"#c98a5a"},nar:{name:""},me:{name:"(คุณ)"}};
@@ -43,7 +44,7 @@ const EVENTS=[
   {n:"kati",f:"happy",t:"ซ้อมอีกนิดเดียวค่ะ… ผู้จัดการรู้ไหม ค่ายพยัคฆ์ทองมาชวนหนูตั้งสามรอบ เงินเดือนดีกว่าที่นี่เยอะเลย"},
   {n:"kati",f:"sad",t:"แต่คุณปู่ชัยเป็นคนแรกที่บอกว่าหนูชกได้ ตอนที่ไม่มีใครเชื่อเลยสักคน"},
   {choice:[
-   {t:"ขอบคุณที่อยู่ต่อ ฉันจะไม่ทำให้เธอเสียใจ",fx:G=>add(G,"kati","trust",6),then:[{n:"kati",f:"happy",t:"งั้นหนูจะจำคำนี้ไว้นะคะ ห้ามคืนคำ!"}]},
+   {t:"ขอบคุณที่อยู่ต่อ ฉันจะไม่ทำให้เธอเสียใจ",fx:G=>{add(G,"kati","trust",6);MEM(G,"kati_promise");},then:[{n:"kati",f:"happy",t:"งั้นหนูจะจำคำนี้ไว้นะคะ ห้ามคืนคำ!"}]},
    {t:"แล้วตัวเธอเองล่ะ อยากชกเพื่ออะไร",fx:G=>add(G,"kati","bond",6),then:[
      {n:"kati",f:"flustered",t:"…ไม่เคยมีใครถามแบบนี้เลยค่ะ"},
      {n:"kati",f:"happy",t:"หนูอยากให้คนเห็นว่าผู้หญิงจากค่ายเก่า ๆ ก็เป็นแชมป์ได้ ไม่ต้องมีเงิน ไม่ต้องมีชื่อเสียง มีแค่หัวใจก็พอ"}]}]}]},
@@ -95,7 +96,7 @@ const EVENTS=[
   {n:"mali",f:"happy",t:G=>`อ้าว คุณมาจากค่ายศิริชัยเหรอคะ? หนูชื่อมะลิค่ะ มาจากต่างจังหวัด ตระเวนชกงานวัดหาเงินส่งที่บ้าน`},
   {n:"mali",f:"sad",t:"ไม่มีค่ายไหนรับหนูหรอกค่ะ เขาว่าตัวเล็กเกินไป ชกเวทีใหญ่ไม่ไหว"},
   {choice:[
-   {t:"ค่ายเราเล็ก แต่ฉันจะให้เธอได้ชกจริงจัง",fx:G=>{add(G,"mali","trust",8);add(G,"mali","bond",4);},then:[{n:"mali",f:"flustered",t:"จริงเหรอคะ… งั้นหนูจะไปดูค่ายนะคะ! (รับมะลิเข้าค่ายได้ที่แท็บ ค่าย & การเงิน)"}]},
+   {t:"ค่ายเราเล็ก แต่ฉันจะให้เธอได้ชกจริงจัง",fx:G=>{add(G,"mali","trust",8);add(G,"mali","bond",4);MEM(G,"mali_promise");},then:[{n:"mali",f:"flustered",t:"จริงเหรอคะ… งั้นหนูจะไปดูค่ายนะคะ! (รับมะลิเข้าค่ายได้ที่แท็บ ค่าย & การเงิน)"}]},
    {t:"เตะสวยมาก ไว้เจอกันใหม่",fx:G=>add(G,"mali","bond",3),then:[{n:"mali",f:"happy",t:"แล้วเจอกันนะคะ ถ้าเปลี่ยนใจอยากได้นักมวยตัวจิ๋ว มาหาหนูที่งานวัดได้เลย!"}]}]},
   {fx:G=>{G.F.mali.met=true;G.flags.maliRecruit=true;}}]},
 
@@ -645,8 +646,8 @@ EVENTS.push(
   {n:"rin",f:"sad",l:"train",t:"ไม่เป็นไรค่ะ… ฉันมองเห็นอยู่ …นั่นมะลิใช่ไหมคะ"},
   {n:"mali",f:"flustered",l:"train",t:"นั่นกระสอบทรายค่ะพี่ริน! มะลิอยู่ทางนี้!"},
   {n:"rin",f:"flustered",l:"train",t:G=>`${CALL(G,"rin")}คะ… สารภาพก็ได้ ฉันสายตาสั้นสามร้อย ตอนชกจริงถอดแว่น ฉันเลยต้องจำทุกอย่างก่อนขึ้นเวที นั่นแหละที่มาของข้อมูลทั้งหมด`},
-  {choice:[{t:"(พาไปร้านแว่นในเมือง จ่ายให้เอง ฿1,500)",fx:G=>{G.cash-=1500;add(G,"rin","bond",5);add(G,"rin","trust",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"…กรอบนี้เบากว่าเดิมครึ่งหนึ่ง ฉันจะคืนเงินให้นะคะ ผ่อนได้ไหม"},{n:"nar",t:"ระหว่างทางกลับ รินเดินชิดกว่าทุกครั้ง เพราะยังปรับสายตาไม่ได้ …มั้ง"}]},
-   {t:"แบบนี้ยิ่งเก่งนะ ชกด้วยความจำ",fx:G=>{add(G,"rin","morale",6);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.3);},then:[{n:"rin",f:"happy",l:"train",t:"…ไม่มีใครเคยมองแบบนี้ ขอบคุณค่ะ ฉันจะจำคำนี้ด้วย"},{n:"nar",t:"(การอ่านเกมของรินดีขึ้นเล็กน้อย)"}]}]}]},
+  {choice:[{t:"(พาไปร้านแว่นในเมือง จ่ายให้เอง ฿1,500)",fx:G=>{G.cash-=1500;add(G,"rin","bond",5);add(G,"rin","trust",4);MEM(G,"rin_glasses");},then:[{n:"rin",f:"flustered",l:"casual",t:"…กรอบนี้เบากว่าเดิมครึ่งหนึ่ง ฉันจะคืนเงินให้นะคะ ผ่อนได้ไหม"},{n:"nar",t:"ระหว่างทางกลับ รินเดินชิดกว่าทุกครั้ง เพราะยังปรับสายตาไม่ได้ …มั้ง"}]},
+   {t:"แบบนี้ยิ่งเก่งนะ ชกด้วยความจำ",fx:G=>{add(G,"rin","morale",6);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.3);MEM(G,"rin_memory");},then:[{n:"rin",f:"happy",l:"train",t:"…ไม่มีใครเคยมองแบบนี้ ขอบคุณค่ะ ฉันจะจำคำนี้ด้วย"},{n:"nar",t:"(การอ่านเกมของรินดีขึ้นเล็กน้อย)"}]}]}]},
  {id:"rin_dad",look:"casual",when:G=>G.week>=26&&inCamp(G,"rin"),bg:"night",steps:[
   {n:"nar",t:"สามทุ่ม รินนั่งอยู่หน้าค่าย มือถือสั่นไม่หยุด หน้าจอขึ้นว่า 'พ่อ (ศ.ดร.)'"},
   {n:"rin",f:"sad",l:"casual",t:"พ่อเป็นอาจารย์มหาวิทยาลัยค่ะ อยากให้ฉันเรียนต่อเอก ไม่ใช่มาชกมวยต่างจังหวัด"},
@@ -688,7 +689,7 @@ EVENTS.push(
   {n:"kati",f:"surprised",l:"casual",t:G=>`นี่หนูเองค่ะ! แล้วนี่ก็${CALL(G,"kati")}! ตอนนั้นยังตัวเท่าเสากระโดงเวทีอยู่เลย`},
   {n:"kati",f:"happy",l:"casual",t:"ย่ายังอยู่ตอนนั้น ย่าทำข้าวเหนียวมะม่วงให้ทุกเย็น ปู่ก็แอบกินของเราทุกครั้ง"},
   {choice:[{t:"ไม่นึกเลยว่าจะได้กลับมาอยู่ที่นี่อีก",fx:G=>{add(G,"kati","bond",4);add(G,"kati","trust",3);},then:[{n:"kati",f:"flustered",l:"casual",t:"หนูนึกค่ะ… หนูนึกมาตลอดว่าสักวันคุณจะกลับมา แบบที่ปู่บอก"}]},
-   {t:"ตอนนั้นใครชนะจักรยาน",fx:G=>{add(G,"kati","bond",3);},then:[{n:"kati",f:"pout",l:"casual",t:"เสมอกันค่ะ! ตกคูน้ำพร้อมกัน ย่าตีก้นทั้งสองคนด้วย"}]}]},
+   {t:"ตอนนั้นใครชนะจักรยาน",fx:G=>{add(G,"kati","bond",3);MEM(G,"kati_bike");},then:[{n:"kati",f:"pout",l:"casual",t:"เสมอกันค่ะ! ตกคูน้ำพร้อมกัน ย่าตีก้นทั้งสองคนด้วย"}]}]},
   {n:"nar",t:"คืนนั้นรูปใบนั้นถูกเอาไปตั้งไว้บนหิ้ง ข้างรูปปู่ชัย"}]},
  {id:"me_office",look:"casual",when:G=>G.week>=11,bg:"camp",steps:[
   {n:"nar",t:"เบอร์กรุงเทพฯ โทรเข้ามาตอนกำลังดูเด็ก ๆ ซ้อมเตะ หน้าจอขึ้นว่า 'บอส (อย่ารับวันหยุด)'"},
@@ -1120,3 +1121,29 @@ const PERSONAL_END={
 function personalEnding(G){let id=G.romance;if(!id){const c=["kati","mali","rin","ploy","fah"].filter(k=>G.F[k]&&G.F[k].met&&(G.F[k].bond||0)>=40).sort((a,b)=>G.F[b].bond-G.F[a].bond);id=c[0];}
   const base=id&&PERSONAL_END[id]?PERSONAL_END[id]:[];if(G.romance===id&&LOVER_END[id])return [...base,...LOVER_END[id]];
   const pr=G.promise?Object.keys(G.promise).find(k=>PROMISE_END[k]):null;return [...base,...(pr&&pr!==id?[]:pr?PROMISE_END[pr]:[])];}
+
+// v1.41: they remember what you said — callbacks to earlier choices
+EVENTS.push(
+ {id:"mem_kati_bike",look:"casual",when:G=>G.week>=20&&HAS(G,"kati_bike",12)&&inCamp(G,"kati"),bg:"camp",steps:[
+  {n:"nar",t:"หลังซ้อมเย็น กะทิเข็นจักรยานสนิมเขรอะออกมาจากหลังโรงเก็บของ ยางใหม่สองเส้นยังมีป้ายราคาติดอยู่"},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}จำได้ไหมคะ ที่ถามว่าตอนนั้นใครชนะจักรยาน หนูเลยไปเปลี่ยนยางมา… แข่งใหม่ค่ะ รอบนี้ห้ามตกคูน้ำ!`},
+  {choice:[{t:"(ยอมให้ชนะแบบเนียน ๆ)",fx:G=>{add(G,"kati","bond",4);},then:[{n:"kati",f:"pout",l:"casual",t:"ออมมือใช่ไหมคะ! หนูเห็นนะ! …แต่ก็ชนะอยู่ดี เย้!"}]},
+   {t:"(ปั่นสุดแรง ไม่ยอมแพ้)",fx:G=>{add(G,"kati","bond",3);add(G,"kati","morale",5);},then:[{n:"nar",t:"โค้งสุดท้ายหน้าวัด จักรยานทั้งสองคันลื่นลงคูน้ำพร้อมกันเหมือนเมื่อสิบห้าปีก่อน"},{n:"kati",f:"happy",l:"casual",t:"ฮ่า ๆ ๆ เสมออีกแล้ว! ย่าไม่อยู่ตีก้นแล้วด้วย…"}]}]}]},
+ {id:"mem_mali_promise",look:"train",when:G=>G.week>=30&&HAS(G,"mali_promise")&&inCamp(G,"mali")&&(G.F.mali.rec.w||0)>=4,bg:"gym",steps:[
+  {n:"mali",f:"flustered",l:"train",t:G=>`${CALL(G,"mali")}คะ… วันที่เจอกันที่งานวัด ${CALL(G,"mali")}บอกว่าค่ายเล็ก แต่จะให้หนูได้ชกจริงจัง`},
+  {n:"mali",f:"happy",l:"train",t:"ตอนนี้หนูชนะมาหลายไฟต์แล้ว แม่โทรมาถามทุกอาทิตย์เลยว่าลูกชกเมื่อไหร่ …ขอบคุณที่ทำตามที่พูดนะคะ"},
+  {fx:G=>{add(G,"mali","trust",5);add(G,"mali","bond",3);}},{n:"nar",t:"(มะลิจำคำสัญญาวันนั้นได้ · ความเชื่อใจเพิ่มขึ้น)"}]},
+ {id:"mem_rin_repay",look:"casual",when:G=>HAS(G,"rin_glasses",8)&&inCamp(G,"rin"),bg:"camp",steps:[
+  {n:"nar",t:"เช้าวันจันทร์ มีซองสีขาวเหน็บไว้ใต้แก้วกาแฟบนโต๊ะ ลายมือเรียบร้อยเป๊ะ"},
+  {n:"rin",f:"flustered",l:"casual",t:"ค่าแว่นค่ะ ครบ ฿1,500 ฉันบอกแล้วว่าจะคืน …ห้ามปฏิเสธนะคะ ฉันคำนวณไว้แล้วว่าคุณจะพยายามไม่รับ"},
+  {choice:[{t:"(รับไว้)",fx:G=>{G.cash+=1500;add(G,"rin","trust",4);},then:[{n:"rin",f:"happy",l:"casual",t:"ดีค่ะ ตรงตามแผน"}]},
+   {t:"เก็บไว้ซื้อเทปวิเคราะห์เถอะ",fx:G=>{add(G,"rin","bond",5);},then:[{n:"rin",f:"flustered",l:"casual",t:"…นี่ไม่อยู่ในแผนเลยค่ะ ฉันต้องคำนวณใหม่หมด"}]}]}]},
+ {id:"mem_rin_memory",look:"train",when:G=>HAS(G,"rin_memory",10)&&inCamp(G,"rin"),bg:"gym",steps:[
+  {n:"rin",f:"happy",l:"train",t:G=>`${CALL(G,"rin")}เคยบอกว่าฉันชกด้วยความจำ ตอนนี้ฉันจำได้หมดเลยค่ะ ทุกไฟต์ของค่ายเรา ใครออกหมัดอะไรยกไหน`},
+  {n:"rin",f:"flustered",l:"train",t:"…รวมถึงคำที่คุณพูดวันนั้นด้วย"},
+  {fx:G=>{add(G,"rin","bond",3);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.2);}},{n:"nar",t:"(รินยังจำคำพูดวันนั้นได้ · การอ่านเกมดีขึ้นอีกนิด)"}]},
+ {id:"mem_kati_promise",look:"casual",when:G=>G.week>=44&&HAS(G,"kati_promise")&&inCamp(G,"kati"),bg:"night",steps:[
+  {n:"nar",t:"คืนก่อนรอบสำคัญ กะทินั่งพันเทปมือช้า ๆ อยู่หน้าค่าย"},
+  {n:"kati",f:"flustered",l:"casual",t:G=>`${CALL(G,"kati")}คะ จำได้ไหม อาทิตย์ที่สองที่มาที่นี่ บอกหนูว่าจะไม่ทำให้หนูเสียใจ`},
+  {n:"kati",f:"happy",l:"casual",t:"หนูบอกแล้วว่าจะจำคำนี้ไว้ …ไม่ว่าพรุ่งนี้จะแพ้หรือชนะ คุณไม่ได้คืนคำเลยสักครั้งค่ะ"},
+  {fx:G=>{add(G,"kati","trust",6);add(G,"kati","bond",3);}},{n:"nar",t:"(กะทิจำคำสัญญาวันแรกได้ · ความเชื่อใจเพิ่มขึ้น)"}]});
