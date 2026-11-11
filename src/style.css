@@ -1366,8 +1366,8 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .petrow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .missb{margin:3px 0;padding:2px 6px;background:#3a2240;border:1px solid #7a3f6b;color:#ffb3d1;font-size:12px}
 .albbtn{position:relative;white-space:nowrap}.albh{margin:10px 0 4px;font:700 14px "Chakra Petch",sans-serif;color:var(--gold,#f2c94c)}
-.albg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.tcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;background:#1b1530;border:3px solid var(--rc);color:inherit;font:inherit;cursor:pointer;text-align:center;min-width:0}
-.tcard img{width:64px;height:64px;object-fit:cover;image-rendering:auto;border:2px solid #2a2340}.tcard b{font-size:12px;line-height:1.2}.tcard small{font-size:10px;color:var(--mut,#9a91ad);line-height:1.2}
-.tcard .tstar{color:var(--rc);font-size:11px;letter-spacing:1px}.tcard.lock{cursor:default;opacity:.85}.tcard.lock img{filter:brightness(0) opacity(.55)}.tcard .ndot,.albbtn .ndot{position:absolute;top:3px;right:3px;width:8px;height:8px;background:#ff4d6d;display:block}
+.albg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ccard{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;background:#1b1530;border:3px solid var(--rc);color:inherit;font:inherit;cursor:pointer;text-align:center;min-width:0}
+.ccard img{width:64px;height:64px;object-fit:cover;image-rendering:auto;border:2px solid #2a2340}.ccard b{font-size:12px;line-height:1.2}.ccard small{font-size:10px;color:var(--mut,#9a91ad);line-height:1.2}
+.ccard .tstar{color:var(--rc);font-size:11px;letter-spacing:1px}.ccard.lock{cursor:default;opacity:.85}.ccard.lock img{filter:brightness(0) opacity(.55)}.ccard .ndot,.albbtn .ndot{position:absolute;top:3px;right:3px;width:8px;height:8px;background:#ff4d6d;display:block}
 .gacha{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0 4px;padding:8px;background:#241c3a;border:2px solid #4a3f6b}.gacha span{display:flex;flex-direction:column}.gacha small{font-size:11px;color:var(--mut,#9a91ad)}
-.gres{display:flex;flex-direction:column;align-items:center;gap:8px;margin:8px 0}.tcard.big{width:150px}.tcard.big img{width:110px;height:110px}.tcard.big b{font-size:14px}
+.gres{display:flex;flex-direction:column;align-items:center;gap:8px;margin:8px 0}.ccard.big{width:150px}.ccard.big img{width:110px;height:110px}.ccard.big b{font-size:14px}

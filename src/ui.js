@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.59";
+const VERSION="1.60";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -684,9 +684,12 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
     body=`<h2>อัลบั้มการ์ด</h2><p class="meta">เก็บได้ ${Object.keys(own).length}/${Object.keys(CARDS).length} ใบ · แตะการ์ดเพื่อดูเรื่องราว · ใบที่ยังไม่ได้แสดงเป็นเงาพร้อมคำใบ้</p>
      <div class="gacha"><span><b class="goldt">✦ ${G.dust||0}</b> เศษดาว<small>ได้จากชนะไฟต์ การ์ดใหม่ และการ์ดซ้ำ · การันตี SSR อีก ${GACHA_PITY-(G.pity||0)} ครั้ง</small></span><button class="btn sm gold" data-act="gacha" ${(G.dust||0)<GACHA_COST?"disabled":""}>สุ่มการ์ด ${GACHA_COST}✦</button></div>
      ${CANON_IDS.filter(c=>byC[c]).map(c=>`<h4 class="albh">${esc(G.F[c].name)}</h4><div class="albg">${byC[c].map(id=>{const C=CARDS[id],o=own[id],R=CARD_R[C.r];
-       return o?`<button class="tcard" style="--rc:${R.c}" data-act="cardplay" data-v="${id}">${!o.seen?'<i class="ndot"></i>':""}<img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b><small>${C.r}${(o.lv||1)>1?` · Lv.${o.lv}`:""}</small></button>`
-         :`<div class="tcard lock" style="--rc:${R.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>???</b><small>${C.g?"ได้จากตู้กาชา":esc(C.hint)}</small></div>`;}).join("")}</div>`).join("")}`;}
-  if(m.type==="gacha"){const R=m.res,C=CARDS[R.id],RR=CARD_R[C.r];body=`<h2>ผลการสุ่ม</h2><div class="gres" style="--rc:${RR.c}"><div class="tcard big" style="--rc:${RR.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
+       return o?`<button class="ccard" style="--rc:${R.c}" data-act="cardplay" data-v="${id}">${!o.seen?'<i class="ndot"></i>':""}<img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b><small>${C.r}${(o.lv||1)>1?` · Lv.${o.lv}`:""}</small></button>`
+         :`<div class="ccard lock" style="--rc:${R.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>???</b><small>${C.g?"ได้จากตู้กาชา":esc(C.hint)}</small></div>`;}).join("")}</div>`).join("")}`;}
+  if(m.type==="cardnew"){const P=G.cardPend||[];const id=P[0];const C=CARDS[id];if(!C){G.cardPend=[];UI.modal=null;return "";}const RR=CARD_R[C.r];body=`<h2>ได้การ์ดใหม่!</h2><div class="gres" style="--rc:${RR.c}"><div class="ccard big" style="--rc:${RR.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
+    <p class="center meta">${C.hint?esc(C.hint)+" · ":""}ได้เศษดาว <b class="goldt">✦ 5</b>${P.length>1?` · ยังมีการ์ดใหม่อีก ${P.length-1} ใบ`:""}</p></div>
+    <div class="mfoot roadbtns"><button class="btn primary" data-act="cardplay" data-v="${id}" data-from="new">ดูเรื่องราวเลย</button><button class="btn" data-act="cardlater">เก็บไว้ดูทีหลัง</button></div>`;foot=false;}
+  if(m.type==="gacha"){const R=m.res,C=CARDS[R.id],RR=CARD_R[C.r];body=`<h2>ผลการสุ่ม</h2><div class="gres" style="--rc:${RR.c}"><div class="ccard big" style="--rc:${RR.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
     <p class="center">${R.isNew?"<b class=\"goldt\">การ์ดใหม่!</b>":R.up?`การ์ดซ้ำ · อัปเกรดเป็น <b>Lv.${R.up}</b> · ความสนิท +`:`การ์ดเต็มระดับแล้ว · ย่อยเป็น <b class="goldt">✦ ${R.dust}</b>`}</p></div>
     <div class="mfoot roadbtns">${R.isNew?`<button class="btn" data-act="cardplay" data-v="${R.id}">ดูเรื่องราว</button>`:""}<button class="btn gold" data-act="gacha" ${(G.dust||0)<GACHA_COST?"disabled":""}>สุ่มอีก ${GACHA_COST}✦ (มี ${G.dust||0})</button><button class="btn primary" data-act="album">กลับอัลบั้ม</button></div>`;foot=false;}
   if(m.type==="masters"){body=`<h2>เชิญครูมวยโบราณ</h2><p class="meta">${fmt(18000)} ต่อครั้ง · นักมวยแต่ละคนเรียนได้ครั้งเดียวต่อฤดูกาล</p><div class="mlist">${Object.entries(MASTERS).map(([k,M])=>`<div class="mrow"><b>${M.name}</b><small>เสริม ${M.attrs.map(a=>ATTR_LABEL[a]).join(" · ")}</small><div class="obtns">${roster(G).map(f=>`<button class="btn sm" data-act="hiremaster" data-id="${f.id}" data-v="${k}" ${G.cash<M.cost||f.masterSeason===(G.season||1)?"disabled":""}>${esc(f.name)}</button>`).join("")}</div></div>`).join("")}</div>`;}
@@ -739,7 +742,7 @@ function warmNext(){let src;do{src=WARMQ.shift();}while(src&&WARMED[src]);if(!sr
 function warmAll(){const L=[];CANON_IDS.forEach(id=>["happy","sad","surprised","angry"].forEach(m=>L.push(stand(id,"fight",m))));
   CANON_IDS.forEach(id=>["happy","flustered","pout"].forEach(m=>L.push(stand(id,"casual",m))));
   Object.values(BGIMG).concat(Object.values(TIER_BG),["gym2.webp","gym3.webp"]).filter(Boolean).forEach(b=>L.push(ASSET+b));warmLater(L);}
-function playScene(steps,done,opts={}){warmSteps(steps,opts.look||"fight");if(opts.bg&&BGIMG[opts.bg])warm(ASSET+BGIMG[opts.bg]);UI.scene={steps:[...steps],i:0,done,bg:opts.bg||"night",look:opts.look||"fight",cur:null,cast:[]};sceneNext();}
+function playScene(steps,done,opts={}){warmSteps(steps,opts.look||"fight");if(opts.bg&&BGIMG[opts.bg])warm(ASSET+BGIMG[opts.bg]);UI.scene={steps:[...steps],i:0,done,bg:opts.bg||"night",look:opts.look||"fight",cur:null,cast:[],coachOK:!!opts.coachOK};sceneNext();}
 function sceneNext(){const S=UI.scene;if(!S)return;
   while(S.i<S.steps.length){const st=S.steps[S.i];
     if(st.inject){const more=st.inject(G)||[];S.steps.splice(S.i,1,...more);continue;}
@@ -749,7 +752,7 @@ function sceneNext(){const S=UI.scene;if(!S)return;
     const n=val(st.n);S.lookOf=S.lookOf||{};
     // v1.8: each character keeps one outfit for the whole scene
     const look=CANON_IDS.includes(n)?(S.lookOf[n]=S.lookOf[n]||(st.l==="train"?"fight":st.l)||S.look):(st.l||S.look);
-    S.cur={n,f:val(st.f)||"happy",t:nameCall(n,val(st.t)),look,who:st.who};
+    S.cur={n,f:val(st.f)||"happy",t:nameCall(n,val(st.t)),look,who:st.who,tel:n==="coach"&&!S.coachOK&&!!(G&&G.coachAway&&G.week<G.coachAway)};
     if(st.show)S.cast=st.show.map(x=>({id:x.id,f:x.f||"happy",look:S.lookOf[x.id]||x.l||look,back:!!x.back}));
     if(n==="npc"){const im=npcImg(st);if(im)S.cast=[{id:"npc:"+im,f:"happy",look}];}
     if(n==="coach"){S.cast=[{id:"coach",f:"happy",look}];}           // the coach always stands alone
@@ -762,7 +765,7 @@ function sceneNext(){const S=UI.scene;if(!S)return;
 // v1.35: once she is close she calls you by name, not by title
 function nameCall(n,t){if(typeof t!=="string"||!G||!G.F[n]||!G.F[n].canon||(G.F[n].bond||0)<25)return t;const nm=G.player.name;return t.replace(/^ผู้จัดการ(?=คะ|ครับ|!|…| )/,"คุณ"+nm).replace(/^Manager(?=[,!…. ])/,nm);}
 function sceneChoose(k){const S=UI.scene,c=S.cur.choice[k];AU.sfx("ui");if(c.fx)c.fx(G);S.steps.splice(S.i+1,0,...(c.then||[]));S.i++;sceneNext();}
-function sceneHTML(){const S=UI.scene,c=S.cur||{};const sp=c.n==="coach"?{name:"ครูแดง",color:"#d98a4a"}:c.n==="npc"?{name:c.who||"",color:"#8fbf6a"}:(SPK[c.n]||{name:""});
+function sceneHTML(){const S=UI.scene,c=S.cur||{};const sp=c.n==="coach"?{name:c.tel?"ครูแดง (โทรมา)":"ครูแดง",color:"#d98a4a"}:c.n==="npc"?{name:c.who||"",color:"#8fbf6a"}:(SPK[c.n]||{name:""});
   const who=c.n==="me"?esc(G.player.name):c.n==="nar"?"":esc(sp.name||"");
   const spk=c.n||S.lastN;if(c.n)S.lastN=c.n;
   const bgKey=(S.bg==="gym"||S.bg==="camp")?gymBg():BGIMG[S.bg];
@@ -809,8 +812,9 @@ function pendingEvents(){return EVENTS.filter(e=>e.when&&!evSeen(e)&&e.when(G));
 const EV_MUST=/^(prologue|daeng_leave|pre_qual|qual_result|final_result|semi_result|night_final|lover_final|ploy_prefinal|fah_prefinal|first_win|first_loss)/,EV_CAP=2;
 function runEvents(done){const list=pendingEvents().sort((a,b)=>(b.pri||0)-(a.pri||0));let played=0,opt=0;/* time-limited scenes go first */
   const step=()=>{const e=list.shift();if(!e||G.ended){done&&done(played);return;}if(evSeen(e)||!e.when(G)){step();return;}
+    if(G.coachAway&&G.week<G.coachAway&&!EV_MUST.test(e.id)&&!/daeng|coach/.test(e.id)&&e.steps.some(x=>x.n==="coach")){step();return;}/* v1.60: scenes where Kru Daeng talks wait until he is back */
     if(!EV_MUST.test(e.id)&&G.week<47){if(opt>=EV_CAP){step();return;}opt++;}
-    if(e.annual){G.seenY=G.seenY||{};G.seenY[e.id]=G.season||1;}else G.seen[e.id]=true;G.seenWk=G.seenWk||{};G.seenWk[e.id]=G.week;played++;playScene(e.steps,step,{bg:e.bg,look:e.look});};step();}
+    if(e.annual){G.seenY=G.seenY||{};G.seenY[e.id]=G.season||1;}else G.seen[e.id]=true;G.seenWk=G.seenWk||{};G.seenWk[e.id]=G.week;played++;playScene(e.steps,step,{bg:e.bg,look:e.look,coachOK:/daeng|coach/.test(e.id)});};step();}
 function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);if(typeof questExtra==="function"&&questExtra(done,mulberry32(G.seed+G.week*59)))return;
   const dil=(typeof DILEMMAS!=="undefined"?DILEMMAS:[]).filter(d=>!G.seen[d.id]&&G.week>=d.from&&G.week<=d.to&&d.need(G));
   const sinceD=G.week-(G.lastDilemma||0);
@@ -821,9 +825,9 @@ function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);if(typeof que
   const chats2=chats.filter(c=>!c.need2||c.need2(G)),haps2=haps.filter(h=>!h.need||h.need(G));
   let pick=null;if(chats2.length&&rng()<.6)pick=chats2[Math.floor(rng()*chats2.length)];else if(haps2.length&&rng()<.7)pick=haps2[Math.floor(rng()*haps2.length)];
   if(!pick){done();return;}G.seen[pick.id]=true;playScene(pick.steps,done,{bg:pick.bg==="camp"?"gym":pick.bg,look:pick.look||"train"});}
-function afterWeekFlow(){if(typeof cardCheck==="function"){const got=cardCheck(G);if(got.length)setTimeout(()=>toast(`🃏 ได้การ์ดใหม่ ${got.length} ใบ! ดูในอัลบั้ม (แท็บตัวละคร)`),900);}if(typeof mailWeekly==="function"&&!G.ended)mailWeekly(G);if(typeof chatWeekly==="function"&&!G.ended)chatWeekly(G);runEvents(played=>{const fin=()=>{if(G.ended){startEnding();return;}
-    relTierCheck();if(UI.relUp&&UI.relUp.length){const m=UI.relUp.join(" / ");UI.relUp=[];setTimeout(()=>toast("♥ "+m),300);}
-    if(G.levelUps&&G.levelUps.length){const ids=[...new Set(G.levelUps)];G.levelUps=[];AU.sfx("level");UI.modal={type:"levelup",ids};}render();};
+function afterWeekFlow(){if(typeof cardCheck==="function"){const got=cardCheck(G);if(got.length){G.cardPend=(G.cardPend||[]).concat(got);}}if(typeof mailWeekly==="function"&&!G.ended)mailWeekly(G);if(typeof chatWeekly==="function"&&!G.ended)chatWeekly(G);runEvents(played=>{const fin=()=>{if(G.ended){startEnding();return;}
+    if(typeof cardCheck==="function"){const g2=cardCheck(G);if(g2.length)G.cardPend=(G.cardPend||[]).concat(g2);}relTierCheck();if(UI.relUp&&UI.relUp.length){const m=UI.relUp.join(" / ");UI.relUp=[];setTimeout(()=>toast("♥ "+m),300);}
+    if(G.levelUps&&G.levelUps.length){const ids=[...new Set(G.levelUps)];G.levelUps=[];AU.sfx("level");UI.modal={type:"levelup",ids};}else if((G.cardPend||[]).length){AU.sfx&&AU.sfx("level");UI.modal={type:"cardnew"};}render();};
     const go=()=>coachBackScene(()=>aftermathScene(()=>tiredScene(()=>rinScene(fin))));if(played)go();else weeklyExtra(go);});}
 // v1.15: a worn-out fighter asks for a rest week herself
 function tiredScene(done){G.tiredAt=G.tiredAt||{};const f=roster(G).find(x=>!x.injury&&x.fatigue>=58&&x.plan.preset!=="rest"&&(G.tiredAt[x.id]||-9)<G.week-3);if(!f||!coachOn()&&f.fatigue<70){done();return;}
@@ -1143,7 +1147,8 @@ const ACT={
   petnamesave:d=>{const p=(G.pets||[])[+d.v];const v=((document.getElementById("petname")||{}).value||"").trim();if(p&&v)p.name=v.slice(0,12);UI.modal=null;save();render();},
   gacha:()=>{const r=gachaPull(G);if(!r)return;AU.sfx&&AU.sfx(CARDS[r.id].r==="SSR"||CARDS[r.id].r==="SR"?"level":"ui");save();UI.modal={type:"gacha",res:r};render();},
   album:()=>{UI.modal={type:"album"};render();},
-  cardplay:d=>{const C=CARDS[d.v],o=(G.cards||{})[d.v];if(!C||!o)return;o.seen=true;save();UI.modal=null;playScene(C.steps,()=>{UI.modal={type:"album"};render();},{bg:C.bg,look:"casual"});},
+  cardplay:d=>{const C=CARDS[d.v],o=(G.cards||{})[d.v];if(!C||!o)return;o.seen=true;G.cardPend=(G.cardPend||[]).filter(x=>x!==d.v);save();UI.modal=null;const nw=d.from==="new";playScene(C.steps,()=>{UI.modal=nw?((G.cardPend||[]).length?{type:"cardnew"}:null):{type:"album"};render();},{bg:C.bg,look:"casual"});},
+  cardlater:()=>{(G.cardPend||[]).shift();save();UI.modal=(G.cardPend||[]).length?{type:"cardnew"}:null;render();},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},
   cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator[d.k]=d.v;render();},
   crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};crSeed();UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab,seed:o.seed};render();},

@@ -1251,24 +1251,92 @@ for(const id of Object.keys(BDAY_RIVAL)){const B=BDAY_RIVAL[id];
     {choice:[{t:"Send birthday wishes",fx:G=>{add(G,id,"bond",3);},then:[{n:id,f:"flustered",l:"casual",t:B.reply[0]}]},
       {t:"Send a cake (฿600)",fx:G=>{G.cash-=600;add(G,id,"bond",6);},then:[{n:id,f:"happy",l:"casual",t:B.reply[1]}]},
       {t:"(Send nothing)",fx:G=>{}}]}]});}
-// festivals that return every year (year 1 keeps its story versions)
+// v1.60: longer festival nights — every girl in camp gets a moment, pets join in, each festival ends on a quiet beat
+const FIN=(G,id)=>inCamp(G,id);
+const petOf=(G,k)=>(G.pets||[]).find(p=>p.k===k);
+const festTop=G=>roster(G).filter(f=>f.canon).slice().sort((x,y)=>(y.bond||0)-(x.bond||0))[0]||roster(G)[0];
 EVENTS.push(
- {id:"fest_newyear",annual:true,pri:1,look:"casual",bg:"night",when:annualWhen(32,G=>roster(G).length>0),steps:[
-  {inject:G=>{const R=roster(G),a=R[0],b=R[1]||R[0];return [
-   {n:"nar",t:yr(G)===1?"New Year's Eve. Everyone in the camp climbs onto the roof to count down and watch the fireworks over the city.":`New Year's Eve again, same roof, more people than last year. This is year ${yr(G)} we've counted down together.`},
-   {n:a.id,f:"happy",l:"casual",t:"Three! Two! One! Happy New Yeeear!"},
-   {n:b.id,f:"flustered",l:"casual",t:yr(G)===1?"Next year… I hope our camp is still together like this.":"Last year we wished we'd stay together like this… and it came true."},
-   {choice:[{t:"Wish that nobody gets hurt (everyone: morale +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);})},
-     {t:`Wish for ${b.name}'s dream to come true (Bond +)`,fx:G2=>add(G2,b.id,"bond",5)}]}];}}]},
- {id:"fest_krathong",annual:true,pri:1,look:"casual",bg:"night",when:annualWhen(26,G=>yr(G)>=2&&roster(G).length>0),steps:[
-  {inject:G=>{const R=roster(G).slice().sort((x,y)=>(y.bond||0)-(x.bond||0)),f=R[0];return [
-   {n:"nar",t:"Loy Krathong again. Yi Peng lanterns fill the Chiang Mai sky, and the Ping River glows from end to end."},
-   {n:f.id,f:"flustered",l:"casual",t:`${CALL(G,f.id)}, remember what we wished for last year? …This year I'm making the same wish again.`},
-   {choice:[{t:"Release a lantern together (Bond +)",fx:G2=>add(G2,f.id,"bond",6)},{t:"Release a lantern for Grandpa Chai with the whole camp (everyone: morale +4)",fx:G2=>R_ALL(G2,x=>{x.morale=Math.min(100,x.morale+4);})}]}];}}]},
- {id:"fest_songkran",annual:true,pri:1,look:"casual",bg:"gym",when:annualWhen(47,G=>yr(G)>=2&&roster(G).length>0),steps:[
-  {n:"nar",t:"Songkran again. Training stops at noon, everyone pours scented water over Coach Daeng's hands, and the water war starts immediately."},
-  {n:"coach",t:G=>`This camp has had ${yr(G)} years with this manager… I wish for next year, and the year after, and on and on.`},
-  {fx:G=>R_ALL(G,f=>{f.morale=Math.min(100,f.morale+6);f.fatigue=Math.max(0,f.fatigue-8);})},{n:"nar",t:"(Everyone: morale +6 · fatigue −8)"}]});
+ {id:"fest_newyear",annual:true,pri:1,look:"casual",bg:"market",when:annualWhen(32,G=>roster(G).length>0),steps:[
+  {inject:G=>{const S=[],y=yr(G),T=festTop(G);
+   S.push({n:"nar",t:y===1?"December 31st, late afternoon. Warorot Market is packed down every lane, and the whole camp has come to shop for New Year's Eve.":`December 31st again. Warorot Market is as packed as ever, but this year Sirichai Camp arrives as a whole procession. That makes ${y} years of shopping together.`});
+   if(FIN(G,"kati"))S.push({n:"kati",f:"happy",l:"casual",t:"Sai ua, pork crackling, nam prik num… Grandpa bought this set every year. This year I'm buying it for him."});
+   if(FIN(G,"mali"))S.push({n:"mali",f:"happy",l:"casual",t:"Manager, this chicken balloon! Let's tie it at the camp gate. It's not expensive, only twenty baht~"});
+   if(FIN(G,"rin"))S.push({n:"rin",f:"pout",l:"casual",t:"…I made a list. Twelve items. The cart now has twenty-seven. Who put in the chicken balloon?"});
+   if(FIN(G,"fah"))S.push({n:"fah",f:"flustered",l:"casual",t:"Fireworks! We need fireworks! I only bought… three bags. That's not a lot!"});
+   if(FIN(G,"ploy"))S.push({n:"ploy",f:"happy",l:"casual",t:"Fah, put two bags back… I'll carry the rest myself. It's safer."});
+   S.push({n:"nar",bg:"camp",t:"That night the yard becomes a party. A jim jum hot pot sits in the middle, and Coach Daeng brings out Grandpa Chai's old chair for the head of the table. Nobody sits in it."});
+   S.push({n:"coach",t:"Grandpa sat in this chair every New Year's Eve… I'll leave it right here so he can celebrate too."});
+   const dog=petOf(G,"dog"),cat=petOf(G,"cat"),roo=petOf(G,"rooster");
+   if(dog)S.push({n:"nar",t:`${dog.name} guards the hot pot without moving a step, tail sweeping the yard half clean.`});
+   if(cat)S.push({n:"nar",t:`${cat.name} steals a meatball in front of everyone, then eats it on Grandpa Chai's chair without a care.`});
+   if(roo)S.push({n:"nar",t:`${roo.name} crows at 9 p.m., as if announcing the new year three hours early.`});
+   S.push({n:"nar",t:"After ten, everyone sits in a circle talking about the year. Someone suggests each person say one thing they want to do next year."});
+   if(FIN(G,"kati"))S.push({n:"kati",f:"flustered",l:"casual",t:y===1?"I want to put the provincial championship belt in front of Grandpa's photo… and I want more people in the camp.":"I want to fight further than last year… and I want everyone to still be here, all of us."});
+   if(FIN(G,"mali"))S.push({n:"mali",f:"happy",l:"casual",t:"I want to bring Mom to watch me fight once! She's never seen how high I can kick now."});
+   if(FIN(G,"rin"))S.push({n:"rin",f:"pout",l:"casual",t:"I want to cut everyone's round-three guard drop by twenty percent… and I'd like to see the sea once. Don't write that last one down."});
+   if(FIN(G,"fah"))S.push({n:"fah",f:"happy",l:"casual",t:"I want the whole country to see me fight my way! And… I want khao soi at the same shop with everyone every week."});
+   if(FIN(G,"ploy"))S.push({n:"ploy",f:"sad",l:"casual",t:"I want to live one year without having to be a genius… Here, I think I can."});
+   S.push({n:"coach",t:"All I ask is that next year nobody wrecks a knee and nobody breaks a wrist. That's enough. The rest you can do yourselves."});
+   S.push({n:"nar",bg:"night",t:"11:50 p.m. Everyone climbs onto the tin roof. The city lights of Chiang Mai sparkle far away, and Doi Suthep is pitch dark behind them."});
+   S.push({n:T.id,f:"happy",l:"casual",t:"Ten! Nine! Eight!… Three! Two! One! Happy New Year!"});
+   S.push({n:"nar",t:"Fireworks from the city burst into gold across the sky."+(FIN(G,"fah")?" As for Fah's three bags of fireworks, only one lit, but it was the loudest in the whole street.":"")});
+   if(dog)S.push({n:"nar",t:`${dog.name} dove under Coach Daeng's bed at the first firework and won't come out until morning.`});
+   S.push({choice:[{t:"Wish that nobody gets hurt (everyone: morale +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);})},
+     {t:`Wish for ${T.name}'s dream to come true (Bond +)`,fx:G2=>add(G2,T.id,"bond",5),then:[{n:T.id,f:"flustered",l:"casual",t:`…${CALL(G,T.id)} wished for me just now, didn't you? I heard. Thank you.`}]}]});
+   S.push({n:"nar",t:"1 a.m. Everyone else is asleep. Only you and "+T.name+" left sitting on the roof."});
+   S.push({n:T.id,f:"happy",l:"casual",t:y===1?"This time last year, I didn't even know I'd meet "+CALL(G,T.id)+"… Please take care of me next year too.":"We've counted down together for "+y+" years now… Next year I'm reserving the seat next to you."});
+   S.push({fx:G2=>{G2.flags.fc_ny=(G2.flags.fc_ny||0)+1;}});
+   return S;}}]},
+ {id:"fest_krathong",annual:true,pri:1,look:"casual",bg:"camp",when:annualWhen(26,G=>yr(G)>=2&&roster(G).length>0),steps:[
+  {inject:G=>{const S=[],T=festTop(G);
+   S.push({n:"nar",t:"Yi Peng again. That afternoon the camp yard is full of banana leaves, banana trunks, marigolds and incense. Coach Daeng announces that no one buys a krathong this year. You make your own."});
+   S.push({n:"coach",t:"In Grandpa Chai's day the whole camp folded banana leaves together every year. A fighter has to fold petals properly, or her hand wraps won't look neat either."});
+   if(FIN(G,"kati"))S.push({n:"kati",f:"happy",l:"casual",t:"I fold it the way Grandpa taught me. Eight layers of rose petals… the eighth one always falls off."});
+   if(FIN(G,"mali"))S.push({n:"mali",f:"happy",l:"casual",t:"Are there too many flowers on mine? …It's starting to sink before it even floats. Waah."});
+   if(FIN(G,"rin"))S.push({n:"rin",f:"pout",l:"casual",t:"Mine's made of bread. Fish can eat it. It breaks down in three hours. …Don't look at me like that. It's pretty in its own way."});
+   if(FIN(G,"fah"))S.push({n:"fah",f:"flustered",l:"casual",t:"Fah's krathong is the biggest in camp! …Used half a banana trunk. Not sure it'll float, but it's definitely pretty!"});
+   if(FIN(G,"ploy"))S.push({n:"ploy",f:"happy",l:"casual",t:"…(Ploy quietly sets down a krathong with every layer folded perfectly even, then starts fixing Mali's)"});
+   const cat=petOf(G,"cat"),tur=petOf(G,"turtle");
+   if(cat)S.push({n:"nar",t:`${cat.name} lies on the pile of marigolds and won't move, so everyone ends up folding krathongs around it.`});
+   S.push({n:"nar",bg:"river",t:"At dusk the whole camp walks to the Ping River. The water glows with thousands of candles, and Yi Peng lanterns slowly fill the Chiang Mai sky."});
+   if(tur)S.push({n:"nar",t:`Someone carries ${tur.name} along. It stretches its neck and watches the krathongs drift by for a long time, as if it remembers being a temple turtle by the river.`});
+   if(FIN(G,"fah"))S.push({n:"fah",f:"surprised",l:"casual",t:"It's floating! It's floating! …Oh no, it's tilting! It's tipping! Somebody help!"});
+   if(FIN(G,"rin"))S.push({n:"rin",f:"happy",l:"casual",t:"The fish are eating mine… three of them. No, five. I told you it was useful."});
+   if(FIN(G,"mali"))S.push({n:"mali",f:"sad",l:"casual",t:"I wished for Mom to rest more… This year I sent home more money than last year, too."});
+   if(FIN(G,"kati"))S.push({n:"kati",f:"sad",l:"casual",t:"The eighth petal came off again… Grandpa must be laughing somewhere. His never stayed on either."});
+   S.push({n:"coach",t:"Alright, release the lanterns together, the whole camp. Anything you want to send to Grandpa, send it now."});
+   S.push({n:"nar",t:"Paper lanterns rise from everyone's hands at once, shrinking until they become one star among hundreds."});
+   S.push({n:T.id,f:"flustered",l:"casual",t:`${CALL(G,T.id)}, remember what we wished for last year? …This year I'm making the same wish again.`});
+   S.push({choice:[{t:"Release another lantern together, just you two (Bond +)",fx:G2=>add(G2,T.id,"bond",6),then:[{n:"nar",t:"The second lantern rises after the first. Two pairs of hands hold its edge until the very last second."},{n:T.id,f:"happy",l:"casual",t:"…You don't have to tell me what you wished for. I can guess."}]},
+     {t:"Release one more lantern for Grandpa Chai with the whole camp (everyone morale +4)",fx:G2=>R_ALL(G2,x=>{x.morale=Math.min(100,x.morale+4);}),then:[{n:"coach",t:"…Thank you, Manager. Grandpa would have liked that."}]}]});
+   S.push({n:"nar",bg:"night",t:"Walking back to camp at ten, fireworks still pop now and then. Everyone walks slowly, as if no one wants tonight to end."});
+   S.push({fx:G2=>{G2.flags.fc_kt=(G2.flags.fc_kt||0)+1;}});
+   return S;}}]},
+ {id:"fest_songkran",annual:true,pri:1,look:"casual",bg:"temple",when:annualWhen(47,G=>yr(G)>=2&&roster(G).length>0),steps:[
+  {inject:G=>{const S=[],y=yr(G),T=festTop(G);
+   S.push({n:"nar",t:"Songkran again. On the morning of the thirteenth the whole camp puts on floral shirts and goes to make merit at the temple, building sand pagodas in a row."});
+   if(FIN(G,"rin"))S.push({n:"rin",f:"pout",l:"casual",t:"My sand pagoda is forty-two centimeters tall. The strongest structure here. …Fah's has collapsed twice."});
+   if(FIN(G,"fah"))S.push({n:"fah",f:"angry",l:"casual",t:"It didn't fall down by itself! The dog bumped it! …Right, dog?"});
+   S.push({n:"nar",bg:"camp",t:"Back at camp, everyone lines up to pour water over Coach Daeng's hands. The manager gets the front of the line."});
+   S.push({n:"coach",t:G2=>`This camp has had ${yr(G2)} years with this manager… I wish for next year, and the year after, and on and on.`});
+   if(FIN(G,"kati"))S.push({n:"kati",f:"sad",l:"casual",t:"(Kati pours slower than anyone) Coach… thank you for staying with Grandpa's camp all this time."});
+   if(FIN(G,"ploy"))S.push({n:"ploy",f:"happy",l:"casual",t:"Coach Daeng, may I? …At Golden Tiger I never once got to pour water for a coach like this."});
+   S.push({n:"nar",t:"The last bowl of water hasn't dried on Coach Daeng's hands when someone splashes Kati in the back, and the water war begins at once."});
+   if(FIN(G,"fah"))S.push({n:"fah",f:"happy",l:"casual",t:"New triple-nozzle water gun! Ten-meter range! No getting mad if you're hit!"});
+   if(FIN(G,"rin"))S.push({n:"rin",f:"pout",l:"casual",t:"My team has taken the ice bucket. Everyone on my team, stand behind the heavy bags. This isn't play. This is strategy."});
+   if(FIN(G,"mali"))S.push({n:"mali",f:"happy",l:"casual",t:"Chalk paste~ Manager, let me dab some on you… Just a little on the cheek. A bit here. And here… and here~"});
+   if(FIN(G,"ploy"))S.push({n:"ploy",f:"angry",l:"casual",t:"Fah! Don't aim for the face! …Okay. Fine. If that's how you want to play, I'm getting serious."});
+   if(FIN(G,"kati"))S.push({n:"kati",f:"surprised",l:"casual",t:"The water's freezing! Who put ice in the bucket! It was Rin, wasn't it!"});
+   const dog=petOf(G,"dog"),roo=petOf(G,"rooster");
+   if(dog)S.push({n:"nar",t:`${dog.name} chases the water jets, snapping at them, happier than ever and wetter than anyone in camp.`});
+   if(roo)S.push({n:"nar",t:`${roo.name} takes cover on the gym roof, looking down with the eyes of a rooster who doesn't understand humans.`});
+   S.push({n:"coach",t:"Whoever gets the heavy bags wet dries them tomorrow! …Hey! Who splashed me!"});
+   S.push({choice:[{t:"Join "+T.name+" (Bond +)",fx:G2=>add(G2,T.id,"bond",5),then:[{n:T.id,f:"happy",l:"casual",t:"Yay! "+CALL(G,T.id)+" Stay behind me, okay? I'll cover you… Wait, why am I the only one getting soaked!"}]},
+     {t:"Call half-time and hand out khao chae (everyone morale +3)",fx:G2=>R_ALL(G2,x=>{x.morale=Math.min(100,x.morale+3);}),then:[{n:"nar",t:"Ice-cold khao chae with fried shrimp-paste balls stops the war for exactly fifteen minutes before round two begins."}]}]});
+   S.push({n:"nar",bg:"night",t:"That evening everyone sits in front of the camp drying off. Wet floral shirts hang in a row on the line. Nobody says a word about training."});
+   S.push({n:T.id,f:"happy",l:"casual",t:"Let's play Songkran again next year… and the year after, and the year after that."});
+   S.push({fx:G2=>{R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+6);f.fatigue=Math.max(0,f.fatigue-8);});G2.flags.fc_sk=(G2.flags.fc_sk||0)+1;}},{n:"nar",t:"(Everyone: morale +6 · fatigue −8)"});
+   return S;}}]});
 
 // v1.50: a new year opens — ties last year's result, the debt and the rivals into the fresh start
 function lastYear(G){const t=(G.titles||[]).slice(-1)[0];return t||null;}
@@ -1455,6 +1523,31 @@ const CARDS={
   {n:"fah",f:"flustered",l:"casual",t:"…This year someone's sitting with me. Guess I don't need to dress as a ghost anymore."}]}};
 function cardCheck(G){G.cards=G.cards||{};const got=[];for(const id in CARDS){if(G.cards[id])continue;const C=CARDS[id];if(C.g)continue;try{if(C.need(G)){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};got.push(id);G.dust=(G.dust||0)+5;}}catch(e){}}return got;}
 
+
+// v1.60: cards round 3 — festival nights and the first pet
+Object.assign(CARDS,{
+ f_pet:{c:"kati",r:"N",t:"The First Furry Member",hint:"Welcome your first pet to the camp",bg:"camp",need:G=>(G.pets||[]).length>=1,steps:[
+  {n:"nar",t:"One morning Kati wakes up to find the camp's newest member curled up on the hand wraps drying on the line."},
+  {n:"kati",f:"pout",l:"casual",t:"Those are my hand wraps! …Fine, you can have them today. But give them back tomorrow."},
+  {n:"coach",t:"Back in Grandpa Chai's day this yard was full of dogs and cats. He said a camp animals want to live in is a kind camp."},
+  {n:"kati",f:"happy",l:"casual",t:"Then our camp is kind again, right? …Manager, I'll go buy it a food bowl."}]},
+ f_ny:{c:"kati",r:"R",t:"One Firework on the Roof",hint:"Celebrate New Year's Eve together with the whole camp",bg:"night",need:G=>(G.flags.fc_ny||0)>=1,steps:[
+  {n:"nar",t:"The tin roof is still warm from the afternoon sun. The lights of Chiang Mai twinkle far away."},
+  {n:"kati",f:"happy",l:"casual",t:"When I was little, Grandpa carried me up here every year to watch the fireworks. He said this was the camp's VIP seat."},
+  {n:"kati",f:"flustered",l:"casual",t:"The year Grandpa was gone, I came up here alone. …It was so quiet."},
+  {n:"nar",t:"A firework bursts into gold just as she turns around."},
+  {n:"kati",f:"happy",l:"casual",t:"This year it isn't quiet. Every VIP seat is taken."}]},
+ f_kt:{c:"kati",r:"R",t:"The Eighth Petal",hint:"Float a krathong on the Ping River with the camp",bg:"river",need:G=>(G.flags.fc_kt||0)>=1||!!G.seen.loykrathong,steps:[
+  {n:"nar",t:"Kati's banana-leaf krathong has seven neat layers of petals. The eighth always comes loose and floats off before the krathong does."},
+  {n:"kati",f:"pout",l:"casual",t:"I've folded it this way for ten years. The eighth layer has never stayed on, not once."},
+  {n:"kati",f:"sad",l:"casual",t:"Grandpa said the eighth layer belongs to someone who hasn't arrived yet. Let it float ahead and wait."},
+  {n:"kati",f:"flustered",l:"casual",t:"…This year it floated right toward you, Manager. Ha ha, what a coincidence."}]},
+ f_sk:{c:"kati",r:"R",t:"Water War at the Camp",hint:"Celebrate Songkran with everyone in camp",bg:"camp",need:G=>(G.flags.fc_sk||0)>=1||!!G.seen.songkran,steps:[
+  {n:"nar",t:"Kati crouches behind the heavy bag, holding the biggest water bowl in camp with both hands."},
+  {n:"kati",f:"happy",l:"casual",t:"Shh, Manager, Coach Daeng's coming. I'm going to splash him. This year I'll get him!"},
+  {n:"coach",t:"Kati, I can see you. Where do you think you're hiding a bowl that big behind a bag?"},
+  {n:"nar",t:"A second later, Kati and the manager are both drenched head to toe by Coach Daeng's garden hose."},
+  {n:"kati",f:"surprised",l:"casual",t:"Not fair! You used the hose, Coach! …Manager, what are you laughing at? You're soaked too!"}]}});
 // ===== v1.57: when the camp gets rich, funny little disasters eat some of the money =====
 const DRAIN_MIN=70000;
 const drainAmt=G=>Math.max(3000,Math.round(Math.min(20000,G.cash*.12)/100)*100);
