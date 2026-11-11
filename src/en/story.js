@@ -602,7 +602,7 @@ EVENTS.push(
   {n:"coach",t:G=>`${ME(G)}, do you know why some fighters follow the corner instantly, and others just stand there confused?`},
   {n:"coach",t:"It's trust. If they trust us, corner orders turn into real weapons, and a loss doesn't break their spirit. Check the fighter info, that gold bar"},
   {n:"kati",f:"happy",l:"train",t:G=>`I already trust ${ME(G)}! …Except when you say 'just one more lap'`},
-  {n:"coach",t:"Trust comes from making merit together, wai khru, not training until you break, and a camp that isn't in the red. It builds up slowly",fx:G=>add(G,"kati","trust",2)}]},
+  {n:"coach",t:"Trust comes from making merit together, wai khru, not training until you break, and a camp that isn't in the red. It builds up slowly"},{fx:G=>add(G,"kati","trust",2)}]},
  {id:"trust_merit_kati",look:"casual",when:G=>G.week>=9&&inCamp(G,"kati"),bg:"temple",steps:[
   {n:"nar",t:"5:30 a.m. Kati knocks on the door with a bowl of hot rice. Today is Grandpa Chai's birthday"},
   {n:"npc",who:"Grandma Pen, by the temple",t:"Oh, little Kati! And who's this… ah, the new manager Grandpa Chai left the camp to? He used to praise you to me all the time"},
@@ -622,6 +622,56 @@ EVENTS.push(
   {n:"nar",t:"The pages are full of arrows, numbers, and doodles of round fighters that look like steamed buns"},
   {choice:[{t:"I trust your plan. Use it",fx:G=>{add(G,"rin","trust",8);add(G,"rin","morale",5);},then:[{n:"rin",f:"flustered",l:"casual",t:"…I can't measure 'trust', but I can feel it. Thank you"}]},
    {t:"Let Coach Daeng look it over first",fx:G=>{add(G,"rin","trust",1);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.2);},then:[{n:"rin",f:"sad",l:"casual",t:"Understood. Caution makes sense… I'll do better"},{n:"nar",t:"(Coach Daeng fixes two spots; Rin writes down every word. Her ring IQ improves a little)"}]}]}]});
+// v1.37: more of Rin between joining and the late-season arc
+EVENTS.push(
+ {id:"rin_sheet",look:"train",when:G=>G.week>=18&&inCamp(G,"rin"),bg:"gym",steps:[
+  {n:"nar",t:"Monday morning, the training room wall is covered in forty sheets of A4, each with graphs, arrows and a fighter's name"},
+  {n:"kati",f:"surprised",l:"train",t:"Rin… what is this? Why does my picture have eleven arrows pointing at my left elbow?"},
+  {n:"rin",f:"happy",l:"train",t:"Kati's left elbow drops when she's tired, three times a round on average. I drew one arrow for every time she got countered"},
+  {n:"coach",t:"Twenty years teaching Muay Thai and I only just learned a dropped elbow can have a graph"},
+  {n:"rin",f:"flustered",l:"train",t:G=>`${ME(G)}, am I overdoing it? At my old camp they used these sheets to wrap fried bananas`},
+  {choice:[{t:"Keep going, our camp needs this",fx:G=>{add(G,"rin","trust",4);add(G,"rin","bond",3);G.F.kati.a.guard=Math.min(20,G.F.kati.a.guard+.3);},then:[{n:"rin",f:"happy",l:"train",t:"…Thank you. I'll make a color version too"},{n:"nar",t:"(Kati's guard improved a little)"}]},
+   {t:"Can we cut it to ten sheets? The wall's about to collapse",fx:G=>{add(G,"rin","bond",2);},then:[{n:"rin",f:"pout",l:"train",t:"Ten sheets… the font will be a little smaller"},{n:"nar",t:"The next day there are ten sheets, the text the size of ants"}]}]}]},
+ {id:"rin_glasses",look:"train",when:G=>G.week>=22&&inCamp(G,"rin"),bg:"gym",steps:[
+  {n:"nar",t:"Crack! Rin's glasses fly off and land under Mali's foot during pad work; the left lens shatters like a spiderweb"},
+  {n:"rin",f:"sad",l:"train",t:"It's fine… I can see… that's Mali, right?"},
+  {n:"mali",f:"flustered",l:"train",t:"That's the sandbag, Rin! Mali's over here!"},
+  {n:"rin",f:"flustered",l:"train",t:G=>`${ME(G)}… Fine, I'll confess. I'm quite nearsighted. I take my glasses off to fight, so I have to memorize everything before I step in the ring. That's where all the data comes from`},
+  {choice:[{t:"(Take her to an optician in town and pay, ฿1,500)",fx:G=>{G.cash-=1500;add(G,"rin","bond",5);add(G,"rin","trust",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"…This frame is half the weight of the old one. I'll pay you back. Can I pay in installments?"},{n:"nar",t:"On the way back Rin walks closer than usual, because her eyes haven't adjusted yet… probably"}]},
+   {t:"That makes you even better. You fight from memory",fx:G=>{add(G,"rin","morale",6);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.3);},then:[{n:"rin",f:"happy",l:"train",t:"…Nobody's ever seen it that way. Thank you. I'll remember that too"},{n:"nar",t:"(Rin's ring IQ improved a little)"}]}]}]},
+ {id:"rin_dad",look:"casual",when:G=>G.week>=26&&inCamp(G,"rin"),bg:"night",steps:[
+  {n:"nar",t:"9 p.m. Rin sits outside the camp, her phone buzzing nonstop. The screen reads 'Dad (Prof. Dr.)'"},
+  {n:"rin",f:"sad",l:"casual",t:"My dad is a university professor. He wants me to do a PhD, not box out in the provinces"},
+  {n:"rin",f:"sad",l:"casual",t:G=>`Dad says boxing has nothing worth analyzing. ${ME(G)}, do you think… he's right?`},
+  {choice:[{t:"Send your dad your fight stats. Let the numbers speak",fx:G=>{add(G,"rin","trust",5);add(G,"rin","bond",3);},then:[{n:"nar",t:"Rin types for twenty minutes, attaches three files, and hits send"},{n:"nar",t:"Ten minutes later, the reply: 'Table three has the SD wrong, but… interesting. I'd like to watch the next fight live'"},{n:"rin",f:"flustered",l:"casual",t:"…Dad's going to watch the livestream. He's never watched anything of mine"}]},
+   {t:"You don't have to prove anything to anyone. Being here is enough",fx:G=>{add(G,"rin","morale",8);add(G,"rin","bond",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"…There's no variable in that sentence to analyze. But I understand"}]}]}]},
+ {id:"rin_cook",look:"casual",when:G=>G.week>=33&&inCamp(G,"rin")&&inCamp(G,"mali"),bg:"camp",steps:[
+  {n:"nar",t:"The camp kitchen: a digital scale, beakers and a thermometer lined up beside the som tam mortar"},
+  {n:"rin",f:"happy",l:"casual",t:"Today I'm making pad kra pao. Fish sauce 12.5 ml, sugar 4 g, high heat 3 minutes 20 seconds"},
+  {n:"mali",f:"happy",l:"casual",t:"Rin, you don't weigh basil stir-fry. You use your heart… and your hands, like this~ (pours fish sauce freely)"},
+  {n:"rin",f:"surprised",l:"casual",t:"Mali! That's 40 ml, 220 percent over the recipe!"},
+  {choice:[{t:"Taste Rin's first",fx:G=>{add(G,"rin","bond",4);},then:[{n:"nar",t:"Every value exactly to standard… and the blandest thing you've ever eaten"},{n:"rin",f:"pout",l:"casual",t:"It's exactly to the recipe. Why are you making that face?"}]},
+   {t:"Taste Mali's first",fx:G=>{add(G,"mali","bond",3);add(G,"rin","bond",1);},then:[{n:"nar",t:"So salty your eyes cross, but weirdly delicious"},{n:"rin",f:"happy",l:"casual",t:"…Noted. 'Heart and hands' is a variable I can't measure yet"}]}]}]});
+// v1.37: when the camp is flush, bad luck comes for the money (students stay home, repairs cost)
+EVENTS.push(
+ {id:"dis_storm",look:"casual",when:G=>G.week>=14&&G.week<=30&&G.cash>=90000,bg:"camp",steps:[
+  {n:"nar",t:"A summer storm hits at 2 a.m.; sheets of tin roofing fly off and slam into the mango tree next door"},
+  {n:"kati",f:"surprised",l:"casual",t:G=>`${ME(G)}! Half the training room roof is gone! The rain's soaking all the sandbags!`},
+  {n:"coach",t:"Kids can't train in a room with no roof. How do we fix it?"},
+  {choice:[{t:"Repair it properly, fast (฿25,000)",fx:G=>{G.cash-=25000;},then:[{n:"nar",t:"A full crew arrives and finishes in two days; a shiny new roof, and classes carry on without a hitch"}]},
+   {t:"Patch it up for now (฿8,000)",fx:G=>{G.cash-=8000;G.disaster={name:"The temporary roof",until:G.week+3,inc:.5};roster(G).forEach(f=>f.morale=Math.max(0,f.morale-3));},then:[{n:"nar",t:"A blue tarp covers the roof. Every time it rains, water drips onto the middle of the ring; only half the students come for three weeks"}]}]}]},
+ {id:"dis_flood",look:"casual",when:G=>G.week>=30&&G.week<=44&&G.cash>=70000,bg:"camp",steps:[
+  {n:"nar",t:"Three days and nights of heavy rain. The river bursts its banks and floods the whole subdistrict; knee-deep water in camp, training mats drifting against the door"},
+  {n:"mali",f:"sad",l:"casual",t:"Mali's gloves floated away! …Oh, there's a fish swimming into the camp!"},
+  {n:"rin",f:"sad",l:"casual",t:"The road into the subdistrict is cut off. Students definitely can't come for at least three weeks. The generator and mats need replacing"},
+  {n:"coach",t:G=>`${ME(G)}, the villagers' homes are flooded worse than ours. Do we send the girls to help them first, or rush to fix our camp?`},
+  {choice:[{t:"Help the villagers move their things first (camp repairs ฿12,000)",fx:G=>{G.cash-=12000;G.rep+=3;G.disaster={name:"The flood",until:G.week+4,inc:0};roster(G).forEach(f=>{f.trust=Math.min(100,f.trust+4);f.fatigue=Math.min(100,f.fatigue+8);});},then:[{n:"nar",t:"Sirichai's fighters haul sandbags all day; the local paper puts their photo on the front page"},{n:"npc",who:"Auntie Sri, vegetable vendor",t:"This camp has the kindest hearts in the district! When the water goes down I'm sending three grandkids to train!"}]},
+   {t:"Rush the camp repairs to reopen ASAP (฿25,000)",fx:G=>{G.cash-=25000;G.disaster={name:"The flood",until:G.week+2,inc:0};},then:[{n:"nar",t:"Three rented pumps; our camp dries out faster than anyone's, but the road stays cut off for two more weeks"}]}]}]},
+ {id:"dis_termite",look:"train",when:G=>G.week>=36&&G.cash>=120000&&G.F.fah.met,bg:"gym",steps:[
+  {n:"nar",t:"Crack! The corner post snaps while Fah is leaning on it… wait, what is Fah doing at our camp?"},
+  {n:"fah",f:"surprised",l:"casual",t:"Fah was just passing by! Not spying on training! …And this post is hollow, termites ate all of it!"},
+  {n:"coach",t:"Termites ate the camp's whole timber frame. It has to be rebuilt, ฿18,000. During the work, only half the students can come for two weeks"},{fx:G=>{G.cash-=18000;G.disaster={name:"Termite repairs",until:G.week+2,inc:.5};}},
+  {n:"fah",f:"happy",l:"casual",t:G=>`Serves you right! …Kidding, ${ME(G)}. Golden Tiger has a great termite guy, Fah'll get you his number. No need to thank me!`},{fx:G=>add(G,"fah","bond",2)}]});
 EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29,bg:"camp",steps:[
   {n:"coach",t:"Boss, I'm taking two weeks' leave to go home to Surin. My niece is getting married"},
   {n:"coach",t:"I've written the training schedule on the wall. For now you make all the calls. I trust you"},

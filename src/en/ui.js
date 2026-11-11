@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.36.0";
+const VERSION="1.37.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -276,6 +276,7 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
   if(G.cash<0)T.push({p:10,t:`In the red for ${G.negWeeks} weeks. In the red 4 weeks and below ฿10,000, the camp goes bankrupt`});
   if(studentDemand(G)>studentCap(G)+2)T.push({p:5,t:`Classes are full and ${studentDemand(G)-studentCap(G)} more people want to join. Upgrading the class yard holds 3 more each level`,act:{k:"tab",v:"camp",sub:"fac",label:"Upgrade the class yard"}});
   {const un=(G.losses||[]).filter(l=>!l.watched&&G.F[l.b]&&G.F[l.b].camp!=="quest"&&G.week-l.wk<=6);if(un.length)T.push({p:4,t:`Haven't reviewed the fight ${G.F[un[un.length-1].a].name} lost. Watch it with the team for EXP and a read on that opponent`,act:{k:"lossrev",label:"Review fight"}});}
+  if(G.disaster&&G.week<G.disaster.until)T.push({p:9,t:`${G.disaster.name} isn't over. Students can ${G.disaster.inc?"only come half the time":"not come at all"} for ${G.disaster.until-G.week} more weeks. Take fights to keep the money going`,act:{k:"tab",v:"fights",label:"See offers"}});
   if(dmOfferOn(G))T.push({p:8,t:"A promoter invites us to an 8-fighter cross-division Death Match, all fought this week. The champion takes ฿40,000!",act:{k:"tab",v:"fights",label:"See offers"}});
   if(!G.campUsed)T.push({p:3,t:"No camp activity chosen this week",act:{k:"campacts",label:"Choose activity"}});
   if(!G.freeUsed)T.push({p:2,t:"Don't forget free time with your fighters. Bond helps morale",act:{k:"tab",v:"people",label:"See characters"}});
@@ -587,6 +588,7 @@ function relHTML(f){const P=PROFILES[f.id],b=f.bond;
      <div><span>Birthday</span><b>${L(b>=UNLOCK.bday||f.know.bday,UNLOCK.bday,P.bday)}</b></div><div><span>Style</span><b>${esc(P.heritage)}</b></div></div></div></div>
    <div class="pf-sec"><h4>Personality</h4><p>${L(b>=UNLOCK.personality,UNLOCK.personality,P.personality)}</p></div>
    <div class="pf-two"><div class="pf-sec"><h4>Likes</h4><div class="tchips">${chips(P.likes,"like",UNLOCK.likesAll)}</div></div><div class="pf-sec"><h4>Dislikes</h4><div class="tchips">${chips(P.dislikes,"dislike",UNLOCK.dislikesAll)}</div></div></div>
+   ${(()=>{const L=Object.keys(f.know||{}).filter(k=>k.startsWith("gift_")&&GIFTS[k.slice(5)]);return L.length?`<div class="pf-sec"><h4>Gifts given</h4><div class="tchips">${L.map(k=>{const t=f.know[k];return `<span class="tchip gk-${t}">${t==="love"?"♥♥":t==="like"?"♥":t==="dislike"?"✕":"·"} ${esc(GIFTS[k.slice(5)].name)}</span>`;}).join("")}</div></div>`:"";})()}
    ${gifts?`<div class="pf-sec"><h4>Known gifts</h4><div class="tchips">${gifts}</div></div>`:""}
    <div class="pf-two"><div class="pf-sec"><h4>Hometown</h4><p>${esc(P.home)}</p></div><div class="pf-sec"><h4>Hobby</h4><p>${L(b>=UNLOCK.hobby||f.know.hobby,UNLOCK.hobby,P.hobby)}</p></div></div>
    <details class="pf-sec"><summary>Story & secrets</summary><h4>Story</h4><p>${L(b>=UNLOCK.story,UNLOCK.story,P.story)}</p><h4>Secret</h4><p>${L(b>=UNLOCK.secret,UNLOCK.secret,P.secret)}</p></details>`;}
@@ -596,8 +598,8 @@ function giftHTML(id){const f=G.F[id];
   return `<h2>A gift for ${esc(f.name)}</h2><p class="meta">Bought and given right away · 1 per person per week · the closer you are, the more to choose ${E.hidden?` (${E.hidden} more hidden)`:""} · cash ${fmt(G.cash)}</p><div class="gifts">${E.map(([k,g])=>{const kn=f.know["gift_"+k],lk=(g.bond||0)>(f.bond||0);
    if(lk)return `<div class="giftbtn lockg"><b>???</b><small>Unlocks at bond ${g.bond}</small></div>`;
    const lw=f.giftL&&f.giftL[k],cd=lw&&G.week-lw<6&&(f.giftN||{})[k]?6-(G.week-lw):0;
-   return `<button class="giftbtn ${kn?"k-"+kn:""} ${cd?"cool":""}" data-act="give" data-id="${id}" data-v="${k}" ${G.cash<g.price?"disabled":""}><b>${g.name}${g.fun?" <i class=\"funb\">LOL</i>":""}</b><small>${fmt(g.price)}${kn?` · <span class="gpref">${kn==="love"?"♥♥♥ love":kn==="like"?"♥♥ like":kn==="dislike"?"✕ dislike":"♥ okay"}</span>`:""}${cd?` · repeat, less effect (forgotten in ${cd} wks)`:""}</small></button>`;}).join("")}</div>
-   <p class="meta glegend">Preference: ♥♥♥ love · ♥♥ like · ♥ okay · ✕ dislike · you find out after giving</p>`;}
+   return `<button class="giftbtn" data-act="give" data-id="${id}" data-v="${k}" ${G.cash<g.price?"disabled":""}><b>${g.name}${g.fun?" <i class=\"funb\">LOL</i>":""}</b><small>${fmt(g.price)}${cd?` · given recently`:""}</small></button>`;}).join("")}</div>
+   <p class="meta glegend">Watch how she reacts when you give it, or check her profile for what you've given before</p>`;}
 function considerHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,o.b,3);const pct=x=>Math.round(x*100);const v=verdictOf(A.bestRate);const sc=scouted(op.id);const P=personaOf(op);
   return `<h2>Fight info</h2><div class="vsrow"><div class="vsc">${faceImg(me)}<b>${esc(me.name)}</b><span class="meta">${styleOf(me.a)}</span></div><span class="vs">VS</span><div class="vsc">${faceImg(op)}<b>${esc(op.name)}</b><span class="meta">${styleOf(op.a)} · ${rec(op)}</span></div></div>
    ${P?`<p class="quote">“${esc(P.line)}” <span class="meta">— ${esc(P.tag)}</span></p>`:""}${h2hText(op)?`<p class="meta goldt">${h2hText(op)}</p>`:""}

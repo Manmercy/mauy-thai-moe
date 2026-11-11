@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.36.0";
+const VERSION="1.37.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -276,6 +276,7 @@ function coachTips(){const T=[],R=roster(G);if(!coachOn())return T;
   if(G.cash<0)T.push({p:10,t:`เงินติดลบมา ${G.negWeeks} สัปดาห์ ถ้าติดลบ 4 สัปดาห์จนเกิน ฿10,000 ค่ายจะล้มละลาย`});
   if(studentDemand(G)>studentCap(G)+2)T.push({p:5,t:`นักเรียนเต็มค่ายแล้ว ยังมีคนอยากเรียนอีก ${studentDemand(G)-studentCap(G)} คน อัปลานสอนคอร์สจะรับเพิ่มได้ทีละ 3 คน`,act:{k:"tab",v:"camp",sub:"fac",label:"ไปอัปลานสอน"}});
   {const un=(G.losses||[]).filter(l=>!l.watched&&G.F[l.b]&&G.F[l.b].camp!=="quest"&&G.week-l.wk<=6);if(un.length)T.push({p:4,t:`ยังไม่ได้ดูเทปไฟต์ที่${G.F[un[un.length-1].a].name}แพ้ ดูกับทีมแล้วได้ EXP และรู้ทางคู่ชกคนนั้น`,act:{k:"lossrev",label:"ทบทวนไฟต์"}});}
+  if(G.disaster&&G.week<G.disaster.until)T.push({p:9,t:`${G.disaster.name}ยังไม่หาย นักเรียนมาเรียนได้${G.disaster.inc?"แค่ครึ่งเดียว":"ไม่ได้เลย"} อีก ${G.disaster.until-G.week} สัปดาห์ รับไฟต์ช่วยประคองเงินไปก่อน`,act:{k:"tab",v:"fights",label:"ดูข้อเสนอ"}});
   if(dmOfferOn(G))T.push({p:8,t:"โปรโมเตอร์ชวนลงศึก Death Match 8 คนข้ามรุ่น ชกรวดเดียวจบในสัปดาห์นี้ แชมป์รับ ฿40,000!",act:{k:"tab",v:"fights",label:"ไปดูข้อเสนอ"}});
   if(!G.campUsed)T.push({p:3,t:"ยังไม่ได้เลือกกิจกรรมค่ายสัปดาห์นี้",act:{k:"campacts",label:"เลือกกิจกรรม"}});
   if(!G.freeUsed)T.push({p:2,t:"อย่าลืมใช้เวลาว่างกับนักมวย ความสนิทช่วยเรื่องกำลังใจ",act:{k:"tab",v:"people",label:"ไปหาตัวละคร"}});
@@ -587,6 +588,7 @@ function relHTML(f){const P=PROFILES[f.id],b=f.bond;
      <div><span>วันเกิด</span><b>${L(b>=UNLOCK.bday||f.know.bday,UNLOCK.bday,P.bday)}</b></div><div><span>สายมวย</span><b>${esc(P.heritage)}</b></div></div></div></div>
    <div class="pf-sec"><h4>นิสัย</h4><p>${L(b>=UNLOCK.personality,UNLOCK.personality,P.personality)}</p></div>
    <div class="pf-two"><div class="pf-sec"><h4>ชอบ</h4><div class="tchips">${chips(P.likes,"like",UNLOCK.likesAll)}</div></div><div class="pf-sec"><h4>ไม่ชอบ</h4><div class="tchips">${chips(P.dislikes,"dislike",UNLOCK.dislikesAll)}</div></div></div>
+   ${(()=>{const L=Object.keys(f.know||{}).filter(k=>k.startsWith("gift_")&&GIFTS[k.slice(5)]);return L.length?`<div class="pf-sec"><h4>ของขวัญที่เคยให้</h4><div class="tchips">${L.map(k=>{const t=f.know[k];return `<span class="tchip gk-${t}">${t==="love"?"♥♥":t==="like"?"♥":t==="dislike"?"✕":"·"} ${esc(GIFTS[k.slice(5)].name)}</span>`;}).join("")}</div></div>`:"";})()}
    ${gifts?`<div class="pf-sec"><h4>ของขวัญที่รู้แล้ว</h4><div class="tchips">${gifts}</div></div>`:""}
    <div class="pf-two"><div class="pf-sec"><h4>บ้านเกิด</h4><p>${esc(P.home)}</p></div><div class="pf-sec"><h4>งานอดิเรก</h4><p>${L(b>=UNLOCK.hobby||f.know.hobby,UNLOCK.hobby,P.hobby)}</p></div></div>
    <details class="pf-sec"><summary>เรื่องราว & ความลับ</summary><h4>เรื่องราว</h4><p>${L(b>=UNLOCK.story,UNLOCK.story,P.story)}</p><h4>ความลับ</h4><p>${L(b>=UNLOCK.secret,UNLOCK.secret,P.secret)}</p></details>`;}
@@ -596,8 +598,8 @@ function giftHTML(id){const f=G.F[id];
   return `<h2>ของขวัญให้${esc(f.name)}</h2><p class="meta">ซื้อแล้วให้ทันที · คนละ 1 ชิ้นต่อสัปดาห์ · ยิ่งสนิทยิ่งมีของให้เลือก${E.hidden?` (ยังซ่อนอีก ${E.hidden} ชิ้น)`:""} · เงินสด ${fmt(G.cash)}</p><div class="gifts">${E.map(([k,g])=>{const kn=f.know["gift_"+k],lk=(g.bond||0)>(f.bond||0);
    if(lk)return `<div class="giftbtn lockg"><b>???</b><small>ปลดล็อกเมื่อสนิท ${g.bond}</small></div>`;
    const lw=f.giftL&&f.giftL[k],cd=lw&&G.week-lw<6&&(f.giftN||{})[k]?6-(G.week-lw):0;
-   return `<button class="giftbtn ${kn?"k-"+kn:""} ${cd?"cool":""}" data-act="give" data-id="${id}" data-v="${k}" ${G.cash<g.price?"disabled":""}><b>${g.name}${g.fun?' <i class="funb">ฮา</i>':""}</b><small>${fmt(g.price)}${kn?` · <span class="gpref">${kn==="love"?"♥♥♥ ชอบมาก":kn==="like"?"♥♥ ชอบ":kn==="dislike"?"✕ ไม่ชอบ":"♥ เฉย ๆ"}</span>`:""}${cd?` · ให้ซ้ำ ผลลดลง (อีก ${cd} สด.หายจำ)`:""}</small></button>`;}).join("")}</div>
-   <p class="meta glegend">ระดับความชอบ: ♥♥♥ ชอบมาก · ♥♥ ชอบ · ♥ เฉย ๆ · ✕ ไม่ชอบ · ให้แล้วถึงจะรู้</p>`;}
+   return `<button class="giftbtn" data-act="give" data-id="${id}" data-v="${k}" ${G.cash<g.price?"disabled":""}><b>${g.name}${g.fun?' <i class="funb">ฮา</i>':""}</b><small>${fmt(g.price)}${cd?` · เพิ่งให้ไป`:""}</small></button>`;}).join("")}</div>
+   <p class="meta glegend">สังเกตท่าทีตอนให้ หรือดูในประวัติว่าเคยให้อะไรไปแล้วบ้าง</p>`;}
 function considerHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,o.b,3);const pct=x=>Math.round(x*100);const v=verdictOf(A.bestRate);const sc=scouted(op.id);const P=personaOf(op);
   return `<h2>ข้อมูลไฟต์</h2><div class="vsrow"><div class="vsc">${faceImg(me)}<b>${esc(me.name)}</b><span class="meta">${styleOf(me.a)}</span></div><span class="vs">VS</span><div class="vsc">${faceImg(op)}<b>${esc(op.name)}</b><span class="meta">${styleOf(op.a)} · ${rec(op)}</span></div></div>
    ${P?`<p class="quote">“${esc(P.line)}” <span class="meta">— ${esc(P.tag)}</span></p>`:""}${h2hText(op)?`<p class="meta goldt">${h2hText(op)}</p>`:""}
