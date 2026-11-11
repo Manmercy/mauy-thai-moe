@@ -1175,3 +1175,27 @@ EVENTS.push(
   {n:"mali",f:"flustered",l:"casual",t:"…This is the first time I've ever had a room of my own."},
   {choice:[{t:"Welcome home.",fx:G=>{add(G,"mali","bond",5);add(G,"mali","trust",3);},then:[{n:"mali",f:"flustered",l:"casual",t:"…Home… I'll remember you said that."}]},
    {t:"Five a.m. tomorrow, first day of training.",fx:G=>{add(G,"mali","bond",3);add(G,"mali","morale",6);},then:[{n:"mali",f:"happy",l:"train",t:"Five a.m.! I'll get up at four!"}]}]}]});
+
+// v1.45: mid-season stakes — Golden Tiger tries to poach one of your girls; trust decides
+const POACH_WHY={mali:"The owner says he'll double my pay… I could send so much more to Mom.",rin:"The owner says this time he'll listen to my data, and give me my own analysis room… something they never had."};
+const POACH_L={mali:{wait:"I haven't answered them… I wanted to talk to you first.",pay:"…Thank you. I didn't really want to go. I just wanted to know this place still wants me.",ok:"…You didn't stop me, even though you could have. I'm staying. Nothing to think about.",think:"…Give me two weeks to think.",stay:"I've decided. I'm staying at Sirichai. …Don't ask me why."},
+ rin:{wait:"I haven't answered them yet… I wanted to talk to you first.",pay:"…Thank you. It was never about money. I just wanted to know this camp still values my data.",ok:"…You didn't stop me, even though you could have. I didn't include that variable in my model. I'm staying.",think:"…Give me two weeks to analyze it.",stay:"I've decided. I'm staying at Sirichai. …The numbers don't favor this place. But some things don't need calculating."}};
+const poachTarget=G=>["mali","rin"].filter(id=>inCamp(G,id)).sort((a,b)=>G.F[a].trust-G.F[b].trust)[0];
+function poachLeave(G,id){const f=G.F[id];f.camp="rival";G.bookings=G.bookings.filter(b=>b.a!==id&&b.b!==id);G.flags.poached=id;if(G.romance===id)G.romance=null;}
+EVENTS.push(
+ {id:"poach",look:"casual",when:G=>G.week>=24&&G.week<=31&&!!poachTarget(G),bg:"night",steps:[
+  {inject:G=>{const id=poachTarget(G),f=G.F[id];G._poach=id;return [
+   {n:"nar",t:`Late at night, only one light is still on in the fighters' rooms. ${f.name} sits staring at a gold envelope with a tiger seal on the desk.`},
+   {n:id,f:"sad",l:"casual",t:`${CALL(G,id)}… Golden Tiger reached out to me.`},
+   {n:id,f:"flustered",l:"casual",t:POACH_WHY[id]},
+   {n:id,f:"sad",l:"casual",t:POACH_L[id].wait},
+   {choice:[
+    {t:"I'll raise your pay (wage +฿600/week · she stays for sure)",fx:G2=>{f.wage+=600;add(G2,id,"trust",3);},then:[{n:id,f:"happy",l:"casual",t:POACH_L[id].pay}]},
+    {t:`I trust you. Your call (depends on Trust, now ${Math.round(f.trust)})`,fx:G2=>{if(f.trust>=45){add(G2,id,"trust",8);add(G2,id,"bond",6);G2._poachOk=1;}else{G2.poach={id,wk:G2.week+2};G2._poachOk=0;}},
+     then:[{inject:G2=>G2._poachOk?[{n:id,f:"flustered",l:"casual",t:POACH_L[id].ok},{n:"nar",t:`${f.name} tears up the gold envelope in front of you (Trust +, Bond +)`}]
+       :[{n:id,f:"sad",l:"casual",t:POACH_L[id].think},{n:"nar",t:`(${f.name} will decide in two weeks · if her Trust reaches 40, she stays)`}]}]}]}];}}]},
+ {id:"poach_end",look:"casual",when:G=>!!G.poach&&G.week>=G.poach.wk,bg:"camp",steps:[
+  {inject:G=>{const id=G.poach.id,f=G.F[id];G.poach=null;if(!inCamp(G,id))return [];
+   if(f.trust>=40){add(G,id,"bond",5);return [{n:"nar",t:`Monday morning, ${f.name} is at training by five a.m., before everyone else.`},{n:id,f:"happy",l:"train",t:POACH_L[id].stay}];}
+   poachLeave(G,id);return [{n:"nar",t:`Monday morning. ${f.name}'s room is empty. Just a short note left on the bed.`},{n:"nar",t:`"I'm sorry. Thank you for everything." — ${f.name} has moved to Golden Tiger.`},{n:"kati",f:"sad",l:"casual",t:"…I'm not angry at her. But next time we meet in the ring, I won't hold back."}];}}]}
+);
