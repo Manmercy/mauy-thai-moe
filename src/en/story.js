@@ -591,8 +591,8 @@ const DATE_TWISTS=[
  {id:"rival",t:f=>`On the way you run into two Golden Tiger fighters who laugh: "Manager taking his fighter sightseeing, no training?"`,
   choice:[{t:"Stand beside her quietly, don't respond",sc:2,rep:"Thank you for not leaving me standing alone. See you in the ring"},{t:"Fire back hard",sc:0,rep:"Easy… but that was satisfying"}]},
 ];
-function dateTwist(G,f,D,look){const r=Math.random();if(r>.4)return [];f.twists=f.twists||[];
-  const pool=DATE_TWISTS.filter(x=>!f.twists.includes(x.id));if(!pool.length)return [];const T=pool[Math.floor(Math.random()*pool.length)];f.twists.push(T.id);
+function dateTwist(G,f,D,look){const r=srand(G,(f.twists||[]).length*13+f.id.charCodeAt(0));if(r>.4)return [];f.twists=f.twists||[];
+  const pool=DATE_TWISTS.filter(x=>!f.twists.includes(x.id));if(!pool.length)return [];const T=pool[Math.floor(srand(G,f.id.charCodeAt(1)+97)*pool.length)];f.twists.push(T.id);
   return [{n:"nar",t:T.t(f)},{choice:T.choice.map(c=>({t:c.t,fx:()=>{D.score+=c.sc;},then:[{n:f.id,f:c.sc>=2?"flustered":c.sc<0?"pout":"happy",l:look,t:c.rep}]}))}];}
 
 // ================= v1.13 temptations — someone else wants your time =================

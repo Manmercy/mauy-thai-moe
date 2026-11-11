@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.47.1";
+const VERSION="1.48";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -174,8 +174,12 @@ function titleHTML(){const sv=loadSave();
      <button class="btn gold" data-act="openload" ${sv?"":"disabled"}>โหลดเกม<small>${sv?`${[1,2,3].filter(i=>loadSlot(i)).length} ช่องที่มีเซฟ`:"ยังไม่มีเซฟ"}</small></button>
      <button class="btn" data-act="settings">ตั้งค่า</button></nav>`}</div></div>
    ${langSwitch("tlang")}<div class="version">v${VERSION}</div></div>`;}
+// v1.48: shareable world seeds — digits are used as-is, words are hashed
+function seedFrom(v){v=String(v||"").trim();if(!v)return undefined;if(/^\d{1,10}$/.test(v))return Number(v)>>>0;let h=2166136261;for(const ch of v.toLowerCase()){h^=ch.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+function crSeed(){const e=document.getElementById("pseed");if(e&&UI.creator)UI.creator.seed=e.value.trim();}
+const seedHTML=()=>G?`<div class="set"><span><b>Seed ของโลกนี้</b><small>แชร์ให้เพื่อนใส่ตอนสร้างตัว จะได้โลกเดียวกัน · แจ้งบั๊กพร้อม seed กับสัปดาห์ได้เลย</small></span><span class="obtns"><code class="seedv">${esc(G.seedText||String(G.seed))}</code><button class="btn sm" data-act="copyseed">คัดลอก</button></span></div>`:"";
 function settingsHTML(){const t=(k,label,desc)=>`<label class="set"><span><b>${label}</b><small>${desc}</small></span><input type="checkbox" data-act="setopt" data-k="${k}" ${SETTINGS[k]?"checked":""}></label>`;
-  return `<h2>ตั้งค่า</h2><div class="sets"><div class="set"><span><b>ภาษา · Language</b><small>สลับแล้วเกมจะโหลดใหม่ เซฟยังอยู่</small></span>${langSwitch()}</div>${t("music","เพลงประกอบ","ปี่ชวา กลองแขก ฉิ่ง ระหว่างชก")}${t("sfx","เอฟเฟกต์เสียง","เสียงต่อย เตะ ระฆัง เสียงเชียร์")}${t("coach","ครูแดงแนะนำ","ครูคอยไกด์ในหน้าค่าย ข้อเสนอไฟต์ และช่วงพักยก")}${t("quick","เล่นเร็ว","ข้ามฉากฝึกซ้อมตอนจบสัปดาห์ ไปสรุปผลทันที")}</div>
+  return `<h2>ตั้งค่า</h2><div class="sets"><div class="set"><span><b>ภาษา · Language</b><small>สลับแล้วเกมจะโหลดใหม่ เซฟยังอยู่</small></span>${langSwitch()}</div>${t("music","เพลงประกอบ","ปี่ชวา กลองแขก ฉิ่ง ระหว่างชก")}${t("sfx","เอฟเฟกต์เสียง","เสียงต่อย เตะ ระฆัง เสียงเชียร์")}${t("coach","ครูแดงแนะนำ","ครูคอยไกด์ในหน้าค่าย ข้อเสนอไฟต์ และช่วงพักยก")}${t("quick","เล่นเร็ว","ข้ามฉากฝึกซ้อมตอนจบสัปดาห์ ไปสรุปผลทันที")}${seedHTML()}</div>
    ${!G&&loadSave()?`<div class="set danger"><span><b>จัดการช่องเซฟ</b><small>ดู โหลด หรือลบเซฟแต่ละช่อง</small></span><button class="btn sm" data-act="openload">เปิด</button></div>`:""}${G?`<p class="meta">กำลังเล่นช่องเซฟ ${UI.slot} · บันทึกอัตโนมัติทุกครั้งที่มีความคืบหน้า${CLOUD.ready?" · สำรองบนคลาวด์แล้ว":" · ยังไม่ได้เชื่อมคลาวด์ (เซฟอยู่ในเบราว์เซอร์นี้เท่านั้น)"}</p>
    ${G&&UI.slot&&bakInfo(UI.slot)?`<div class="set"><span><b>เซฟก่อนอัปเดต</b><small>เก็บไว้ตอนเกมอัปเดต · v${esc(String(bakInfo(UI.slot).ver))} สัปดาห์ ${bakInfo(UI.slot).week}</small></span><button class="btn sm" data-act="bakrestore">กู้คืน</button></div>`:""}
    <div class="set"><span><b>สำรองเซฟเป็นไฟล์</b><small>เก็บไฟล์ไว้เอง ย้ายเครื่องหรือเบราว์เซอร์ก็นำเข้าได้</small></span><span class="obtns"><button class="btn sm" data-act="exportsave">ส่งออก</button><label class="btn sm">นำเข้า<input type="file" accept=".json,application/json" data-act="importsave" hidden></label></span></div>`:`<div class="set"><span><b>นำเข้าเซฟจากไฟล์</b><small>ไฟล์ที่เคยส่งออกไว้ จะลงช่อง 1</small></span><label class="btn sm">นำเข้า<input type="file" accept=".json,application/json" data-act="importsave" hidden></label></div>`}
@@ -193,7 +197,7 @@ function creatorHTML(){const c=UI.creator,O=CHIBI.OPT;
   const seg=(prop,list)=>`<div class="seg">${list.map(([v,t])=>`<button data-act="cset" data-k="${prop}" data-v="${v}" aria-pressed="${c[prop]===v}">${t}</button>`).join("")}</div>`;
   const F=(label,inner)=>`<div class="field"><span class="lb">${label}</span>${inner}</div>`;
   const tab=c.tab||"base";
-  const T={base:F("เพศ (มีผลกับบทพูด)",seg("gender",[["m","ชาย"],["f","หญิง"]]))+F("ความยาก",seg("diff",[["easy","ง่าย"],["normal","ปกติ"],["hard","ยาก"]]))+`<p class="meta">${{easy:"คู่แข่งพัฒนาช้าลง รายได้คลาสมากขึ้น เหมาะกับคนอยากเล่นเนื้อเรื่อง",normal:"สมดุลตามที่ออกแบบไว้",hard:"พลอยกับฟ้าโหดขึ้น ใช้สกิลแรงขึ้น เงินตึงขึ้น"}[c.diff||"normal"]}</p>`,
+  const T={base:F("เพศ (มีผลกับบทพูด)",seg("gender",[["m","ชาย"],["f","หญิง"]]))+F("ความยาก",seg("diff",[["easy","ง่าย"],["normal","ปกติ"],["hard","ยาก"]]))+`<p class="meta">${{easy:"คู่แข่งพัฒนาช้าลง รายได้คลาสมากขึ้น เหมาะกับคนอยากเล่นเนื้อเรื่อง",normal:"สมดุลตามที่ออกแบบไว้",hard:"พลอยกับฟ้าโหดขึ้น ใช้สกิลแรงขึ้น เงินตึงขึ้น"}[c.diff||"normal"]}</p>`+F("Seed (ไม่บังคับ)",`<input id="pseed" maxlength="20" value="${esc(c.seed||"")}" autocomplete="off" placeholder="เว้นว่าง = สุ่มโลกใหม่">`)+`<p class="meta">ใส่ seed เดียวกับเพื่อน จะได้โลกเดียวกัน: นักมวยคู่แข่ง ข้อเสนอไฟต์ และเหตุการณ์สุ่มตรงกัน ใส่เป็นตัวเลขหรือคำก็ได้</p>`,
    face:F("ทรงผม",seg("hairStyle",O.hairStyle))+F("สีผม",sw("hair",O.hair))+`<div class="two">${F("สีผิว",sw("skin",O.skin))}${F("สีตา",sw("eyes",O.eyes))}</div>`,
    wear:F("ชุด",seg("outfit",[["tee","เสื้อยืด"],["polo","โปโล"],["suit","สูท"],["hoodie","ฮู้ด"]])+sw("outfitColor",O.cloth))+F("กางเกง",seg("pants",[["long","ขายาว"],["shorts","ขาสั้น"]])+sw("pantsColor",["#1f1f24","#2c3e6b","#5a4a3a","#8a8f99","#e8dcc0"])),
    acc:F("หมวก",seg("hat",[["none","ไม่ใส่"],["cap","แก๊ป"],["bucket","บักเก็ต"]]))+(c.hat!=="none"?F("สีหมวก",sw("hatColor",O.cloth)):"")+F("แว่น",seg("glasses",[["none","ไม่ใส่"],["glasses","สายตา"],["sun","กันแดด"]]))};
@@ -852,7 +856,7 @@ function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
    <section class="px card"><h3>ความสัมพันธ์</h3>${CANON_IDS.map(id=>G.F[id]).filter(f=>f.met).map(f=>`<div class="kv-row"><span>${esc(f.name)}${G.romance===f.id?" ♥ คนรัก":G.promise&&G.promise[f.id]!=null?" ♡ สัญญาไว้":""}</span>${hearts(f.bond)}</div>`).join("")}</section></div>
    <section class="px card teaser"><span class="pill red">ฤดูกาลหน้า · เร็ว ๆ นี้</span><h3>เส้นทางสู่เวทีระดับภาค</h3>
     <ul><li>ค่ายพยัคฆ์ทองดึงเทรนเนอร์จากกรุงเทพฯ และฟ้าจะไม่ใช่คนเดิมอีกต่อไป</li><li>นักมวยหน้าใหม่จากมวยท่าเสาและมวยโคราชกำลังมองหาค่าย</li><li>หนี้ของปู่ชัยยังมีความลับที่กะทิไม่ได้เล่าทั้งหมด</li></ul></section>
-   <div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">เล่นต่อ ฤดูกาลที่ ${(G.season||1)+1} ▸</button>`:""}<button class="btn primary" data-act="replay">เล่นใหม่อีกรอบ</button><button class="btn" data-act="restart">กลับหน้าแรก</button></div></main>`;}
+   <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · ฤดูกาลที่ ${G.season||1}</p><div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">เล่นต่อ ฤดูกาลที่ ${(G.season||1)+1} ▸</button>`:""}<button class="btn primary" data-act="replay">เล่นใหม่อีกรอบ</button><button class="btn" data-act="restart">กลับหน้าแรก</button></div></main>`;}
 
 // ---------- FIGHT ----------
 function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.week)}`;
@@ -1107,12 +1111,13 @@ const ACT={
   askdelslot:d=>{UI.delSlot=+d.v;render();},canceldel:()=>{UI.delSlot=null;render();},
   delslot:()=>{clearSave(UI.delSlot);UI.delSlot=null;if(!loadSave())UI.modal=null;render();},
   beginNew:i=>{UI.slot=i;UI.modal=null;AU.startMusic("hub");UI.creator={name:"",...CHIBI.randomManager(Math.random),gender:"m",diff:"normal",outfit:"tee",hat:"none",glasses:"none"};UI.modal=null;render();},
+  copyseed:()=>{const v=G.seedText||String(G.seed);const ok=()=>toast("คัดลอก seed แล้ว: "+v);try{navigator.clipboard.writeText(v).then(ok,()=>toast("seed: "+v));}catch(e){toast("seed: "+v);}},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},
-  cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator[d.k]=d.v;render();},
-  crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab};render();},
-  ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator.tab=d.v;render();},
+  cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator[d.k]=d.v;render();},
+  crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};crSeed();UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab,seed:o.seed};render();},
+  ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator.tab=d.v;render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"ต้น":"ดาว");
-    const {name,diff,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look});genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
+    crSeed();const {name,diff,seed,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look,seed:seedFrom(seed)});if(seed&&!/^\d{1,10}$/.test(seed))G.seedText=seed;genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
     playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"night",look:"train"});},
   continue:()=>{let si=0;for(let i=1;i<=SLOTS;i++)if(loadSlot(i)){si=i;break;}if(!si)return;backupSlot(si);const s=safeFix(loadSlot(si));if(!s){toast("เซฟนี้เปิดกับเวอร์ชันนี้ไม่ได้ ข้อมูลยังอยู่ครบ ไม่ถูกลบ");return;}G=s;UI.slot=si;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
@@ -1194,7 +1199,7 @@ const ACT={
   tlock:d=>{const f=G.F[d.id];if(!f)return;f.lockWeek=G.week;f.drillBonus=0;AU.sfx("level");save();
     // v1.19.1: a short drill scene — tap to make her strike, then see how the session went
     const pr=f.plan.preset;if(!f.injury&&pr!=="rest"&&pr!=="prep"){UI.drill={id:f.id,taps:0,need:f.plan.intensity==="light"?2:3,res:[],hitT:0};UI.modal={type:"drill",id:f.id};}else UI.modal=null;render();},
-  dtap:()=>{const D=UI.drill;if(!D||D.taps>=D.need)return;const r=Math.random();const q=r<.3?"perfect":r<.85?"good":"ok";D.res.push(q);D.taps++;D.hitT=performance.now();D.q=q;
+  dtap:()=>{const D=UI.drill;if(!D||D.taps>=D.need)return;const r=srand(G,D.taps*31+D.need*7+(G.campUsed?3:0));const q=r<.3?"perfect":r<.85?"good":"ok";D.res.push(q);D.taps++;D.hitT=performance.now();D.q=q;
     AU.sfx(DRILL_ROW[G.F[D.id].plan.preset]==="knee"?"kick":"punch");
     if(D.taps>=D.need){const b=D.res.reduce((x,q)=>x+(q==="perfect"?4:q==="good"?2:0),0);G.F[D.id].drillBonus=b/100;D.bonus=b;save();setTimeout(()=>{if(UI.drill===D){D.done=true;AU.sfx(b>=8?"level":"ui");render();}},700);}
     render();},

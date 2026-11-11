@@ -395,6 +395,8 @@ function startLv(f){if(f.id==="ploy")f.aura=ployAura(1);if(f.id==="ploy")f.lvl=5
 // v1.22 difficulty: easy = rivals grow slower + more class income; hard = rivals grow faster and use skills harder
 const DIFF={easy:{rival:.7,ai:.6,inc:1.2,train:1.12,name:"ง่าย"},normal:{rival:1,ai:.8,inc:1,train:1,name:"ปกติ"},hard:{rival:1.12,ai:.95,inc:.9,train:.97,name:"ยาก"}};
 const dif=G=>DIFF[(G&&G.diff)||"normal"]||DIFF.normal;
+// v1.48: seeded "random" for gameplay rolls outside fights, so a shared seed replays the same
+function srand(G,salt){return mulberry32((((G&&G.seed)||1)+((G&&G.week)||0)*7919+(salt|0)*104729)>>>0)();}
 function newGame(opts){
   const seed=(opts.seed??Math.floor(Math.random()*1e9))>>>0;const rng=mulberry32(seed);
   const G={v:1,seed,week:1,diff:opts.diff||"normal",player:{name:opts.name||"ต้น",gender:opts.gender||"m"},cash:60000,debt:120000,rep:5,

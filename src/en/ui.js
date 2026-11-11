@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.47.1";
+const VERSION="1.48";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -174,8 +174,12 @@ function titleHTML(){const sv=loadSave();
      <button class="btn gold" data-act="openload" ${sv?"":"disabled"}>Load game<small>${sv?`${[1,2,3].filter(i=>loadSlot(i)).length}/3 slots used`:"No saves yet"}</small></button>
      <button class="btn" data-act="settings">Settings</button></nav>`}</div></div>
    ${langSwitch("tlang")}<div class="version">v${VERSION}</div></div>`;}
+// v1.48: shareable world seeds — digits are used as-is, words are hashed
+function seedFrom(v){v=String(v||"").trim();if(!v)return undefined;if(/^\d{1,10}$/.test(v))return Number(v)>>>0;let h=2166136261;for(const ch of v.toLowerCase()){h^=ch.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+function crSeed(){const e=document.getElementById("pseed");if(e&&UI.creator)UI.creator.seed=e.value.trim();}
+const seedHTML=()=>G?`<div class="set"><span><b>This world's seed</b><small>Share it so friends get the same world · include it (with the week) when reporting bugs</small></span><span class="obtns"><code class="seedv">${esc(G.seedText||String(G.seed))}</code><button class="btn sm" data-act="copyseed">Copy</button></span></div>`:"";
 function settingsHTML(){const t=(k,label,desc)=>`<label class="set"><span><b>${label}</b><small>${desc}</small></span><input type="checkbox" data-act="setopt" data-k="${k}" ${SETTINGS[k]?"checked":""}></label>`;
-  return `<h2>Settings</h2><div class="sets"><div class="set"><span><b>Language · ภาษา</b><small>Switching reloads the game. Your saves are kept</small></span>${langSwitch()}</div>${t("music","Music","Pi chawa, khaek drums and ching during fights")}${t("sfx","Sound effects","Punches, kicks, bells, cheering")}${t("coach","Coach Daeng's tips","Coach guides you on the camp screen, fight offers and between rounds")}${t("quick","Fast mode","Skip the training scenes at week's end and go straight to the summary")}</div>
+  return `<h2>Settings</h2><div class="sets"><div class="set"><span><b>Language · ภาษา</b><small>Switching reloads the game. Your saves are kept</small></span>${langSwitch()}</div>${t("music","Music","Pi chawa, khaek drums and ching during fights")}${t("sfx","Sound effects","Punches, kicks, bells, cheering")}${t("coach","Coach Daeng's tips","Coach guides you on the camp screen, fight offers and between rounds")}${t("quick","Fast mode","Skip the training scenes at week's end and go straight to the summary")}${seedHTML()}</div>
    ${!G&&loadSave()?`<div class="set danger"><span><b>Manage save slots</b><small>View, load or delete each slot</small></span><button class="btn sm" data-act="openload">Open</button></div>`:""}${G?`<p class="meta">Playing save slot ${UI.slot} · autosaves whenever you make progress ${CLOUD.ready?" · backed up to the cloud":" · not connected to the cloud (saved in this browser only)"}</p>
    ${G&&UI.slot&&bakInfo(UI.slot)?`<div class="set"><span><b>Pre-update save</b><small>Kept when the game updated · v${esc(String(bakInfo(UI.slot).ver))} week ${bakInfo(UI.slot).week}</small></span><button class="btn sm" data-act="bakrestore">Restore</button></div>`:""}
    <div class="set"><span><b>Back up save to a file</b><small>Keep the file yourself; import it on another device or browser</small></span><span class="obtns"><button class="btn sm" data-act="exportsave">Export</button><label class="btn sm">Import<input type="file" accept=".json,application/json" data-act="importsave" hidden></label></span></div>`:`<div class="set"><span><b>Import a save file</b><small>A previously exported file goes into slot 1</small></span><label class="btn sm">Import<input type="file" accept=".json,application/json" data-act="importsave" hidden></label></div>`}
@@ -193,7 +197,7 @@ function creatorHTML(){const c=UI.creator,O=CHIBI.OPT;
   const seg=(prop,list)=>`<div class="seg">${list.map(([v,t])=>`<button data-act="cset" data-k="${prop}" data-v="${v}" aria-pressed="${c[prop]===v}">${t}</button>`).join("")}</div>`;
   const F=(label,inner)=>`<div class="field"><span class="lb">${label}</span>${inner}</div>`;
   const tab=c.tab||"base";
-  const T={base:F("Gender (affects dialogue)",seg("gender",[["m","Male"],["f","Female"]]))+F("Difficulty",seg("diff",[["easy","Easy"],["normal","Normal"],["hard","Hard"]]))+`<p class="meta">${{easy:"Rivals grow slower, more class income. For players who want the story",normal:"Balanced as designed",hard:"Ploy and Fah are tougher, use stronger skills, money is tighter"}[c.diff||"normal"]}</p>`,
+  const T={base:F("Gender (affects dialogue)",seg("gender",[["m","Male"],["f","Female"]]))+F("Difficulty",seg("diff",[["easy","Easy"],["normal","Normal"],["hard","Hard"]]))+`<p class="meta">${{easy:"Rivals grow slower, more class income. For players who want the story",normal:"Balanced as designed",hard:"Ploy and Fah are tougher, use stronger skills, money is tighter"}[c.diff||"normal"]}</p>`+F("Seed (optional)",`<input id="pseed" maxlength="20" value="${esc(c.seed||"")}" autocomplete="off" placeholder="Leave blank = random world">`)+`<p class="meta">Use the same seed as a friend to get the same world: rival fighters, fight offers and random events all match. Numbers or words both work.</p>`,
    face:F("Hairstyle",seg("hairStyle",O.hairStyle))+F("Hair color",sw("hair",O.hair))+`<div class="two">${F("Skin tone",sw("skin",O.skin))}${F("Eye color",sw("eyes",O.eyes))}</div>`,
    wear:F("Outfit",seg("outfit",[["tee","T-shirt"],["polo","Polo"],["suit","Suit"],["hoodie","Hoodie"]])+sw("outfitColor",O.cloth))+F("Pants",seg("pants",[["long","Long"],["shorts","Shorts"]])+sw("pantsColor",["#1f1f24","#2c3e6b","#5a4a3a","#8a8f99","#e8dcc0"])),
    acc:F("Hat",seg("hat",[["none","None"],["cap","Cap"],["bucket","Bucket"]]))+(c.hat!=="none"?F("Hat color",sw("hatColor",O.cloth)):"")+F("Glasses",seg("glasses",[["none","None"],["glasses","Prescription"],["sun","Sunglasses"]]))};
@@ -852,7 +856,7 @@ function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
    <section class="px card"><h3>Relationships</h3>${CANON_IDS.map(id=>G.F[id]).filter(f=>f.met).map(f=>`<div class="kv-row"><span>${esc(f.name)}${G.romance===f.id?" ♥ Sweetheart":G.promise&&G.promise[f.id]!=null?" ♡ Promised":""}</span>${hearts(f.bond)}</div>`).join("")}</section></div>
    <section class="px card teaser"><span class="pill red">Next season · coming soon</span><h3>The road to the regional stage</h3>
     <ul><li>Golden Tiger poaches a Bangkok trainer, and Fah won't be the same anymore</li><li>New fighters from the Tha Sao and Korat styles are looking for a camp</li><li>Grandpa Chai's debt still hides a secret Kati hasn't told</li></ul></section>
-   <div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">Continue · season ${(G.season||1)+1} ▸</button>`:""}<button class="btn primary" data-act="replay">Play again</button><button class="btn" data-act="restart">Back to title</button></div></main>`;}
+   <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · Season ${G.season||1}</p><div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">Continue · season ${(G.season||1)+1} ▸</button>`:""}<button class="btn primary" data-act="replay">Play again</button><button class="btn" data-act="restart">Back to title</button></div></main>`;}
 
 // ---------- FIGHT ----------
 function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.week)}`;
@@ -1107,12 +1111,13 @@ const ACT={
   askdelslot:d=>{UI.delSlot=+d.v;render();},canceldel:()=>{UI.delSlot=null;render();},
   delslot:()=>{clearSave(UI.delSlot);UI.delSlot=null;if(!loadSave())UI.modal=null;render();},
   beginNew:i=>{UI.slot=i;UI.modal=null;AU.startMusic("hub");UI.creator={name:"",...CHIBI.randomManager(Math.random),gender:"m",diff:"normal",outfit:"tee",hat:"none",glasses:"none"};UI.modal=null;render();},
+  copyseed:()=>{const v=G.seedText||String(G.seed);const ok=()=>toast("Seed copied: "+v);try{navigator.clipboard.writeText(v).then(ok,()=>toast("seed: "+v));}catch(e){toast("seed: "+v);}},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},
-  cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator[d.k]=d.v;render();},
-  crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab};render();},
-  ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;UI.creator.tab=d.v;render();},
+  cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator[d.k]=d.v;render();},
+  crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};crSeed();UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab,seed:o.seed};render();},
+  ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator.tab=d.v;render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"Start":"Dao");
-    const {name,diff,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look});genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
+    crSeed();const {name,diff,seed,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look,seed:seedFrom(seed)});if(seed&&!/^\d{1,10}$/.test(seed))G.seedText=seed;genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
     playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"night",look:"train"});},
   continue:()=>{let si=0;for(let i=1;i<=SLOTS;i++)if(loadSlot(i)){si=i;break;}if(!si)return;backupSlot(si);const s=safeFix(loadSlot(si));if(!s){toast("This save can't be opened in this version. Nothing was deleted");return;}G=s;UI.slot=si;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
@@ -1194,7 +1199,7 @@ const ACT={
   tlock:d=>{const f=G.F[d.id];if(!f)return;f.lockWeek=G.week;f.drillBonus=0;AU.sfx("level");save();
     // v1.19.1: a short drill scene — tap to make her strike, then see how the session went
     const pr=f.plan.preset;if(!f.injury&&pr!=="rest"&&pr!=="prep"){UI.drill={id:f.id,taps:0,need:f.plan.intensity==="light"?2:3,res:[],hitT:0};UI.modal={type:"drill",id:f.id};}else UI.modal=null;render();},
-  dtap:()=>{const D=UI.drill;if(!D||D.taps>=D.need)return;const r=Math.random();const q=r<.3?"perfect":r<.85?"good":"ok";D.res.push(q);D.taps++;D.hitT=performance.now();D.q=q;
+  dtap:()=>{const D=UI.drill;if(!D||D.taps>=D.need)return;const r=srand(G,D.taps*31+D.need*7+(G.campUsed?3:0));const q=r<.3?"perfect":r<.85?"good":"ok";D.res.push(q);D.taps++;D.hitT=performance.now();D.q=q;
     AU.sfx(DRILL_ROW[G.F[D.id].plan.preset]==="knee"?"kick":"punch");
     if(D.taps>=D.need){const b=D.res.reduce((x,q)=>x+(q==="perfect"?4:q==="good"?2:0),0);G.F[D.id].drillBonus=b/100;D.bonus=b;save();setTimeout(()=>{if(UI.drill===D){D.done=true;AU.sfx(b>=8?"level":"ui");render();}},700);}
     render();},

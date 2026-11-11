@@ -591,8 +591,8 @@ const DATE_TWISTS=[
  {id:"rival",t:f=>`ระหว่างทาง คุณเจอนักมวยค่ายพยัคฆ์ทองสองคนเดินสวนมา พวกเขาหัวเราะเยาะ "ผู้จัดการพาลูกค่ายเที่ยว ไม่ซ้อมเหรอ"`,
   choice:[{t:"ยืนข้าง ๆ เธอเงียบ ๆ ไม่ตอบโต้",sc:2,rep:"ขอบคุณที่ไม่ปล่อยให้หนูยืนคนเดียวนะคะ ไว้เจอกันบนเวที"},{t:"ตอบกลับแรง ๆ",sc:0,rep:"ใจเย็นค่ะ… แต่ก็สะใจดีนะ"}]},
 ];
-function dateTwist(G,f,D,look){const r=Math.random();if(r>.4)return [];f.twists=f.twists||[];
-  const pool=DATE_TWISTS.filter(x=>!f.twists.includes(x.id));if(!pool.length)return [];const T=pool[Math.floor(Math.random()*pool.length)];f.twists.push(T.id);
+function dateTwist(G,f,D,look){const r=srand(G,(f.twists||[]).length*13+f.id.charCodeAt(0));if(r>.4)return [];f.twists=f.twists||[];
+  const pool=DATE_TWISTS.filter(x=>!f.twists.includes(x.id));if(!pool.length)return [];const T=pool[Math.floor(srand(G,f.id.charCodeAt(1)+97)*pool.length)];f.twists.push(T.id);
   return [{n:"nar",t:T.t(f)},{choice:T.choice.map(c=>({t:c.t,fx:()=>{D.score+=c.sc;},then:[{n:f.id,f:c.sc>=2?"flustered":c.sc<0?"pout":"happy",l:look,t:c.rep}]}))}];}
 
 // ================= v1.13 temptations — someone else wants your time =================
