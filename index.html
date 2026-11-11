@@ -1375,6 +1375,10 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .ccard .tstar{color:var(--rc);font-size:11px;letter-spacing:1px}.ccard.lock{cursor:default;opacity:.85}.ccard.lock img{filter:brightness(0) opacity(.55)}.ccard .ndot,.albbtn .ndot{position:absolute;top:3px;right:3px;width:8px;height:8px;background:#ff4d6d;display:block}
 .gacha{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0 4px;padding:8px;background:#241c3a;border:2px solid #4a3f6b}.gacha span{display:flex;flex-direction:column}.gacha small{font-size:11px;color:var(--mut,#9a91ad)}
 .gres{display:flex;flex-direction:column;align-items:center;gap:8px;margin:8px 0}.ccard.big{width:150px}.ccard.big img{width:110px;height:110px}.ccard.big b{font-size:14px}
+/* v1.61: the overlay scrolls, not the notched box inside it — iOS won't touch-scroll an element that has clip-path */
+.overlay{display:flex;flex-direction:column;align-items:center;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.overlay>.modal{margin:auto;flex:none}
+.modal:not(.fpm){max-height:none;overflow:visible}
 </style></head><body>
 <div id="app"></div>
 <script type="text/plain" id="js-th">
@@ -4880,7 +4884,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.60";
+const VERSION="1.61";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -10272,7 +10276,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.60";
+const VERSION="1.61";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
