@@ -569,7 +569,7 @@ EVENTS.push(
     {t:"ขอคิดดูก่อน (ได้ ฿10,000 ค่าเสียเวลา · ความเชื่อใจทุกคน −6)",fx:G=>{G.cash+=10000;R_ALL(G,f=>f.trust=Math.max(0,f.trust-6));},
       then:[{n:"kati",f:"sad",t:"…เจ้าของค่ายจะขายค่ายของคุณปู่จริง ๆ เหรอคะ"},{n:"nar",t:"คุณคืนซองในวันรุ่งขึ้น แต่ความเงียบในค่ายยังอยู่ไปอีกหลายวัน"}]}]}]},
 
- {id:"songkran",look:"casual",when:G=>G.week>=43,bg:"gym",steps:[
+ {id:"songkran",look:"casual",when:G=>G.week>=47&&(G.season||1)===1,bg:"gym",steps:[
   {n:"nar",t:"สงกรานต์มาถึง ค่ายหยุดซ้อมครึ่งวัน ทุกคนรดน้ำดำหัวครูแดงด้วยน้ำอบไทยหอม ๆ"},
   {n:"coach",t:"ขอให้ทุกคนแข็งแรง ไม่เจ็บไม่ป่วย ชกให้สมศักดิ์ศรีค่ายศิริชัย…"},
   {n:"kati",f:"happy",t:"พิธีจบแล้วนะคะ ทีนี้ก็— สาดน้ำ!!!"},
@@ -1198,3 +1198,58 @@ EVENTS.push(
    if(f.trust>=40){add(G,id,"bond",5);return [{n:"nar",t:`เช้าวันจันทร์ ${f.name}มาซ้อมตั้งแต่ตีห้า ก่อนทุกคน`},{n:id,f:"happy",l:"train",t:POACH_L[id].stay}];}
    add(G,id,"bond",2);f.morale=Math.max(0,f.morale-8);return [{n:"nar",t:`เช้าวันจันทร์ ${f.name}ส่งซองสีทองคืนค่ายพยัคฆ์ทองไปแล้ว แต่ยังซ้อมเงียบ ๆ ไม่ค่อยพูด`},{n:id,f:"flustered",l:"train",t:POACH_L[id].stay2},{n:"kati",f:"happy",l:"casual",t:"ไม่ต้องรีบตอบอะไรหรอก อยู่ด้วยกันตรงนี้ก่อน เดี๋ยวก็รู้เองว่าที่นี่คือบ้าน"},{n:"nar",t:`(${f.name}อยู่ค่ายต่อ แต่ยังลังเลอยู่บ้าง · กำลังใจลดลงเล็กน้อย ลองใช้เวลากับเธอให้มากขึ้น)`}];}}]}
 );
+
+// ===== v1.49: the year loop — calendar, birthdays and festivals that come back every year =====
+const CAL_START=[4,25]; // week 1 starts 25 May
+const TH_MON=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+function weekDate(w){const d=new Date(2026,CAL_START[0],CAL_START[1]+(Math.max(1,w)-1)*7);return {d:d.getDate(),m:d.getMonth()};}
+const weekDateLabel=w=>{const x=weekDate(w);return `${x.d} ${TH_MON[x.m]}`;};
+function dateWeek(d,m){const a=new Date(2026,CAL_START[0],CAL_START[1]);let b=new Date(2026,m,d);if(b<a)b=new Date(2027,m,d);return Math.floor((b-a)/864e5/7)+1;}
+const BDAY_DM={kati:[13,3],mali:[2,4],rin:[9,8],ploy:[1,0],fah:[31,9]}; // matches PROFILES bday
+function bdayWeek(id){const x=BDAY_DM[id];return x?dateWeek(x[0],x[1]):0;}
+const yr=G=>G.season||1;
+const annualWhen=(w,extra)=>G=>G.week>=w&&G.week<=w+1&&(!extra||extra(G));
+const BDAY_CAMP={
+ kati:{bg:"gym",y1:[{n:"nar",t:"วันสงกรานต์ ตรงกับวันเกิดกะทิพอดี เด็ก ๆ จากคลาสวิ่งมาสาดน้ำใส่เธอตั้งแต่เช้า"},{n:"kati",f:"happy",l:"casual",t:"ตอนเด็ก ๆ ปู่จะรดน้ำดำหัวให้หนูก่อนใคร แล้วบอกว่า ‘เกิดวันปีใหม่ไทย ชีวิตต้องเริ่มใหม่ได้เสมอ’"},{n:"kati",f:"flustered",l:"casual",t:"ปีนี้ไม่มีปู่แล้ว… แต่มีทุกคน มีค่ายที่ยังไม่ปิด"}],
+   y2:[{n:"nar",t:G=>`สงกรานต์อีกปี วันเกิดกะทิครบ ${21+yr(G)-1} ปี ค่ายศิริชัยเปียกทั้งค่าย`},{n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}คะ! ปีนี้หนูขอเป็นคนรดน้ำดำหัวคุณบ้าง ปีที่แล้วคุณดูแลค่ายมาทั้งปี`}]},
+ mali:{bg:"camp",y1:[{n:"nar",t:"เย็นวันเสาร์ แม่ของมะลิโทรวิดีโอคอลมา มีญาติยืนเบียดกันอยู่หน้ากล้องสิบกว่าคน ร้องเพลงวันเกิดเพี้ยนกันคนละคีย์"},{n:"mali",f:"flustered",l:"casual",t:"หนูไม่ได้บอกใครที่นี่เลยนะคะว่าวันนี้วันเกิด… กลัวทุกคนต้องลำบาก"},{n:"kati",f:"happy",l:"casual",t:"ช้าไปแล้วจ้ะ เค้กกล้วยหอมซื้อมาตั้งแต่บ่าย!"}],
+   y2:[{n:"nar",t:"วันเกิดมะลิอีกปี ปีนี้แม่ของเธอส่งข้าวต้มมัดมาให้ทั้งค่ายสองลัง"},{n:"mali",f:"happy",l:"casual",t:G=>`${CALL(G,"mali")}คะ ปีนี้หนูบอกทุกคนเองเลยว่าวันเกิด! …เพราะที่นี่เป็นบ้านแล้วนี่คะ`}]},
+ rin:{bg:"camp",y1:[{n:"nar",t:"รินนั่งกรอกตารางสถิติอยู่คนเดียว เหมือนวันธรรมดาทุกวัน"},{n:"kati",f:"surprised",l:"casual",t:"(กระซิบ) วันนี้วันเกิดพี่รินนะคะ หนูเห็นในใบสมัคร แต่พี่เขาไม่พูดอะไรเลย"},{n:"rin",f:"flustered",l:"casual",t:"…วันเกิดเป็นแค่วันที่หนึ่งในสามร้อยหกสิบห้าวันค่ะ ไม่มีนัยสำคัญทางสถิติ"}],
+   y2:[{n:"nar",t:"วันเกิดรินอีกปี ปีนี้เธอเป็นคนวางเค้กไว้บนโต๊ะเอง พร้อมป้ายเขียนว่า ‘ห้ามทำเป็นไม่รู้’"},{n:"rin",f:"flustered",l:"casual",t:"…ปีที่แล้วพวกคุณทำให้ข้อมูลฉันเปลี่ยนค่ะ วันเกิดมีนัยสำคัญขึ้นมาแล้ว"}]}};
+const BDAY_GIFT_LINE={kati:["ของปีที่แล้วหนูยังใช้ทุกวันเลยนะคะ","ปาร์ตี้ปีก่อนสนุกมาก ปีนี้หนูขอเป่าเค้กนานกว่าเดิม!","คำอวยพรปีที่แล้ว หนูจำได้ทุกคำเลยค่ะ"],
+ mali:["ของขวัญปีที่แล้ว หนูวางไว้ข้างต้นมะลิทุกวันเลยค่ะ","ปีก่อนทุกคนร้องเพลงดังจนหมาข้างบ้านหอน หนูยังขำอยู่เลย","ปีที่แล้วคุณอวยพรสั้นมาก แต่หนูจดไว้ในสมุดนะคะ"],
+ rin:["ของปีที่แล้ว ฉันใช้ทุกวันค่ะ อัตราการใช้งาน 100%","ปาร์ตี้ปีที่แล้วเสียงดังเกินค่ามาตรฐาน …แต่ฉันชอบ","คำอวยพรปีที่แล้ว ฉันบันทึกไว้ในไฟล์ ‘สำคัญ’ ค่ะ"]};
+const bdayChoice=id=>({choice:[
+  {t:"ของขวัญที่ตั้งใจเลือกให้ (฿800 · ความสนิท +)",fx:G=>{G.cash-=800;add(G,id,"bond",8);add(G,id,"trust",2);(G.bday=G.bday||{})[id]={y:yr(G),c:0};},then:[{n:id,f:"flustered",l:"casual",t:"…นี่เลือกเองเหรอคะ ตรงใจมากเลย"}]},
+  {t:"จัดปาร์ตี้ทั้งค่าย (฿2,000 · ทุกคนกำลังใจ +6)",fx:G=>{G.cash-=2000;add(G,id,"bond",5);R_ALL(G,f=>{f.morale=Math.min(100,f.morale+6);});(G.bday=G.bday||{})[id]={y:yr(G),c:1};},then:[{n:"nar",t:"คืนนั้นค่ายศิริชัยเปิดไฟสว่างจนดึก เสียงร้องเพลงวันเกิดดังไปถึงตลาด"}]},
+  {t:"อวยพรจากใจ",fx:G=>{add(G,id,"bond",3);(G.bday=G.bday||{})[id]={y:yr(G),c:2};},then:[{n:id,f:"happy",l:"casual",t:"ขอบคุณค่ะ …แค่นี้ก็พอแล้วจริง ๆ"}]}]});
+for(const id of Object.keys(BDAY_CAMP)){const B=BDAY_CAMP[id];
+  EVENTS.push({id:"bday_"+id,annual:true,pri:1,look:"casual",bg:B.bg,when:G=>{const w=bdayWeek(id);return w>0&&G.week>=w&&G.week<=w+1&&inCamp(G,id);},steps:[
+    {inject:G=>{const last=G.bday&&G.bday[id];const lines=last&&last.y<yr(G)?B.y2.concat([{n:id,f:"happy",l:"casual",t:BDAY_GIFT_LINE[id][last.c]}]):B.y1;return lines.concat([bdayChoice(id)]);}}]});}
+// rivals: a short message on their birthday
+const BDAY_RIVAL={ploy:{t:"วันที่ 1 มกราคม ทุกคนฉลองปีใหม่ ไม่มีใครจำได้ว่าเป็นวันเกิดพลอยด้วย",reply:["…รู้ได้ไงคะ ไม่มีใครเคยจำได้เลย เพราะทุกคนยุ่งกับปีใหม่ …ขอบคุณ","เค้ก? ส่งมาที่ค่ายพยัคฆ์ทองเนี่ยนะ …เดี๋ยวพวกรุ่นน้องแย่งหมด แต่ ขอบคุณค่ะ"]},
+ fah:{t:"31 ตุลาคม คืนฮาโลวีน วันเกิดฟ้า สตอรี่ของเธอเต็มไปด้วยรูปตัวเองแต่งเป็นแวมไพร์",reply:["อะไรนะ! ผู้จัดการค่ายศัตรูส่งข้อความวันเกิดมา!? …ไม่ได้ดีใจหรอกนะ! แค่… แคปเก็บไว้เฉย ๆ","เค้กฟักทอง! ฟ้าจะกินคนเดียวหมดเลย! …ไม่ได้ซึ้งนะ ไม่ได้ซึ้งเลยสักนิด"]}};
+for(const id of Object.keys(BDAY_RIVAL)){const B=BDAY_RIVAL[id];
+  EVENTS.push({id:"bday_"+id,annual:true,pri:1,look:"casual",bg:"night",when:G=>{const w=bdayWeek(id);return w>0&&G.week>=w&&G.week<=w+1&&G.F[id]&&G.F[id].met&&!inCamp(G,id);},steps:[
+    {n:"nar",t:B.t},
+    {choice:[{t:"ส่งข้อความอวยพร",fx:G=>{add(G,id,"bond",3);},then:[{n:id,f:"flustered",l:"casual",t:B.reply[0]}]},
+      {t:"ส่งเค้กไปให้ (฿600)",fx:G=>{G.cash-=600;add(G,id,"bond",6);},then:[{n:id,f:"happy",l:"casual",t:B.reply[1]}]},
+      {t:"(ไม่ส่งอะไร)",fx:G=>{}}]}]});}
+// festivals that return every year (year 1 keeps its story versions)
+EVENTS.push(
+ {id:"fest_newyear",annual:true,pri:1,look:"casual",bg:"night",when:annualWhen(32,G=>roster(G).length>0),steps:[
+  {inject:G=>{const R=roster(G),a=R[0],b=R[1]||R[0];return [
+   {n:"nar",t:yr(G)===1?"คืนข้ามปี ทุกคนในค่ายปีนขึ้นหลังคาไปนับถอยหลังดูพลุจากตัวเมือง":`คืนข้ามปีอีกครั้ง หลังคาค่ายเดิม คนเยอะกว่าปีก่อน ปีนี้เป็นปีที่ ${yr(G)} ที่ได้นับถอยหลังด้วยกัน`},
+   {n:a.id,f:"happy",l:"casual",t:"สาม! สอง! หนึ่ง! สวัสดีปีใหม่ค่าาา!"},
+   {n:b.id,f:"flustered",l:"casual",t:yr(G)===1?"ปีหน้า… ขอให้ค่ายเรายังอยู่ด้วยกันแบบนี้นะคะ":"ปีที่แล้วขอพรว่าขอให้อยู่ด้วยกันแบบนี้ …ก็เป็นจริงแล้วนะคะ"},
+   {choice:[{t:"ขอพรให้ทุกคนไม่เจ็บตัว (ทุกคนกำลังใจ +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);})},
+     {t:`ขอพรให้${b.name}ฝันเป็นจริง (ความสนิท +)`,fx:G2=>add(G2,b.id,"bond",5)}]}];}}]},
+ {id:"fest_krathong",annual:true,pri:1,look:"casual",bg:"night",when:annualWhen(26,G=>yr(G)>=2&&roster(G).length>0),steps:[
+  {inject:G=>{const R=roster(G).slice().sort((x,y)=>(y.bond||0)-(x.bond||0)),f=R[0];return [
+   {n:"nar",t:"คืนลอยกระทงอีกปี โคมยี่เป็งลอยเต็มฟ้าเชียงใหม่ แม่น้ำปิงสว่างไปทั้งสาย"},
+   {n:f.id,f:"flustered",l:"casual",t:`${CALL(G,f.id)}คะ ปีที่แล้วเราขอพรอะไรกันไว้ จำได้ไหม …ปีนี้หนูขอพรเรื่องเดิมอีกรอบนะคะ`},
+   {choice:[{t:"ปล่อยโคมด้วยกัน (ความสนิท +)",fx:G2=>add(G2,f.id,"bond",6)},{t:"ปล่อยโคมให้ปู่ชัยด้วยกันทั้งค่าย (ทุกคนกำลังใจ +4)",fx:G2=>R_ALL(G2,x=>{x.morale=Math.min(100,x.morale+4);})}]}];}}]},
+ {id:"fest_songkran",annual:true,pri:1,look:"casual",bg:"gym",when:annualWhen(47,G=>yr(G)>=2&&roster(G).length>0),steps:[
+  {n:"nar",t:"สงกรานต์อีกปี ค่ายหยุดซ้อมครึ่งวัน ทุกคนรดน้ำดำหัวครูแดง แล้วสงครามน้ำก็เริ่มขึ้นทันที"},
+  {n:"coach",t:G=>`ค่ายนี้อยู่มา ${yr(G)} ปีแล้วกับผู้จัดการคนนี้ …ครูขอให้มีปีหน้า ปีโน้น ต่อไปเรื่อย ๆ`},
+  {fx:G=>R_ALL(G,f=>{f.morale=Math.min(100,f.morale+6);f.fatigue=Math.max(0,f.fatigue-8);})},{n:"nar",t:"(ทุกคนกำลังใจ +6 · ล้า −8)"}]});

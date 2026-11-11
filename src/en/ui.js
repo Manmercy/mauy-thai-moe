@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.48";
+const VERSION="1.49";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -231,6 +231,7 @@ function newsItems(){const N=[...(G.lvNews||[]).slice(0,1)],st=standings(G,"A").
   if(G.rep>=10)N.push(`Sirichai Muay Thai Camp is being talked about again after years of silence`);
   const nb=G.bookings.filter(b=>G.F[b.a].camp==="player").sort((a,b)=>a.week-b.week)[0];if(nb)N.push(`Week ${nb.week}: ${G.F[nb.a].name} vs ${G.F[nb.b].name}`);
   N.unshift(...funnyNews(2));
+  if(typeof bdayWeek==="function")for(const id of ["kati","mali","rin","ploy","fah"]){const f=G.F[id];if(!f||!(f.camp==="player"||f.met))continue;const d=bdayWeek(id)-G.week;if(d>=0&&d<=2)N.unshift(d===0?`🎂 This week: birthday of ${f.name}!`:`🎂 In ${d} weeks: birthday of ${f.name}`);}
   N.push(["Muay oil prices up 5 baht. Vendor says 'business is good lately'","The district stadium installs new air con. No more fanning for spectators","An 80-year-old Korat coach still teaches the buffalo swing every morning","Women's Muay Thai is booming; attendance nearly doubled","Foreigners flock to learn Muay Thai in high season"][G.week%5]);
   return N;}
 function weekTodo(){const R=roster(G),todo=[];if(R.some(f=>!f.injury&&!trLocked(f)))todo.push("Some training programs aren't confirmed yet");if(!G.campUsed)todo.push("No camp activity chosen yet");
@@ -252,7 +253,7 @@ function hubHTML(){
   const dots={fights:G.offers.some(o=>!G.bookings.some(b=>b.a===o.a))||dmOfferOn(G),people:(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>!f.injury&&!trLocked(f))};
   return `<header class="hud"><div class="hud-in">
     <div class="brand">MUAY THAI <b>MOE</b></div>
-    <div class="wk"><strong class="num">Week ${Math.min(G.week,52)}<small>/52</small></strong><span>${G.season>1?`Season ${G.season} · `:""}${stageLabel()}</span></div>
+    <div class="wk"><strong class="num">Week ${Math.min(G.week,52)}<small>/52</small></strong><span>${typeof weekDateLabel==="function"?weekDateLabel(Math.min(G.week,52))+" · ":""}${G.season>1?`Year ${G.season} · `:""}${stageLabel()}</span></div>
     <div class="stats"><button class="stat cashbtn" data-act="cashflow"><span>Cash ▸</span><b class="num ${G.cash<0||weeksLeft()<=4?"neg":""}">${fmt(G.cash)}${weeksLeft()<=6?`<i class="cashwarn" title="Money runs out in about ${weeksLeft()} weeks">⚠</i>`:""}</b></button><button class="stat repbtn" data-act="repgraph"><span>Fame ▸</span><b class="num">${G.rep.toFixed(1)}</b></button></div>
     <div class="hbtns"><button class="iconbtn mailbtn ${mailBadge()?"has":""}" data-act="mail" aria-label="Mailbox ${mailBadge()?`, ${mailBadge()} new`:""}">${MAILBOX_PX}${mailBadge()?`<i class="mbadge">${mailBadge()}</i>`:""}</button><button class="iconbtn" data-act="settings" aria-label="Settings">${icon("gear")}</button></div>
     <button class="btn primary endweek ${weekTodo().length?"":"ready"}" data-act="endweek">${weekTodo().length?`End week ▸ <small>(${weekTodo().length} left)</small>`:"Ready · End week ▸"}</button>
@@ -779,13 +780,15 @@ function goalText(){const st=stageOf(G.week),me=roster(G);const best=d=>{const r
   return "Season over · preparing for next year";}
 
 // ---------- events / extras ----------
-function pendingEvents(){return EVENTS.filter(e=>e.when&&!G.seen[e.id]&&e.when(G));}
+// v1.49: annual events can play once per year
+const evSeen=e=>e.annual?((G.seenY||{})[e.id]===(G.season||1)):!!G.seen[e.id];
+function pendingEvents(){return EVENTS.filter(e=>e.when&&!evSeen(e)&&e.when(G));}
 // v1.41: at most two optional story scenes a week — the rest wait for next week (main story / finals always play)
 const EV_MUST=/^(prologue|daeng_leave|pre_qual|qual_result|final_result|semi_result|night_final|lover_final|ploy_prefinal|fah_prefinal|first_win|first_loss)/,EV_CAP=2;
 function runEvents(done){const list=pendingEvents().sort((a,b)=>(b.pri||0)-(a.pri||0));let played=0,opt=0;/* time-limited scenes go first */
-  const step=()=>{const e=list.shift();if(!e||G.ended){done&&done(played);return;}if(G.seen[e.id]||!e.when(G)){step();return;}
+  const step=()=>{const e=list.shift();if(!e||G.ended){done&&done(played);return;}if(evSeen(e)||!e.when(G)){step();return;}
     if(!EV_MUST.test(e.id)&&G.week<47){if(opt>=EV_CAP){step();return;}opt++;}
-    G.seen[e.id]=true;G.seenWk=G.seenWk||{};G.seenWk[e.id]=G.week;played++;playScene(e.steps,step,{bg:e.bg,look:e.look});};step();}
+    if(e.annual){G.seenY=G.seenY||{};G.seenY[e.id]=G.season||1;}else G.seen[e.id]=true;G.seenWk=G.seenWk||{};G.seenWk[e.id]=G.week;played++;playScene(e.steps,step,{bg:e.bg,look:e.look});};step();}
 function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);if(typeof questExtra==="function"&&questExtra(done,mulberry32(G.seed+G.week*59)))return;
   const dil=(typeof DILEMMAS!=="undefined"?DILEMMAS:[]).filter(d=>!G.seen[d.id]&&G.week>=d.from&&G.week<=d.to&&d.need(G));
   const sinceD=G.week-(G.lastDilemma||0);

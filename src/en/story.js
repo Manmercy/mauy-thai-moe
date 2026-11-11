@@ -569,7 +569,7 @@ EVENTS.push(
     {t:"Let me think about it (everyone's trust −6)",fx:G=>{G.cash+=10000;R_ALL(G,f=>f.trust=Math.max(0,f.trust-6));},
       then:[{n:"kati",f:"sad",t:"…Boss, are you really going to sell Grandpa's camp?"},{n:"nar",t:"You return the envelope the next day, but the silence in camp lingers for days"}]}]}]},
 
- {id:"songkran",look:"casual",when:G=>G.week>=43,bg:"gym",steps:[
+ {id:"songkran",look:"casual",when:G=>G.week>=47&&(G.season||1)===1,bg:"gym",steps:[
   {n:"nar",t:"Songkran arrives. The camp stops training for half a day; everyone pours fragrant Thai scented water over Coach Daeng's hands"},
   {n:"coach",t:"May everyone be strong, free of injury and illness, and fight with the honor of Sirichai…"},
   {n:"kati",f:"happy",t:"The ceremony's over! Now— water fight!!!"},
@@ -1198,3 +1198,58 @@ EVENTS.push(
    if(f.trust>=40){add(G,id,"bond",5);return [{n:"nar",t:`Monday morning, ${f.name} is at training by five a.m., before everyone else.`},{n:id,f:"happy",l:"train",t:POACH_L[id].stay}];}
    add(G,id,"bond",2);f.morale=Math.max(0,f.morale-8);return [{n:"nar",t:`Monday morning, ${f.name} sent the gold envelope back to Golden Tiger, but she trains quietly and barely talks.`},{n:id,f:"flustered",l:"train",t:POACH_L[id].stay2},{n:"kati",f:"happy",l:"casual",t:"No need to answer anything yet. Just stay here with us. You'll realize this is home."},{n:"nar",t:`(${f.name} stays, but is still a little unsure · morale down slightly. Try spending more time with her)`}];}}]}
 );
+
+// ===== v1.49: the year loop — calendar, birthdays and festivals that come back every year =====
+const CAL_START=[4,25]; // week 1 starts 25 May
+const TH_MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function weekDate(w){const d=new Date(2026,CAL_START[0],CAL_START[1]+(Math.max(1,w)-1)*7);return {d:d.getDate(),m:d.getMonth()};}
+const weekDateLabel=w=>{const x=weekDate(w);return `${x.d} ${TH_MON[x.m]}`;};
+function dateWeek(d,m){const a=new Date(2026,CAL_START[0],CAL_START[1]);let b=new Date(2026,m,d);if(b<a)b=new Date(2027,m,d);return Math.floor((b-a)/864e5/7)+1;}
+const BDAY_DM={kati:[13,3],mali:[2,4],rin:[9,8],ploy:[1,0],fah:[31,9]}; // matches PROFILES bday
+function bdayWeek(id){const x=BDAY_DM[id];return x?dateWeek(x[0],x[1]):0;}
+const yr=G=>G.season||1;
+const annualWhen=(w,extra)=>G=>G.week>=w&&G.week<=w+1&&(!extra||extra(G));
+const BDAY_CAMP={
+ kati:{bg:"gym",y1:[{n:"nar",t:"Songkran falls on Kati's birthday. Kids from the running class have been soaking her since morning."},{n:"kati",f:"happy",l:"casual",t:"When I was little, Grandpa always poured the blessing water for me first and said, ‘Born on Thai New Year, you can always start over.’"},{n:"kati",f:"flustered",l:"casual",t:"Grandpa's not here this year… but everyone is. And the camp is still open."}],
+   y2:[{n:"nar",t:G=>`Songkran again, and Kati turns ${21+yr(G)-1} years old. All of Sirichai Camp is soaked.`},{n:"kati",f:"happy",l:"casual",t:G=>`${CALL(G,"kati")}! This year I want to be the one pouring water on your hands. You looked after the camp all year.`}]},
+ mali:{bg:"camp",y1:[{n:"nar",t:"Saturday evening, Mali's mom video-calls. A dozen relatives crowd the camera, singing happy birthday in a dozen different keys."},{n:"mali",f:"flustered",l:"casual",t:"I didn't tell anyone here it's my birthday… I didn't want to trouble anyone."},{n:"kati",f:"happy",l:"casual",t:"Too late! I bought a banana cake this afternoon!"}],
+   y2:[{n:"nar",t:"Mali's birthday again. This year her mom sent two whole boxes of khao tom mat for the camp."},{n:"mali",f:"happy",l:"casual",t:G=>`${CALL(G,"mali")}, this year I told everyone myself that it's my birthday! …Because this is home now.`}]},
+ rin:{bg:"camp",y1:[{n:"nar",t:"Rin sits alone filling in stat sheets, like any other day."},{n:"kati",f:"surprised",l:"casual",t:"(whispering) Today's Rin's birthday. I saw it on her application, but she hasn't said a word."},{n:"rin",f:"flustered",l:"casual",t:"…A birthday is just one day in three hundred sixty-five. Not statistically significant."}],
+   y2:[{n:"nar",t:"Rin's birthday again. This year she put the cake on the table herself, with a sign: ‘Do not pretend you didn't know.’"},{n:"rin",f:"flustered",l:"casual",t:"…Last year you all changed my data. Birthdays have become statistically significant."}]}};
+const BDAY_GIFT_LINE={kati:["I still use last year's gift every day!","Last year's party was so much fun! This year I'm blowing out the candles for longer!","I remember every word of your wishes from last year."],
+ mali:["Last year's gift sits next to my jasmine every day.","Last year everyone sang so loud the neighbor's dog howled. I still laugh about it.","Your wishes last year were really short, but I wrote them down in my notebook."],
+ rin:["Last year's gift, I use it every day. 100% utilization rate.","Last year's party exceeded the acceptable noise level… but I liked it.","Your wishes from last year, I saved in a file called ‘Important’."]};
+const bdayChoice=id=>({choice:[
+  {t:"A gift chosen with care (฿800 · Bond +)",fx:G=>{G.cash-=800;add(G,id,"bond",8);add(G,id,"trust",2);(G.bday=G.bday||{})[id]={y:yr(G),c:0};},then:[{n:id,f:"flustered",l:"casual",t:"…You picked this yourself? It's exactly what I wanted."}]},
+  {t:"Throw a party for the whole camp (฿2,000 · everyone: morale +6)",fx:G=>{G.cash-=2000;add(G,id,"bond",5);R_ALL(G,f=>{f.morale=Math.min(100,f.morale+6);});(G.bday=G.bday||{})[id]={y:yr(G),c:1};},then:[{n:"nar",t:"That night Sirichai Camp keeps its lights on late, and the birthday song carries all the way to the market."}]},
+  {t:"Heartfelt wishes",fx:G=>{add(G,id,"bond",3);(G.bday=G.bday||{})[id]={y:yr(G),c:2};},then:[{n:id,f:"happy",l:"casual",t:"Thank you… This is really enough."}]}]});
+for(const id of Object.keys(BDAY_CAMP)){const B=BDAY_CAMP[id];
+  EVENTS.push({id:"bday_"+id,annual:true,pri:1,look:"casual",bg:B.bg,when:G=>{const w=bdayWeek(id);return w>0&&G.week>=w&&G.week<=w+1&&inCamp(G,id);},steps:[
+    {inject:G=>{const last=G.bday&&G.bday[id];const lines=last&&last.y<yr(G)?B.y2.concat([{n:id,f:"happy",l:"casual",t:BDAY_GIFT_LINE[id][last.c]}]):B.y1;return lines.concat([bdayChoice(id)]);}}]});}
+// rivals: a short message on their birthday
+const BDAY_RIVAL={ploy:{t:"January 1st. Everyone celebrates New Year, and nobody remembers it's also Ploy's birthday.",reply:["…How did you know? Nobody ever remembers, everyone's busy with New Year. …Thanks.","Cake? Sent to Golden Tiger? …The juniors will steal it all. But, thank you."]},
+ fah:{t:"October 31st, Halloween night, and Fah's birthday. Her stories are full of selfies dressed as a vampire.",reply:["What!? The rival camp's manager sent me birthday wishes!? …I'm not happy about it! I'm just… screenshotting it, that's all.","A pumpkin cake! I'm eating the whole thing myself! …I'm not touched. Not touched at all."]}};
+for(const id of Object.keys(BDAY_RIVAL)){const B=BDAY_RIVAL[id];
+  EVENTS.push({id:"bday_"+id,annual:true,pri:1,look:"casual",bg:"night",when:G=>{const w=bdayWeek(id);return w>0&&G.week>=w&&G.week<=w+1&&G.F[id]&&G.F[id].met&&!inCamp(G,id);},steps:[
+    {n:"nar",t:B.t},
+    {choice:[{t:"Send birthday wishes",fx:G=>{add(G,id,"bond",3);},then:[{n:id,f:"flustered",l:"casual",t:B.reply[0]}]},
+      {t:"Send a cake (฿600)",fx:G=>{G.cash-=600;add(G,id,"bond",6);},then:[{n:id,f:"happy",l:"casual",t:B.reply[1]}]},
+      {t:"(Send nothing)",fx:G=>{}}]}]});}
+// festivals that return every year (year 1 keeps its story versions)
+EVENTS.push(
+ {id:"fest_newyear",annual:true,pri:1,look:"casual",bg:"night",when:annualWhen(32,G=>roster(G).length>0),steps:[
+  {inject:G=>{const R=roster(G),a=R[0],b=R[1]||R[0];return [
+   {n:"nar",t:yr(G)===1?"New Year's Eve. Everyone in the camp climbs onto the roof to count down and watch the fireworks over the city.":`New Year's Eve again, same roof, more people than last year. This is year ${yr(G)} we've counted down together.`},
+   {n:a.id,f:"happy",l:"casual",t:"Three! Two! One! Happy New Yeeear!"},
+   {n:b.id,f:"flustered",l:"casual",t:yr(G)===1?"Next year… I hope our camp is still together like this.":"Last year we wished we'd stay together like this… and it came true."},
+   {choice:[{t:"Wish that nobody gets hurt (everyone: morale +5)",fx:G2=>R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);})},
+     {t:`Wish for ${b.name}'s dream to come true (Bond +)`,fx:G2=>add(G2,b.id,"bond",5)}]}];}}]},
+ {id:"fest_krathong",annual:true,pri:1,look:"casual",bg:"night",when:annualWhen(26,G=>yr(G)>=2&&roster(G).length>0),steps:[
+  {inject:G=>{const R=roster(G).slice().sort((x,y)=>(y.bond||0)-(x.bond||0)),f=R[0];return [
+   {n:"nar",t:"Loy Krathong again. Yi Peng lanterns fill the Chiang Mai sky, and the Ping River glows from end to end."},
+   {n:f.id,f:"flustered",l:"casual",t:`${CALL(G,f.id)}, remember what we wished for last year? …This year I'm making the same wish again.`},
+   {choice:[{t:"Release a lantern together (Bond +)",fx:G2=>add(G2,f.id,"bond",6)},{t:"Release a lantern for Grandpa Chai with the whole camp (everyone: morale +4)",fx:G2=>R_ALL(G2,x=>{x.morale=Math.min(100,x.morale+4);})}]}];}}]},
+ {id:"fest_songkran",annual:true,pri:1,look:"casual",bg:"gym",when:annualWhen(47,G=>yr(G)>=2&&roster(G).length>0),steps:[
+  {n:"nar",t:"Songkran again. Training stops at noon, everyone pours scented water over Coach Daeng's hands, and the water war starts immediately."},
+  {n:"coach",t:G=>`This camp has had ${yr(G)} years with this manager… I wish for next year, and the year after, and on and on.`},
+  {fx:G=>R_ALL(G,f=>{f.morale=Math.min(100,f.morale+6);f.fatigue=Math.max(0,f.fatigue-8);})},{n:"nar",t:"(Everyone: morale +6 · fatigue −8)"}]});
