@@ -379,7 +379,7 @@ function quickFight(fa,fb,seed,rounds,tacA){const F=newFight(fa,fb,{seed,rounds}
 // ---------- WORLD ----------
 const TIER={local:{name:"ระดับตำบล",win:4000,lose:2000,rep:1.5},district:{name:"ระดับอำเภอ",win:9000,lose:4500,rep:3},
   semi:{name:"รองชิงจังหวัด",win:18000,lose:8000,rep:4},final:{name:"ชิงแชมป์จังหวัด",win:50000,lose:20000,rep:8},exhibition:{name:"ไฟต์งานวัด",win:2500,lose:1500,rep:.5},special:{name:"ศึกพิเศษข้ามรุ่น",win:8000,lose:4000,rep:2},
-  quest:{name:"ไฟต์นอกตาราง",win:0,lose:0,rep:.4,off:1},beast:{name:"ศึกพิสดาร",win:7000,lose:2500,rep:1,off:1}};
+  quest:{name:"ไฟต์นอกตาราง",win:0,lose:0,rep:.4,off:1},dm:{name:"ศึก Death Match",win:0,lose:0,rep:.5,off:1},beast:{name:"ศึกพิสดาร",win:7000,lose:2500,rep:1,off:1}};
 function stageOf(w){return w<=20?"local":w<=40?"district":w<=50?"final":"off";}
 const STAGE_NAME={local:"รอบตำบล",district:"รอบอำเภอ",final:"ชิงแชมป์จังหวัด",off:"ปิดฤดูกาล"};
 
