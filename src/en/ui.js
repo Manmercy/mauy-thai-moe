@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.54";
+const VERSION="1.55";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -486,7 +486,7 @@ function rankHTML(){const st=stageOf(G.week),cut=st==="local"?4:st==="district"?
    </tbody></table></div></section>${calendarHTML()}`;}
 
 function peopleHTML(){const met=CANON_IDS.map(id=>G.F[id]).filter(f=>f.met);
-  return `<div class="card-h"><p class="meta">Spend time with one person per week · Once you are close, they will sometimes text you first</p>${G.freeUsed?"<span class=\"pill\">Free time: used</span>":"<span class=\"pill gold\">Free time: 1 left</span>"}</div>
+  return `<div class="card-h"><p class="meta">Spend time with one person per week · Once you are close, they will sometimes text you first</p><button class="btn sm gold albbtn" data-act="album">🃏 Card album ${Object.keys(G.cards||{}).length}/${Object.keys(CARDS).length}${Object.values(G.cards||{}).some(c=>!c.seen)?'<i class="ndot"></i>':""}</button>${G.freeUsed?"<span class=\"pill\">Free time: used</span>":"<span class=\"pill gold\">Free time: 1 left</span>"}</div>
    <div class="plist">${met.map(f=>`<section class="px pcard"><button class="pthumb" data-act="fighter" data-id="${f.id}" data-v="rel" aria-label="View profile of ${esc(f.name)}"><img src="${stand(f.id,"casual")}" alt="" loading="lazy"></button>
      <div class="pbody"><div class="pnm"><b class="nm">${esc(f.name)}</b><span class="meta">${f.camp==="player"?"Sirichai Camp":f.camp==="rival"?"Golden Tiger":"Independent"}${G.romance===f.id?" · Sweetheart ♥":G.promise&&G.promise[f.id]!=null?" · Promised ♡":""}</span></div>${hearts(f.bond)}
       <div class="pbtns"><button class="btn sm" data-act="fighter" data-id="${f.id}" data-v="rel">Profile</button><button class="btn sm primary" data-act="hang" data-id="${f.id}" ${G.freeUsed?"disabled":""}>Hang out</button><button class="btn sm gold giftb" data-act="giftpick" data-id="${f.id}" ${f.giftWeek===G.week?"disabled":""}>${PIX.gift}<span>${f.giftWeek===G.week?"Given":"Gift"}</span></button><button class="btn sm chatb" data-act="chat" data-id="${f.id}" ${canChat(f)?"":"disabled"}>${CHAT_PX}<span>${canChat(f)?"New chat":(f.bond||0)<CHAT_BOND?"Not close yet":"No messages"}</span>${canChat(f)?'<i class="dot"></i>':""}</button></div></div></section>`).join("")}</div>`;}
@@ -680,6 +680,11 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
   if(m.type==="studinfo"){body=studInfoHTML();}
   if(m.type==="gift")body=giftHTML(m.id);
   if(m.type==="petname"){const p=(G.pets||[])[m.i];if(!p){UI.modal=null;return "";}body=`<h2>Name the ${esc(PETS[p.k].name)}</h2><div class="petnm"><img class="peti" src="${petIcon(p.k)}" alt=""><input id="petname" maxlength="12" value="${esc(p.name)}" autocomplete="off"></div><p class="meta">This name will show up in camp scenes</p><button class="btn primary" data-act="petnamesave" data-v="${m.i}">Name</button>`;}
+  if(m.type==="album"){const byC={};for(const id in CARDS)(byC[CARDS[id].c]=byC[CARDS[id].c]||[]).push(id);const own=G.cards||{};
+    body=`<h2>Card album</h2><p class="meta">Collected ${Object.keys(own).length}/${Object.keys(CARDS).length} · tap a card to view its story · cards you don't have yet show as a silhouette with a hint</p>
+     ${CANON_IDS.filter(c=>byC[c]).map(c=>`<h4 class="albh">${esc(G.F[c].name)}</h4><div class="albg">${byC[c].map(id=>{const C=CARDS[id],o=own[id],R=CARD_R[C.r];
+       return o?`<button class="tcard" style="--rc:${R.c}" data-act="cardplay" data-v="${id}">${!o.seen?'<i class="ndot"></i>':""}<img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></button>`
+         :`<div class="tcard lock" style="--rc:${R.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>???</b><small>${esc(C.hint)}</small></div>`;}).join("")}</div>`).join("")}`;}
   if(m.type==="masters"){body=`<h2>Invite an old-school master</h2><p class="meta">${fmt(18000)} per session · each fighter can learn once per season</p><div class="mlist">${Object.entries(MASTERS).map(([k,M])=>`<div class="mrow"><b>${M.name}</b><small>Boosts ${M.attrs.map(a=>ATTR_LABEL[a]).join(" · ")}</small><div class="obtns">${roster(G).map(f=>`<button class="btn sm" data-act="hiremaster" data-id="${f.id}" data-v="${k}" ${G.cash<M.cost||f.masterSeason===(G.season||1)?"disabled":""}>${esc(f.name)}</button>`).join("")}</div></div>`).join("")}</div>`;}
   if(m.type==="advice"){body=adviceHTML(m.id);foot=false;}
   if(m.type==="drill"){body=drillHTML();foot=false;}
@@ -812,7 +817,7 @@ function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);if(typeof que
   const chats2=chats.filter(c=>!c.need2||c.need2(G)),haps2=haps.filter(h=>!h.need||h.need(G));
   let pick=null;if(chats2.length&&rng()<.6)pick=chats2[Math.floor(rng()*chats2.length)];else if(haps2.length&&rng()<.7)pick=haps2[Math.floor(rng()*haps2.length)];
   if(!pick){done();return;}G.seen[pick.id]=true;playScene(pick.steps,done,{bg:pick.bg==="camp"?"gym":pick.bg,look:pick.look||"train"});}
-function afterWeekFlow(){if(typeof mailWeekly==="function"&&!G.ended)mailWeekly(G);if(typeof chatWeekly==="function"&&!G.ended)chatWeekly(G);runEvents(played=>{const fin=()=>{if(G.ended){startEnding();return;}
+function afterWeekFlow(){if(typeof cardCheck==="function"){const got=cardCheck(G);if(got.length)setTimeout(()=>toast(`🃏 Got ${got.length} new! See the album (People tab)`),900);}if(typeof mailWeekly==="function"&&!G.ended)mailWeekly(G);if(typeof chatWeekly==="function"&&!G.ended)chatWeekly(G);runEvents(played=>{const fin=()=>{if(G.ended){startEnding();return;}
     relTierCheck();if(UI.relUp&&UI.relUp.length){const m=UI.relUp.join(" / ");UI.relUp=[];setTimeout(()=>toast("♥ "+m),300);}
     if(G.levelUps&&G.levelUps.length){const ids=[...new Set(G.levelUps)];G.levelUps=[];AU.sfx("level");UI.modal={type:"levelup",ids};}render();};
     const go=()=>coachBackScene(()=>aftermathScene(()=>tiredScene(()=>rinScene(fin))));if(played)go();else weeklyExtra(go);});}
@@ -1132,6 +1137,8 @@ const ACT={
   petplay:d=>{const i=+d.v,p=(G.pets||[])[i];if(!p||!petPlay(G,i))return;AU.sfx&&AU.sfx("ui");const PL={cat:"rolls over for belly rubs",dog:"chases a ball around the ring",rooster:"crows a show-off crow and makes everyone laugh",turtle:"pokes its head out for a slow pat"};
     toast(`${p.name} ${PL[p.k]} · ${PETS[p.k].eff}`);save();render();},
   petnamesave:d=>{const p=(G.pets||[])[+d.v];const v=((document.getElementById("petname")||{}).value||"").trim();if(p&&v)p.name=v.slice(0,12);UI.modal=null;save();render();},
+  album:()=>{UI.modal={type:"album"};render();},
+  cardplay:d=>{const C=CARDS[d.v],o=(G.cards||{})[d.v];if(!C||!o)return;o.seen=true;save();UI.modal=null;playScene(C.steps,()=>{UI.modal={type:"album"};render();},{bg:C.bg,look:"casual"});},
   cancelCreate:()=>{AU.startMusic("title");UI.creator=null;render();},
   cset:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator[d.k]=d.v;render();},
   crand:()=>{const n=(document.getElementById("pname")||{}).value||"",o=UI.creator||{};crSeed();UI.creator={...CHIBI.randomManager(Math.random),name:n,diff:o.diff||"normal",gender:o.gender||"m",tab:o.tab,seed:o.seed};render();},

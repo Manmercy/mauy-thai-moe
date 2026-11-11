@@ -1419,3 +1419,38 @@ EVENTS.push(
   {fx:G=>{add(G,"ploy","morale",20);add(G,"ploy","bond",4);if(G.F.kati&&inCamp(G,"kati"))add(G,"kati","morale",8);}},
   {n:"nar",t:"(Last year's rival is now the camp's sparring partner)"}]}
 );
+
+// ===== v1.55: character cards (round 1) — earned in play, collected in an album, each one replays a side story =====
+const CARD_R={N:{s:1,c:"#9aa3b5"},R:{s:2,c:"#4a9be0"},SR:{s:3,c:"#c46be0"},SSR:{s:4,c:"#f2c94c"}};
+const CARDS={
+ k_n1:{c:"kati",r:"N",t:"The Taped-Up Heavy Bag",hint:"Kati wins her first fight",bg:"gym",need:G=>(G.F.kati.rec||{}).w>=1,steps:[
+  {n:"nar",t:"The oldest heavy bag in the camp, patched with tape in seventeen places."},{n:"kati",f:"happy",l:"train",t:"I remember every patch. This one I kicked open at twelve, this one the day Grandpa said I was ready for the ring."},
+  {n:"kati",f:"flustered",l:"train",t:"Today I won my first fight for you, Manager… Now I need to find tape for patch number eighteen."}]},
+ k_r1:{c:"kati",r:"R",t:"1 a.m. Khao Man Gai",hint:"Reach the Close stage with Kati",bg:"night",need:G=>(G.F.kati.bond||0)>=40,steps:[
+  {n:"nar",t:"1 a.m. Only the khao man gai stall by the market is still open. Kati orders two extra-large plates back to back."},{n:"kati",f:"happy",l:"casual",t:"Grandpa always brought me here after fights, win or lose. He said eat first, think later."},
+  {n:"kati",f:"flustered",l:"casual",t:"…This is the first time I've brought anyone here. Don't tell, okay? It's Grandpa's and my secret spot."}]},
+ m_n1:{c:"mali",r:"N",t:"The First Garland",hint:"Mali has been in camp for two weeks",bg:"camp",need:G=>inCamp(G,"mali")&&(G.flags.maliIn!=null?G.week-G.flags.maliIn>=2:true)&&G.week>=6,steps:[
+  {n:"nar",t:"Holy-day morning. A jasmine garland lies on the manager's desk, strung far too neatly for a beginner."},{n:"mali",f:"flustered",l:"casual",t:"I made it myself! Mom taught me when I was six. At home we string them to sell outside the temple every morning."},
+  {n:"mali",f:"happy",l:"casual",t:"This one's not for sale, it's free! …The next ones are for Coach Daeng and Kati, and Grandpa Chai's shrine too."}]},
+ m_r1:{c:"mali",r:"R",t:"Video Call from Home",hint:"Reach the Close stage with Mali",bg:"camp",need:G=>(G.F.mali.bond||0)>=40,steps:[
+  {n:"nar",t:"Three kids squeeze onto the phone screen and shout together: 'Did Mali win!?'"},{n:"mali",f:"happy",l:"casual",t:"I won! I sent the prize money to Mom, so don't spend it all on snacks!"},
+  {n:"mali",f:"flustered",l:"casual",t:"(hands you the phone) …The kids want to say hi to the manager. They're asking if you're really nice. I said the nicest."}]},
+ r_n1:{c:"rin",r:"N",t:"The Black Notebook",hint:"Rin joins the camp",bg:"gym",need:G=>inCamp(G,"rin"),steps:[
+  {n:"nar",t:"Rin's black notebook lies open on a chair by the ring, every line packed with numbers."},{n:"rin",f:"flustered",l:"casual",t:"Don't read it! …Fine, one page. This page is Kati's kick stats for the last thirty days."},
+  {n:"rin",f:"happy",l:"casual",t:"I've kept notes since my old camp, but nobody ever asked to see them. …Thank you for being interested."}]},
+ r_r1:{c:"rin",r:"R",t:"The Third Coffee",hint:"Reach the Close stage with Rin",bg:"cafe",need:G=>(G.F.rin.bond||0)>=40,steps:[
+  {n:"nar",t:"A little café near the temple. Rin orders her third americano of the day."},{n:"rin",f:"happy",l:"casual",t:"The first cup to wake up, the second to analyze, the third…"},
+  {n:"rin",f:"flustered",l:"casual",t:"…The third cup has no statistical justification. I just want to sit a little longer, with the person across from me."}]},
+ p_n1:{c:"ploy",r:"N",t:"Ploy's Left Knee",hint:"Fight Ploy for the first time",bg:"ring",need:G=>{const h=(G.h2h||{}).ploy;return !!h&&(h.w+h.l+h.d)>=1;},steps:[
+  {n:"nar",t:"After your first fight against her, Ploy sits in a corner of the locker room wrapping her left knee."},{n:"ploy",f:"angry",l:"fight",t:"What are you looking at? …I've trained this left knee for ten years. Everyone it hits remembers it."},
+  {n:"ploy",f:"flustered",l:"fight",t:"Sirichai Camp, right? …Next year send someone tougher. I don't like easy wins."}]},
+ p_r1:{c:"ploy",r:"R",t:"Hot Tea After the Fight",hint:"Reach the Close stage with Ploy",bg:"river",need:G=>(G.F.ploy.bond||0)>=40,steps:[
+  {n:"nar",t:"By the river behind the stadium, Ploy pours tea from a thermos into two cups and hands you one without looking."},{n:"ploy",f:"happy",l:"casual",t:"Oolong. Mom brewed it every morning before I went to train. …Since she's been gone, I brew it myself."},
+  {n:"ploy",f:"flustered",l:"casual",t:"…I didn't make extra for you. I just made too much. Drink it."}]},
+ f_n1:{c:"fah",r:"N",t:"Ten Stickers",hint:"Fah starts texting you",bg:"night",need:G=>G.F.fah.met&&(G.F.fah.bond||0)>=15,steps:[
+  {n:"nar",t:"2 a.m. Your phone buzzes ten times in a row. All angry-cat stickers."},{n:"fah",f:"angry",l:"casual",t:"Why aren't you answering! I sent TEN!"},
+  {n:"fah",f:"flustered",l:"casual",t:"…I just wanted to know if you were asleep. That's all. Good night! Don't dream about me!"}]},
+ f_r1:{c:"fah",r:"R",t:"Vampire by the River",hint:"Reach the Close stage with Fah",bg:"river",need:G=>(G.F.fah.bond||0)>=40,steps:[
+  {n:"nar",t:"Halloween night. Fah, wearing plastic vampire fangs, dangles her feet in the water at the pier."},{n:"fah",f:"happy",l:"casual",t:"When I was a kid nobody threw me a birthday, so I dressed up as a ghost and celebrated myself!"},
+  {n:"fah",f:"flustered",l:"casual",t:"…This year someone's sitting with me. Guess I don't need to dress as a ghost anymore."}]}};
+function cardCheck(G){G.cards=G.cards||{};const got=[];for(const id in CARDS){if(G.cards[id])continue;const C=CARDS[id];try{if(C.need(G)){G.cards[id]={n:1,lv:1,wk:absWeek(G),seen:false};got.push(id);}}catch(e){}}return got;}
