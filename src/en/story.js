@@ -276,6 +276,11 @@ const LOVE_EVENTS={
 };
 const LOVE_YES={kati:"…Really? Then from now on I have one more reason to win",mali:"Yay… wait, why am I crying! I'm too happy",
   rin:"The result matches what I hoped for… thank you",ploy:"…Then after my next fight, I'll come find you, win or lose",fah:"…Yeah, good! Don't you dare change your mind, Fah remembers everything"};
+const LOVE_AGAIN={kati:"Manager… I haven't forgotten that day. I'm not waiting for a new answer. …Okay, maybe a little",
+  mali:"What Mali said that day… Mali still feels the same. Just too shy to say it twice",
+  rin:"I reviewed your answer from that day. My conclusion hasn't changed. But I won't ask again, unless you bring it up",
+  ploy:"You answered me honestly that day, and I respect it. …But my feelings are where they were",
+  fah:"About that day, forget it! …If you can't, fine. Fah hasn't forgotten either"};
 const LOVE_NO={kati:"…Mm, I understand. Thank you for answering honestly. Tomorrow I'm still your fighter, same as always",mali:"It's okay! I'm still at this camp, still the same team as always",
   rin:"Understood. New data, new model. It's completely fine",ploy:"Understood. See you in the ring",fah:"Huh! …Fine, fine, but Fah won't hold back in the ring!"};
 
@@ -320,7 +325,12 @@ function dateScene(G,id,act){
       if(f.bond>=75&&f.trust>=40&&!G2.romance&&!G2.seen["love_"+id]){G2.seen["love_"+id]=true;
         out.push(...LOVE_EVENTS[id].map(x=>({l:"casual",...x})),{choice:[
           {t:"I feel the same way",fx:G3=>{G3.romance=id;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
-          {t:"Thank you, but I want to keep being the one beside you like this",fx:G3=>add(G3,id,"trust",5),then:[{n:id,f:"sad",l:"casual",t:LOVE_NO[id]}]}]});}
+          {t:"Thank you, but I want to keep being the one beside you like this",fx:G3=>{add(G3,id,"trust",5);G3.loveNo=G3.loveNo||{};G3.loveNo[id]=G3.week;},then:[{n:id,f:"sad",l:"casual",t:LOVE_NO[id]}]}]});}
+      // v1.29.3: a second chance — she won't ask twice, but after a while she lets you know the door is still open
+      else if(f.bond>=75&&f.trust>=40&&!G2.romance&&G2.seen["love_"+id]&&G2.week-((G2.loveNo&&G2.loveNo[id])||-99)>=6){G2.loveNo=G2.loveNo||{};G2.loveNo[id]=G2.week;
+        out.push({n:id,f:"flustered",l:"casual",t:LOVE_AGAIN[id]},{choice:[
+          {t:"I answered too fast that day. I feel the same way",fx:G3=>{G3.romance=id;add(G3,id,"morale",15);},then:[{n:id,f:"flustered",l:"casual",t:LOVE_YES[id]}]},
+          {t:"I'd like to stay by your side, just like this",fx:G3=>add(G3,id,"trust",2),then:[{n:"nar",t:`${f.name} smiles and nods, and says nothing more`}]}]});}
       return out;}}];
   return steps;
 }
