@@ -10,7 +10,9 @@ const SPK={kati:{name:"กะทิ",color:"#e23b4e"},mali:{name:"มะลิ",
   ploy:{name:"พลอย",color:"#9b62e0"},fah:{name:"ฟ้า",color:"#e7b443"},coach:{name:"ครูแดง",color:"#c98a5a"},nar:{name:""},me:{name:"(คุณ)"}};
 // v1.7: bonds deepen by chapter — the ceiling rises as the season's story moves on
 const bondCap=G=>100;
-const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*.3*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
+// v1.44: bond grows a bit faster, and the girls who join later catch up while still distant
+const BOND_MUL=.3,BOND_LATE=["mali","rin"];
+const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*BOND_MUL*(BOND_LATE.includes(id)&&(f.bond||0)<50?1.6:1)*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
 
 const EVENTS=[
  {id:"prologue",look:"fight",bg:"night",steps:[
@@ -103,6 +105,7 @@ const EVENTS=[
  {id:"rin_meet",look:"casual",when:G=>G.week>=14,bg:"camp",steps:[
   {n:"nar",t:"ผู้หญิงใส่แว่นคนหนึ่งยืนอยู่หน้าค่าย ในมือถือแท็บเล็ตที่เปิดคลิปไฟต์ล่าสุดของค่ายคุณ"},
   {n:"rin",f:"happy",t:"สวัสดีค่ะ ฉันริน เคยอยู่ค่ายพยัคฆ์ทอง ลาออกมาเพราะที่นั่นไม่ฟังข้อมูลเลย"},
+  {inject:G=>G.seen.rin_note?[{n:"kati",f:"surprised",l:"train",t:"เดี๋ยวนะ… ลายมือในโน้ตไม่ลงชื่อที่เสียบตู้จดหมายเดือนก่อน คือพี่รินเหรอคะ!"},{n:"rin",f:"flustered",t:"…ใช่ค่ะ ฉันอยากรู้ว่าค่ายคุณจะใช้ข้อมูลไหม ผลคือใช้ค่ะ นั่นแหละเหตุผลที่ฉันมาที่นี่"}]:[]},
   {n:"rin",f:"flustered",t:"ไฟต์ล่าสุดของค่ายคุณ ฉันนับได้ว่าเสียจังหวะสวนไป 14 ครั้งในสามยก ถ้าแก้ตรงนี้ได้ ผลจะเปลี่ยน"},
   {n:"rin",f:"happy",t:"ฉันยังอยากชกอยู่ค่ะ และอยากช่วยวิเคราะห์ด้วย ถ้าค่ายคุณจ่ายไหว"},
   {choice:[
@@ -1147,3 +1150,28 @@ EVENTS.push(
   {n:"kati",f:"flustered",l:"casual",t:G=>`${CALL(G,"kati")}คะ จำได้ไหม อาทิตย์ที่สองที่มาที่นี่ บอกหนูว่าจะไม่ทำให้หนูเสียใจ`},
   {n:"kati",f:"happy",l:"casual",t:"หนูบอกแล้วว่าจะจำคำนี้ไว้ …ไม่ว่าพรุ่งนี้จะแพ้หรือชนะ คุณไม่ได้คืนคำเลยสักครั้งค่ะ"},
   {fx:G=>{add(G,"kati","trust",6);add(G,"kati","bond",3);}},{n:"nar",t:"(กะทิจำคำสัญญาวันแรกได้ · ความเชื่อใจเพิ่มขึ้น)"}]});
+
+// v1.44: Rin shows up before she joins (as the Tiger camp's quiet analyst), Mali gets a proper first day
+EVENTS.push(
+ {id:"rin_corner",look:"casual",when:G=>G.week>=7&&G.F.rin.camp!=="player",bg:"ring",steps:[
+  {n:"nar",t:"เวทีมวยตำบล ระหว่างพักยกของไฟต์ค่ายพยัคฆ์ทอง ผู้หญิงใส่แว่นที่มุมแดงไม่ได้เชียร์ใคร เธอจดตัวเลขลงสมุดไม่หยุด"},
+  {n:"ploy",f:"angry",l:"fight",t:"ริน! อย่าเอาแต่จด บอกมาว่าต้องทำยังไง!"},
+  {n:"rin",f:"flustered",l:"casual",t:"…เตะซ้ายเธอช้าลงสิบเปอร์เซ็นต์หลังยกสามค่ะ ฉันบอกไปตั้งแต่เดือนก่อนแล้ว"},
+  {n:"nar",t:"หลังไฟต์ เธอเดินผ่านกะทิที่ยืนดูอยู่ข้างเวที แล้วหยุดอยู่ครึ่งก้าว"},
+  {n:"rin",f:"happy",l:"casual",t:"ค่ายศิริชัยใช่ไหมคะ ไฟต์ที่แล้วคุณยกการ์ดสูงเกินตอนถอย สามครั้งโดนเตะชายโครงเพราะแบบนั้น"},
+  {n:"kati",f:"surprised",l:"train",t:"…นับด้วยเหรอคะ"},
+  {choice:[{t:"ขอบคุณนะ เธอดูละเอียดมาก",fx:G=>{add(G,"rin","bond",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"…ที่ค่ายฉันไม่มีใครพูดแบบนั้นเลยค่ะ"}]},
+   {t:"ทำไมบอกค่ายคู่แข่งล่ะ",fx:G=>{add(G,"rin","trust",3);add(G,"rin","bond",2);},then:[{n:"rin",f:"happy",l:"casual",t:"ข้อมูลไม่มีฝ่ายค่ะ มีแต่คนที่ใช้กับคนที่ไม่ใช้"}]}]},
+  {n:"nar",t:"เธอเดินกลับไปที่มุมพยัคฆ์ทองโดยไม่หันมาอีก"}]},
+ {id:"rin_note",look:"casual",when:G=>G.week>=11&&G.seen.rin_corner&&G.F.rin.camp!=="player"&&G.bookings.some(b=>G.F[b.a].camp==="player"&&b.week>G.week),bg:"camp",steps:[
+  {n:"nar",t:"เช้าวันจันทร์ มีกระดาษพับสามทบเสียบอยู่ที่ตู้จดหมาย ไม่มีชื่อผู้ส่ง ลายมือเล็กเป๊ะเหมือนพิมพ์"},
+  {inject:G=>{const b=G.bookings.filter(b=>G.F[b.a].camp==="player"&&b.week>G.week).sort((x,y)=>x.week-y.week)[0];G.scout=G.scout||{};G.scout[b.b]=G.week;const op=G.F[b.b];
+   return [{n:"nar",t:`"${op.name} · ${styleOf(op.a)} · ถนัดออกอาวุธช่วงต้นยก ยกท้าย ๆ ช้าลงชัดเจน" ตัวเลขยาวเหยียดเต็มหน้ากระดาษ`},{n:"coach",t:"ใครเขียนวะเนี่ย… ละเอียดกว่าที่ครูดูเทปเองอีก"},{n:"nar",t:"(ได้ข้อมูลคู่ชกไฟต์ถัดไปฟรี)"}];}},
+  {fx:G=>{add(G,"rin","bond",3);}}]},
+ {id:"mali_day1",look:"casual",when:G=>inCamp(G,"mali")&&G.week>=5,bg:"camp",steps:[
+  {n:"nar",t:"มะลิมาถึงค่ายพร้อมกระเป๋าเป้ใบใหญ่กว่าตัว กระถางต้นมะลิหนึ่งกระถาง และถุงข้าวเหนียวจากบ้าน"},
+  {n:"mali",f:"happy",l:"casual",t:G=>`${CALL(G,"mali")}คะ! หนูมาแล้วค่ะ! แม่ฝากข้าวเหนียวมาให้ทั้งค่าย บอกว่าถ้าลูกสาวดื้อ ตีได้เลย!`},
+  {n:"kati",f:"happy",l:"casual",t:"ห้องนอนอยู่ข้างห้องหนูนะ มีหน้าต่างรับแดดเช้า ต้นมะลิน่าจะชอบ"},
+  {n:"mali",f:"flustered",l:"casual",t:"…นี่เป็นครั้งแรกเลยค่ะ ที่หนูมีห้องเป็นของตัวเอง"},
+  {choice:[{t:"ยินดีต้อนรับกลับบ้านนะ",fx:G=>{add(G,"mali","bond",5);add(G,"mali","trust",3);},then:[{n:"mali",f:"flustered",l:"casual",t:"…กลับบ้าน… หนูจะจำคำนี้ไว้นะคะ"}]},
+   {t:"พรุ่งนี้ตีห้า ซ้อมวันแรกนะ",fx:G=>{add(G,"mali","bond",3);add(G,"mali","morale",6);},then:[{n:"mali",f:"happy",l:"train",t:"ตีห้า! หนูจะตื่นตีสี่เลยค่ะ!"}]}]}]});

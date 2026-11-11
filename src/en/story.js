@@ -10,7 +10,9 @@ const SPK={kati:{name:"Kati",color:"#e23b4e"},mali:{name:"Mali",color:"#4a7fe0"}
   ploy:{name:"Ploy",color:"#9b62e0"},fah:{name:"Fah",color:"#e7b443"},coach:{name:"Coach Daeng",color:"#c98a5a"},nar:{name:""},me:{name:"(You)"}};
 // v1.7: bonds deepen by chapter — the ceiling rises as the season's story moves on
 const bondCap=G=>100;
-const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*.3*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
+// v1.44: bond grows a bit faster, and the girls who join later catch up while still distant
+const BOND_MUL=.3,BOND_LATE=["mali","rin"];
+const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*BOND_MUL*(BOND_LATE.includes(id)&&(f.bond||0)<50?1.6:1)*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
 
 const EVENTS=[
  {id:"prologue",look:"fight",bg:"night",steps:[
@@ -103,6 +105,7 @@ const EVENTS=[
  {id:"rin_meet",look:"casual",when:G=>G.week>=14,bg:"camp",steps:[
   {n:"nar",t:"A woman in glasses stands at the camp entrance, holding a tablet playing your camp's latest fight"},
   {n:"rin",f:"happy",t:"Hello. I'm Rin, formerly of Golden Tiger. I quit because they never listened to data"},
+  {inject:G=>G.seen.rin_note?[{n:"kati",f:"surprised",l:"train",t:"Wait… that unsigned note in our mailbox last month, that was your handwriting, Rin?!"},{n:"rin",f:"flustered",t:"…Yes. I wanted to see whether your camp would use the data. You did. That's why I'm here."}]:[]},
   {n:"rin",f:"flustered",t:"In your camp's latest fight I counted 14 missed counter opportunities in three rounds. Fix that and the result changes"},
   {n:"rin",f:"happy",t:"I still want to fight, and I'd like to help with analysis too, if your camp can afford it"},
   {choice:[
@@ -1147,3 +1150,28 @@ EVENTS.push(
   {n:"kati",f:"flustered",l:"casual",t:G=>`${CALL(G,"kati")}, remember? My second week here, you told me you'd never let me down.`},
   {n:"kati",f:"happy",l:"casual",t:"I said I'd remember those words… Win or lose tomorrow, you never once took them back."},
   {fx:G=>{add(G,"kati","trust",6);add(G,"kati","bond",3);}},{n:"nar",t:"(Kati remembers her first-week promise · Trust up)"}]});
+
+// v1.44: Rin shows up before she joins (as the Tiger camp's quiet analyst), Mali gets a proper first day
+EVENTS.push(
+ {id:"rin_corner",look:"casual",when:G=>G.week>=7&&G.F.rin.camp!=="player",bg:"ring",steps:[
+  {n:"nar",t:"At the local stadium, between rounds of a Golden Tiger bout, a woman in glasses in the red corner isn't cheering anyone. She just keeps writing numbers in a notebook."},
+  {n:"ploy",f:"angry",l:"fight",t:"Rin! Stop scribbling and tell me what to do!"},
+  {n:"rin",f:"flustered",l:"casual",t:"…Her left kick slows by ten percent after round three. I told you that a month ago."},
+  {n:"nar",t:"After the fight she walks past Kati at ringside, and stops half a step."},
+  {n:"rin",f:"happy",l:"casual",t:"Sirichai Camp, right? Last fight you held your guard too high when backing off. You took three body kicks because of it."},
+  {n:"kati",f:"surprised",l:"train",t:"…You counted?"},
+  {choice:[{t:"Thanks. You've got a sharp eye.",fx:G=>{add(G,"rin","bond",4);},then:[{n:"rin",f:"flustered",l:"casual",t:"…Nobody at my camp ever says that."}]},
+   {t:"Why tell a rival camp?",fx:G=>{add(G,"rin","trust",3);add(G,"rin","bond",2);},then:[{n:"rin",f:"happy",l:"casual",t:"Data doesn't take sides. There are only people who use it and people who don't."}]}]},
+  {n:"nar",t:"She walks back to the Golden Tiger corner without looking back."}]},
+ {id:"rin_note",look:"casual",when:G=>G.week>=11&&G.seen.rin_corner&&G.F.rin.camp!=="player"&&G.bookings.some(b=>G.F[b.a].camp==="player"&&b.week>G.week),bg:"camp",steps:[
+  {n:"nar",t:"Monday morning, a sheet folded in three is tucked into the mailbox. No sender. The handwriting is tiny and precise, like print."},
+  {inject:G=>{const b=G.bookings.filter(b=>G.F[b.a].camp==="player"&&b.week>G.week).sort((x,y)=>x.week-y.week)[0];G.scout=G.scout||{};G.scout[b.b]=G.week;const op=G.F[b.b];
+   return [{n:"nar",t:`"${op.name} · ${styleOf(op.a)} · strongest early in each round, clearly slower in the late rounds." Columns of numbers fill the page.`},{n:"coach",t:"Who on earth wrote this… It's more thorough than my own tape study."},{n:"nar",t:"(Free scouting info on the next opponent)"}];}},
+  {fx:G=>{add(G,"rin","bond",3);}}]},
+ {id:"mali_day1",look:"casual",when:G=>inCamp(G,"mali")&&G.week>=5,bg:"camp",steps:[
+  {n:"nar",t:"Mali arrives with a backpack bigger than she is, a potted jasmine, and a bag of sticky rice from home."},
+  {n:"mali",f:"happy",l:"casual",t:G=>`${CALL(G,"mali")}! I'm here! Mom sent sticky rice for the whole camp, and says if I'm naughty you're allowed to smack me!`},
+  {n:"kati",f:"happy",l:"casual",t:"Your room's next to mine. The window gets morning sun. Your jasmine will love it."},
+  {n:"mali",f:"flustered",l:"casual",t:"…This is the first time I've ever had a room of my own."},
+  {choice:[{t:"Welcome home.",fx:G=>{add(G,"mali","bond",5);add(G,"mali","trust",3);},then:[{n:"mali",f:"flustered",l:"casual",t:"…Home… I'll remember you said that."}]},
+   {t:"Five a.m. tomorrow, first day of training.",fx:G=>{add(G,"mali","bond",3);add(G,"mali","morale",6);},then:[{n:"mali",f:"happy",l:"train",t:"Five a.m.! I'll get up at four!"}]}]}]});
