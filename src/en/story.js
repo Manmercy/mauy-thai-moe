@@ -1550,6 +1550,82 @@ Object.assign(CARDS,{
   {n:"coach",t:"Kati, I can see you. Where do you think you're hiding a bowl that big behind a bag?"},
   {n:"nar",t:"A second later, Kati and the manager are both drenched head to toe by Coach Daeng's garden hose."},
   {n:"kati",f:"surprised",l:"casual",t:"Not fair! You used the hose, Coach! …Manager, what are you laughing at? You're soaked too!"}]}});
+
+// v1.63: cards round 3 — the big moments (SR/SSR), full hearts and birthdays
+const wonTitle=(G,id)=>Object.values(G.champ||{}).includes(id)||(G.titles||[]).some(t=>Object.values(t.champ||{}).includes(id));
+const bdGot=(G,id)=>!!(G.bday&&G.bday[id])||!!(G.seenY&&G.seenY["bday_"+id]);
+Object.assign(CARDS,{
+ e_champ:{c:"kati",r:"SSR",t:"The Belt Before Grandpa's Photo",hint:"Win the provincial championship",bg:"camp",need:G=>wonTitle(G,"kati")||wonTitle(G,"mali"),steps:[
+  {n:"nar",t:"Late that night, everyone is asleep. A single candle burns in front of Grandpa Chai's photo shelf."},
+  {n:"nar",t:"The championship belt rests there. Next to it is the pencil drawing of a belt Grandpa made the day the camp opened. They look eerily alike."},
+  {n:"kati",f:"sad",l:"casual",t:"Grandpa… I brought it for you. A little late. I'm sorry."},
+  {n:"kati",f:"flustered",l:"casual",t:"Why are you up, Manager? …It's okay, sit with me. Grandpa would want to see who brought it home."},
+  {n:"coach",t:"(From the shadows, Coach Daeng has been leaning in the doorway for a long time) …Chai, you see that? Your granddaughter did it."},
+  {n:"kati",f:"happy",l:"casual",t:"This isn't just Grandpa's camp anymore. It belongs to all of us… to you too, Manager."}]},
+ e_beatploy:{c:"ploy",r:"SR",t:"The Day the Genius Lost",hint:"Beat Ploy in an official fight",bg:"ring",need:G=>(G.flags.beat_ploy||0)>=1,steps:[
+  {n:"nar",t:"In the fighters' room behind the ring, Ploy slowly unwinds her wraps one loop at a time. No one from Golden Tiger dares come near."},
+  {n:"ploy",f:"sad",l:"fight",t:"…Sirichai's manager. Came to see the loser?"},
+  {n:"ploy",f:"happy",l:"fight",t:"Don't look at me like that. I'm not upset. Strange… I feel lighter."},
+  {n:"ploy",f:"happy",l:"fight",t:"Since I was twelve, everyone told me I must never lose. Tonight I lost, and the world didn't end."},
+  {n:"ploy",f:"flustered",l:"fight",t:"Tell that girl for me: next time I won't be a genius who can't lose. I'll be an opponent who really wants to beat her."}]},
+ e_fahjoin:{c:"fah",r:"SR",t:"The Blonde Moves In",hint:"Fah moves to Sirichai Camp",bg:"camp",need:G=>inCamp(G,"fah"),steps:[
+  {n:"nar",t:"Fah's first day at Sirichai Camp. She brings three bags: two of clothes, one of hairspray and water guns."},
+  {n:"fah",f:"happy",l:"casual",t:"Where's Fah's room! …This one? It's tiny! …But you can see the mountain from the window. Okay, Fah'll take it!"},
+  {n:"fah",f:"flustered",l:"casual",t:"At Golden Tiger, Fah always ate alone, because the coach said star fighters shouldn't get close to anyone."},
+  {n:"fah",f:"pout",l:"casual",t:"Here everyone eats together and fights over the omelet… Fah likes it. Don't tell anyone."},
+  {n:"fah",f:"happy",l:"casual",t:"Blonde hair belongs to Fah! Anyone who copies gets kicked! …Except you, Manager. You can dye yours."}]},
+ e_ployjoin:{c:"ploy",r:"SR",t:"First Cup of Tea at Sirichai",hint:"Ploy moves to Sirichai Camp to recover",bg:"camp",need:G=>inCamp(G,"ploy"),steps:[
+  {n:"nar",t:"Before dawn on her first day, Ploy is up before everyone, walking slowly on crutches to boil water in the camp's little kitchen."},
+  {n:"ploy",f:"happy",l:"casual",t:"You're an early riser too… Dan Kwian tea, I brought it from home. Want some?"},
+  {n:"ploy",f:"sad",l:"casual",t:"At Golden Tiger, five a.m. was for a ten-kilometer run, not for tea. I'd forgotten a morning could be this quiet."},
+  {n:"ploy",f:"flustered",l:"casual",t:"Thank you for taking me in… not as a genius, but as someone who got hurt."},
+  {n:"ploy",f:"happy",l:"casual",t:"When my knee heals, I'll spar with Kati myself. Consider it rent."}]},
+ h_kati:{c:"kati",r:"SR",t:"Can I Call You By Name?",hint:"Max bond with Kati",bg:"night",need:G=>(G.F.kati.bond||0)>=100,steps:[
+  {n:"nar",t:"One night after evening training, Kati sits beside you on the bench out front, rolling her hand wraps back up."},
+  {n:"kati",f:"flustered",l:"casual",t:"Manager… can I ask you for something?"},
+  {n:"kati",f:"flustered",l:"casual",t:G=>`When it's just us two, can I call you "${G.player.name}"? …"Manager" feels a little far away.`},
+  {n:"kati",f:"happy",l:"casual",t:G=>`${G.player.name} …${G.player.name} …Mm. My heart's beating weird when I say it. I'm going to bed now!`}]},
+ h_mali:{c:"mali",r:"SR",t:"The Letter She Actually Sent",hint:"Max bond with Mali",bg:"camp",need:G=>(G.F.mali.bond||0)>=100,steps:[
+  {n:"nar",t:"Mali hands you an envelope. It isn't sealed yet. On the front it says 'To Mom'."},
+  {n:"mali",f:"flustered",l:"casual",t:"Manager, could you read it before I send it? I'm scared I wrote something wrong… No. I just want you to read it."},
+  {n:"nar",t:"'Mom, I'm doing well. At this camp there's someone who makes me feel I have a second home. One day I'll bring them to meet you.'"},
+  {n:"mali",f:"happy",l:"casual",t:"Don't change the last paragraph! …I really meant to write it that way."}]},
+ h_rin:{c:"rin",r:"SR",t:"The Value of X",hint:"Max bond with Rin",bg:"night",need:G=>(G.F.rin.bond||0)>=100,steps:[
+  {n:"nar",t:"Rin sets her thirteenth stat notebook in front of you. The last page holds one equation, underlined twice."},
+  {n:"rin",f:"pout",l:"casual",t:"Remember the equation 'X = ?' I solved it."},
+  {n:"rin",f:"flustered",l:"casual",t:G=>`X = ${G.player.name} …The only reason I stay at this camp despite better offers is this one variable.`},
+  {n:"rin",f:"flustered",l:"casual",t:"I checked the answer seventeen times. No errors. …You don't have to answer now. This data never expires."}]},
+ h_ploy:{c:"ploy",r:"SR",t:"Just Call Me Ploy",hint:"Max bond with Ploy",bg:"river",need:G=>(G.F.ploy.bond||0)>=100,steps:[
+  {n:"nar",t:"At dusk by the Ping River, Ploy skips a flat stone. It bounces exactly seven times."},
+  {n:"ploy",f:"happy",l:"casual",t:"Everyone calls me Big Sis Ploy, Genius Ploy, Captain Ploy… Nobody ever calls me just Ploy."},
+  {n:"ploy",f:"flustered",l:"casual",t:"Could you try calling me that? …Just 'Ploy'."},
+  {n:"ploy",f:"happy",l:"casual",t:"…Mm. Like that. Better than every title I've ever had."}]},
+ h_fah:{c:"fah",r:"SR",t:"The Real Sky After Rain",hint:"Max bond with Fah",bg:"camp",need:G=>(G.F.fah.bond||0)>=100,steps:[
+  {n:"nar",t:"The rain has just stopped. Fah runs over and drags you into the middle of the wet camp yard."},
+  {n:"fah",f:"happy",l:"casual",t:"Look! A double rainbow! Mom said if you see a double rainbow with someone, you'll be together for a long time."},
+  {n:"fah",f:"flustered",l:"casual",t:"…Fah didn't make that up! Mom really said it! …Half of it."},
+  {n:"fah",f:"happy",l:"casual",t:"So no running away. Fah saw a rainbow with you. By Mom's rule, you have to stay with Fah for a long, long time."}]},
+ b_kati:{c:"kati",r:"R",t:"One Candle on Khanom Khrok",hint:"Celebrate Kati's birthday",bg:"camp",need:G=>bdGot(G,"kati"),steps:[
+  {n:"nar",t:"A small tray of khanom khrok sits on the table with one candle in the middle, because there was no time to get a cake."},
+  {n:"kati",f:"happy",l:"casual",t:"Grandpa stuck a candle in khanom khrok like this every year. When I was little I thought everyone blew out khanom khrok on their birthday."},
+  {n:"kati",f:"flustered",l:"casual",t:"I'm making a wish… I won't tell. But you're in it, Manager."}]},
+ b_mali:{c:"mali",r:"R",t:"The Second Slice Goes Home",hint:"Celebrate Mali's birthday",bg:"camp",need:G=>bdGot(G,"mali"),steps:[
+  {n:"nar",t:"Mali cuts her own birthday cake, then quickly wraps the biggest slice in a box."},
+  {n:"mali",f:"happy",l:"casual",t:"I'm sending this piece to my little siblings back home. Two days by post. It should still be okay… probably."},
+  {n:"mali",f:"flustered",l:"casual",t:"This piece is yours, Manager. The one with the most strawberries. I picked it myself~"}]},
+ b_rin:{c:"rin",r:"R",t:"The Birthday She Never Wrote Down",hint:"Celebrate Rin's birthday",bg:"cafe",need:G=>bdGot(G,"rin"),steps:[
+  {n:"nar",t:"Rin stares at the present in her hands for more than ten seconds, which is unusually long for someone who decides everything fast."},
+  {n:"rin",f:"surprised",l:"casual",t:"I've never told anyone my birthday… How did you know? Where did the data leak?"},
+  {n:"rin",f:"flustered",l:"casual",t:"…You don't have to tell me. I'll file today under 'good days' and underline it twice."}]},
+ b_ploy:{c:"ploy",r:"R",t:"Ploy's New Year's Day",hint:"Celebrate Ploy's birthday",bg:"temple",need:G=>bdGot(G,"ploy"),steps:[
+  {n:"nar",t:"Ploy's birthday is New Year's Day, so nobody has ever remembered it. Everyone is too busy celebrating the new year."},
+  {n:"ploy",f:"surprised",l:"casual",t:"…You actually remembered? January first. Everyone forgets, even me some years."},
+  {n:"ploy",f:"happy",l:"casual",t:"This year I'll count it as my real birthday, not just everyone else's holiday. Thank you."}]},
+ b_fah:{c:"fah",r:"R",t:"Blonde Halloween",hint:"Celebrate Fah's birthday",bg:"market",need:G=>bdGot(G,"fah"),steps:[
+  {n:"nar",t:"Fah's birthday falls on Halloween. She dresses as a blonde witch and hands out candy across the whole market."},
+  {n:"fah",f:"happy",l:"casual",t:"Today is Fah's day! The whole world dressed up to celebrate Fah! …It didn't? Whatever, Fah thinks it did."},
+  {n:"fah",f:"flustered",l:"casual",t:"Your present goes in Fah's special box… Don't read into it. There's only one thing in that box."}]}});
+
 // ===== v1.57: when the camp gets rich, funny little disasters eat some of the money =====
 const DRAIN_MIN=70000;
 const drainAmt=G=>Math.max(3000,Math.round(Math.min(20000,G.cash*.12)/100)*100);
