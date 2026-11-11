@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.30.0";
+const VERSION="1.31.0";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -91,7 +91,7 @@ function hearts(b){const v=Math.max(0,Math.min(100,b||0));let h="";for(let k=0;k
   const tier=v>=85?"ผูกพันลึก":v>=65?"ใกล้ชิด":v>=45?"สนิท":v>=25?"เริ่มคุ้น":"คนรู้จัก";return `<span class="hearts" title="ความสนิท ${Math.round(v)}/100">${h}<small>${tier}</small></span>`;}
 function bar(label,v,color,txt){return `<div class="bar"><span>${label}</span><i style="--v:${clamp(v,0,100)}%;--bc:${color}"></i><b class="num">${txt??Math.round(v)}</b></div>`;}
 function mini(v,color){return `<i class="mini" style="--v:${clamp(v,0,100)}%;--bc:${color}"></i>`;}
-function xpBar(f){const need=xpNeed(f.lvl);return `<div class="xp"><span class="lv">Lv.${f.lvl}</span><i style="--v:${f.lvl>=10?100:clamp(f.xp/need*100,0,100)}%"></i><span class="num dim">${f.lvl>=10?"MAX":`${Math.round(f.xp)}/${need}`}</span>${f.sp>0&&f.camp==="player"?`<span class="pill gold">+${f.sp} สกิล</span>`:""}</div>`;}
+function xpBar(f){const need=xpNeed(f.lvl);return `<div class="xp"><span class="lv">Lv.${f.lvl}</span><i style="--v:${f.lvl>=10?100:clamp(f.xp/need*100,0,100)}%"></i><span class="num dim">${f.lvl>=10?"MAX":`${Math.round(f.xp)}/${need}`}</span>${f.sp>0&&f.camp==="player"?`<button class="spchip" data-act="ptab" data-v="skill">★ ${f.sp} แต้มสกิล</button>`:""}</div>`;}
 function formHTML(f){return `<span class="form">${f.form.map(r=>`<i class="${r}">${r==="W"?"ช":r==="L"?"พ":"ส"}</i>`).join("")||'<span class="dim">—</span>'}</span>`;}
 const rec=f=>`${f.rec.w}-${f.rec.l}-${f.rec.d}`;
 const condColor=c=>c>=70?"var(--green)":c>=45?"var(--warn)":"var(--red)";
@@ -241,7 +241,7 @@ function rinBrief(){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0)retur
   else{const w=R.map(f=>[f,RADAR_AX.map(([n,fn])=>[n,fn(f.a)]).sort((a,b)=>a[1]-b[1])[0]]).sort((a,b)=>a[1][1]-b[1][1])[0];t=`จุดอ่อนที่สุดในทีมตอนนี้คือ${w[1][0]}ของ${w[0].name} ถ้าแก้ได้ อัตราชนะน่าจะขึ้นอีกเยอะ`;}
   return `<div class="px rinnote"><img src="${faceSrc("rin","happy")}" alt=""><span><b>รินสรุปข้อมูล</b>${t}</span></div>`;}
 function hubHTML(){
-  const dots={fights:G.offers.length>0,people:!G.freeUsed||(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>skReady(f)||(!f.injury&&!trLocked(f)))};
+  const dots={fights:G.offers.length>0,people:!G.freeUsed||(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>!f.injury&&!trLocked(f))};
   return `<header class="hud"><div class="hud-in">
     <div class="brand">MUAY THAI <b>MOE</b></div>
     <div class="wk"><strong class="num">สัปดาห์ ${Math.min(G.week,52)}<small>/52</small></strong><span>${G.season>1?`ฤดูกาล ${G.season} · `:""}${stageLabel()}</span></div>
@@ -293,6 +293,8 @@ function offerTipHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,
    <div class="mfoot"><button class="btn primary" data-act="closeModal">เข้าใจแล้ว</button></div>`;}
 function verdictOf(rate){return rate>=.6?{c:"green",t:"อ่อนกว่า",say:"ชนะได้ไม่ยาก แต่ค่าตัวน้อย"}:rate>=.4?{c:"gold",t:"สูสี",say:"น่าสนใจ ผลอยู่ที่การเตรียมตัว"}:{c:"red",t:"เก่งกว่า",say:"เสี่ยง แต่ค่าตัวสูงและได้ EXP เยอะ"};}
 
+function rinNoteHTML(){const n=G.rinNote;if(!n||!G.F.rin||G.F.rin.camp!=="player")return "";
+  return `<button class="px rinnote" data-act="rinread"><img src="${faceSrc("rin")}" alt=""><span><b>รินส่งรายงานมา</b><small>สรุป 3 สัปดาห์ · แตะเพื่ออ่าน</small></span><i class="tdot2"></i></button>`;}
 function homeHTML(){const R=roster(G);
   let guide="";
   if(coachOn()&&G.guideHidden!==G.week&&G.week<=2&&!(G.season>1)){
@@ -302,7 +304,7 @@ function homeHTML(){const R=roster(G);
       <div class="gact">${t.act?`<button class="btn sm gold" data-act="tipact" data-k="${t.act.k}" data-id="${t.act.id||""}" data-v="${t.act.v||""}">${t.act.label}</button>`:""}${T.length>1?`<button class="btn sm" data-act="tipnext">ถัดไป ${i+1}/${T.length} ▸</button>`:""}</div></div>
       <button class="xbtn" data-act="hideguide" aria-label="ปิดคำแนะนำสัปดาห์นี้">✕</button></section>`;}
   const lv=campLevel(G);
-  return `<div class="homegrid">${(()=>{const r=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
+  return `${rinNoteHTML()}<div class="homegrid">${(()=>{const r=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
      return r.length?`<button class="px newfighter" data-act="tab" data-v="camp" data-sub="staff"><span class="newb">NEW!</span>${r.map(([id])=>`<img src="${faceSrc(id,"happy")}" alt="">`).join("")}<span><b>${r.map(([id])=>esc(G.F[id].name)).join(" และ ")} อยากเข้าค่าย</b><small>แตะเพื่อดูสัญญา</small></span><span class="chev">▸</span></button>`:"";})()}<section class="px camp-wrap"><div class="cvbox"><canvas class="campcv" width="640" height="360" data-camp="1" aria-label="ภาพรวมค่ายมวยศิริชัย"></canvas>
     <div class="goal ov">${goalText()}</div></div>
     ${G.campUsed?`<button class="campact done" data-act="campacts"><span class="ci">✓</span><span><small>กิจกรรมค่ายสัปดาห์นี้</small><b>${esc(CAMP_ACTIONS[G.campUsed].name)}</b></span></button>`
@@ -376,12 +378,12 @@ function adviceHTML(id){const f=G.F[id],A=trainAdvice(f);const same=f.plan.prese
   if(A.two)return `<h2>ครูแดงแนะนำ · ${esc(f.name)}</h2><div class="ctip big"><img src="${faceSrc("coach")}" alt=""><span>${esc(A.why)}</span></div>
    <div class="kv-row"><span>ตอนนี้</span><b>${planName(f.plan.preset,f.plan.intensity)}</b></div>${twoRoads(f,A.two)}
    ${planTip(f)}<p class="meta">${masteryLine(f)} · ครูแค่ให้ความเห็น ตัดสินใจเองนะ</p>
-   <div class="mfoot roadbtns">${trLocked(f)?`<span class="meta">ยืนยันโปรแกรมสัปดาห์นี้ไปแล้ว</span>`:`<button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.two.strong.p}" data-i="${A.two.strong.i}">ใช้ทางที่ 1</button><button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.two.weak.p}" data-i="${A.two.weak.i}">ใช้ทางที่ 2</button>`}<button class="btn primary" data-act="closeModal">ปิด</button></div>`;
+   <div class="mfoot roadbtns"><span class="meta">ตั้งโปรแกรมเองได้ที่ปุ่ม "โปรแกรมฝึก"</span><button class="btn primary" data-act="closeModal">ปิด</button></div>`;
   return `<h2>ครูแดงแนะนำ · ${esc(f.name)}</h2><div class="ctip big"><img src="${faceSrc("coach")}" alt=""><span>${esc(A.why)}</span></div>
    <div class="kv-row"><span>ตอนนี้</span><b>${planName(f.plan.preset,f.plan.intensity)}</b></div>
    <div class="kv-row"><span>ครูแนะนำ</span><b class="goldt">${planName(A.p,A.i)}</b></div>
    ${planTip(f)}<p class="meta">${same?"ตอนนี้ตั้งตรงกับที่ครูคิดไว้แล้ว":"ครูแค่ให้ความเห็น ตัดสินใจเองนะ"}</p>
-   <div class="mfoot roadbtns">${!same&&!trLocked(f)?`<button class="btn" data-act="useroad" data-id="${f.id}" data-p="${A.p}" data-i="${A.i}">ใช้ตามนี้</button>`:""}<button class="btn primary" data-act="closeModal">ปิด</button></div>`;}
+   <div class="mfoot roadbtns"><button class="btn primary" data-act="closeModal">ปิด</button></div>`;}
 const trLocked=f=>f?f.lockWeek===G.week:false;
 const planName=(p,i)=>PRESETS[p].name+(p==="rest"||!INTENSITY[i]?"":" · "+INTENSITY[i].name);
 function trainHTML(){const R=roster(G);if(!R.length)return "";
@@ -393,7 +395,7 @@ function tcard(f,L){const pf=projFatigue(f),rest=f.plan.preset==="rest";const ti
    <div class="tc-body"><div class="tc-h"><b class="nm">${esc(f.name)}</b><span class="lv">Lv.${f.lvl}</span>${prepLine(f)}</div>
     <div class="fatg"><span>ล้า <b class="num">${Math.round(f.fatigue)}</b> → <b class="num">${Math.round(pf)}</b></span><i class="fgbar" style="--now:${clamp(f.fatigue,0,100)}%;--next:${clamp(pf,0,100)}%;--bc:${pf>70?"var(--red)":pf>55?"var(--warn)":"var(--green)"}"><s></s></i></div>
     ${tired?`<p class="warnchip">ล้ามาก ควรพักฟื้นสัปดาห์นี้</p>`:""}
-    ${f.id==="kati"?`<div class="grit" title="ซ้อมจริงทุกสัปดาห์ ความพยายามสะสมเป็นแรงฮึดวันชก"><span>ความพยายาม</span><i style="--v:${Math.round((f.grit||0)/.1*100)}%"></i><b>${Math.round((f.grit||0)/.1*100)}%</b></div>`:""}<div class="tc-prog"><span class="pill ${L?"":"gold"}">${f.injury?"พักรักษาตัว":PRESETS[f.plan.preset].name+(rest?"":" · "+INTENSITY[f.plan.intensity].name)}</span></div>
+    ${skReady(f)?`<button class="spchip" data-act="fighter" data-id="${f.id}" data-v="skill">★ อัปสกิลได้</button>`:""}<div class="tc-prog"><span class="pill ${L?"":"gold"}">${f.injury?"พักรักษาตัว":PRESETS[f.plan.preset].name+(rest?"":" · "+INTENSITY[f.plan.intensity].name)}</span></div>
     ${f.injury?"":`<div class="tc-btns">${L?"":`<button class="btn sm" data-act="tpick" data-id="${f.id}">โปรแกรมฝึก</button>`}${coachOn()&&!L?`<button class="btn sm" data-act="advice" data-id="${f.id}">คำแนะนำครู</button>`:""}
      ${L?`<span class="tc-ok">✓ ยืนยันโปรแกรมแล้ว</span>`:`<button class="btn sm gold tc-go" data-act="tlock" data-id="${f.id}">ยืนยันโปรแกรม</button>`}</div>`}
 </div></section>`;}
@@ -503,17 +505,17 @@ function recruitHTML(recs){if(!recs.length)return "";
    <p class="meta">ค่าจ้างเป็นรายจ่ายทุกสัปดาห์ ดูเงินสดให้ไหวก่อนเซ็น</p></section>`;}
 // ---------- fighter popup (tabs) ----------
 function fighterHTML(f){const mine=f.camp==="player";const P=PROFILES[f.id];
-  const tabs=mine?[["rel","ประวัติ"],["over","ค่าพลัง"],["train","ฝึก"],["skill","สกิล"]]:[["rel","ประวัติ"],["over","ค่าพลัง"]];
+  const tabs=mine?[["rel","ประวัติ"],["over","ค่าพลัง"],["skill","สกิล"]]:[["rel","ประวัติ"],["over","ค่าพลัง"]];
   let t=UI.ptab;if(!tabs.some(x=>x[0]===t))t="over";
   const head=`<div class="fp-head">${faceImg(f)}<div><h2>${esc(f.full)}</h2><div class="meta">${P?P.age+" ปี · ":""}${f.camp==="player"?"ค่ายศิริชัย":f.camp==="rival"?"ค่ายพยัคฆ์ทอง":"นักมวยอิสระ"} · รุ่น ${f.div} · ${styleOf(f.a)} · ${rec(f)}</div>${xpBar(f)}</div></div>
-   <div class="seg ptabs">${tabs.map(([k,n])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${t===k}">${n}${k==="skill"&&skReady(f)?" •":""}</button>`).join("")}</div>`;
+   <div class="seg ptabs">${tabs.map(([k,n])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${t===k}">${n}${k==="skill"&&skReady(f)?'<i class="tdot2"></i>':""}</button>`).join("")}</div>`;
   let body="";
   if(t==="over"){const c=condition(f);const nb=G.bookings.find(b=>b.a===f.id||b.b===f.id);
     body=`<div class="fp-over">${radarSVG(f,240)}<div><div class="bars">${bar("ความพร้อม",c,condColor(c))}${bar("ความล้า",f.fatigue,"var(--warn)")}${bar("กำลังใจ",f.morale,"var(--blue)")}</div>
       ${mine?`<p class="meta goldt">${masteryLine(f)}</p>`:""}<p class="meta">ฟอร์ม ${formHTML(f)}${nb?` · ไฟต์ถัดไปสัปดาห์ ${nb.week}`:""}</p><details><summary>ค่าสถานะละเอียด</summary>${attrsHTML(f,mine)}</details></div></div>`;}
   if(t==="train"){body=`<div class="fp-train"><div class="tr-anim big" style="background-image:url(${ASSET}${gymBg()})"><canvas width="260" height="200" data-sprite="${f.id}" data-floor="1"></canvas><span class="tr-tag">${PRESETS[f.plan.preset].name}</span></div>
      <div><p class="meta">${PRESETS[f.plan.preset].desc} · ความล้าสัปดาห์หน้า ${Math.round(projFatigue(f))}</p>${presetPicker(f)}${radarSVG(f,200)}</div></div>`;}
-  if(t==="skill")body=skillGrid(f,mine)+(SIGNATURE[f.id]?`<details class="sigcard ${hasSignature(f)?"on":""}"><summary><b>${hasSignature(f)?"✦":"🔒"} ท่าไม้ตาย: ${SIGNATURE[f.id].name}</b></summary><span class="meta">${SIGNATURE[f.id].desc}${hasSignature(f)?"":` · ตอนนี้ความสนิท ${Math.round(f.bond||0)}/60`}</span></details>`:"")+`<details class="skhelp"><summary>สกิลทำงานยังไง?</summary><p class="meta">ได้แต้มสกิล 1 แต้มทุกเลเวลอัป · ท่าใหม่ปลดล็อกตามเลเวล · แต่ละท่าอัปได้ 3 ขั้น · ตอนชกกดใช้ได้เฉพาะ 3 ท่าที่ "ใช้" · แตะชื่อท่าเพื่อดูรายละเอียด</p></details>`;
+  if(t==="skill"&&hasTree(f.id))body=skillGrid(f,mine);else if(t==="skill")body=skillGrid(f,mine)+(SIGNATURE[f.id]?`<details class="sigcard ${hasSignature(f)?"on":""}"><summary><b>${hasSignature(f)?"✦":"🔒"} ท่าไม้ตาย: ${SIGNATURE[f.id].name}</b></summary><span class="meta">${SIGNATURE[f.id].desc}${hasSignature(f)?"":` · ตอนนี้ความสนิท ${Math.round(f.bond||0)}/60`}</span></details>`:"")+`<details class="skhelp"><summary>สกิลทำงานยังไง?</summary><p class="meta">ได้แต้มสกิล 1 แต้มทุกเลเวลอัป · ท่าใหม่ปลดล็อกตามเลเวล · แต่ละท่าอัปได้ 3 ขั้น · ตอนชกกดใช้ได้เฉพาะ 3 ท่าที่ "ใช้" · แตะชื่อท่าเพื่อดูรายละเอียด</p></details>`;
   if(t==="rel")body=relHTML(f);
   return head+`<div class="fp-body">${body}</div>`;}
 const SK_AN=Object.fromEntries(ATTRS);
@@ -521,20 +523,28 @@ const SK_LINES={kati:["สายแข้ง","สายหมัดศอก","
 const SK_ROWN=["พื้นฐาน","ระดับกลาง","ระดับกลาง · ติดตัว","ระดับสูง"];
 const skReady=f=>f.sp>0&&(hasTree(f.id)?(SKILLS[f.id]||[]).some(k=>!skillBlock(f,k.id).length):true);
 const fmtA=v=>(Math.floor(v*10)/10).toFixed(1).replace(/\.0$/,"");
-// v1.29: skill tree — three lines running top (basic) to bottom (high); tap a node for its requirements
+// v1.31: skill screen — points up top, one line (สาย) at a time, a scrollable list of pixel cards with the upgrade button on each card
+const skState=(f,s,mine)=>{const r=(f.skills&&f.skills[s.id])||0;if(!mine)return {r,st:r?"has":"lock"};const B=skillBlock(f,s.id);
+  if(r>=3)return {r,st:"max"};if(!B.length)return {r,st:"can"};const nb=B.filter(b=>b.t!=="sp");if(!nb.length)return {r,st:"nosp"};return {r,st:"lock",B:nb};};
 function skillTree(f,mine){const L=SKILLS[f.id],eqd=equipped(f),sc=SCHOOLS[L[0].school]||{name:""};
-  let sel=UI.skSel&&UI.skSel.indexOf(f.id+":")===0?UI.skSel.slice(f.id.length+1):null;if(!sel||!skillDef(f.id,sel)){const c=mine&&L.find(k=>!skillBlock(f,k.id).length);sel=c?c.id:L[0].id;}
-  const node=s=>{const r=f.skills[s.id]||0,B=mine?skillBlock(f,s.id):[{t:"x"}],can=!B.length,pre=s.pre&&!((f.skills[s.pre]||0)>0),k=skillKind(s);
-    return `<button class="tnode ${r?"has":""} ${eqd.includes(s.id)?"eq":""} ${can?"can":""} ${pre?"lk":""} ${s.passive?"pas":""} ${sel===s.id?"sel":""}" data-act="sksel" data-id="${f.id}" data-v="${s.id}" aria-pressed="${sel===s.id}" aria-label="${s.name} ขั้น ${r}/3">${s.passive?PIX.sk_rec:PIX["sk_"+k.k]}<b>${s.name}</b><span class="pips">${[1,2,3].map(i=>`<i class="${i<=r?"on":""}"></i>`).join("")}</span></button>`;};
-  const col=li=>`<div class="tcol"><small class="tlh">${(SK_LINES[f.id]||[])[li]||""}</small>${[0,1,2,3].map(row=>{const s=L.find(k=>k.line===li&&k.row===row);return s?node(s):"";}).join("")}</div>`;
-  const d=skillDef(f.id,sel),r=f.skills[d.id]||0,B=mine?skillBlock(f,d.id):[],eq=eqd.includes(d.id);
-  const reqs=r>=3?[]:skillReqs(f.id,d.id,r+1);
-  const chips=(d.pre?[`<span class="rq ${(f.skills[d.pre]||0)>0?"ok":"no"}">มี "${skillDef(f.id,d.pre).name}"</span>`]:[]).concat(reqs.map(q=>`<span class="rq ${f.a[q.k]+1e-6>=q.v?"ok":"no"}">${SK_AN[q.k]} <b class="num">${fmtA(f.a[q.k])}/${fmtA(q.v)}</b></span>`));
-  const det=`<div class="tdet px"><div class="tdh"><b>${d.name}</b><span class="meta">${SK_ROWN[d.row]} · ขั้น ${r}/3</span></div><p class="tdd">${d.desc}${r>1?` <span class="meta">(×${r} ตามขั้น)</span>`:""}</p>
-    ${r>=3?`<p class="meta goldt">อัปเต็มแล้ว</p>`:`<div class="rqs"><small>เงื่อนไขขั้น ${r+1}</small>${chips.join("")||`<span class="rq ok">ไม่มี</span>`}</div>`}
-    ${mine?`<div class="tda">${r&&!d.passive?`<button class="btn sm eqbtn ${eq?"on":""}" data-act="equip" data-id="${f.id}" data-v="${d.id}" ${!eq&&eqd.length>=MAX_EQUIP?"disabled":""}>${eq?"ใช้ขึ้นชกอยู่":"ใช้ขึ้นชก"}</button>`:d.passive&&r?`<span class="meta">ทำงานตลอด ไม่ใช้ช่อง</span>`:""}${r<3?`<button class="btn sm primary" data-act="learn" data-id="${f.id}" data-v="${d.id}" ${B.length?"disabled":""}>${r?"อัปขั้น "+(r+1):"เรียนท่านี้"} · 1 แต้ม</button>`:""}</div>`:""}</div>`;
-  return `<div class="school sm" style="--c:${sc.color}"><b>${sc.name}</b>${mine?`<span class="pill ${f.sp>0?"gold":""}">แต้มสกิล ${f.sp}</span><span class="pill">ใช้ขึ้นชก ${eqd.length}/${MAX_EQUIP}</span>`:""}</div>
-   <div class="tree">${[0,1,2].map(col).join("")}</div>${det}`;}
+  const lines=SK_LINES[f.id]||["สาย 1","สาย 2","สาย 3"];const can=li=>mine&&L.some(s=>s.line===li&&skState(f,s,mine).st==="can");
+  let li=UI.skLine&&UI.skLine.id===f.id?UI.skLine.li:[0,1,2].find(can);if(li==null)li=0;
+  const nCan=L.filter(s=>skState(f,s,mine).st==="can").length;
+  const why=st=>st.B.map(b=>b.t==="pre"?`ต้องมี "${skillDef(f.id,b.id).name}" ก่อน`:b.t==="lv"?`ต้อง Lv.${b.v}`:b.t==="stat"?`${SK_AN[b.k]} ${fmtA(b.have)}/${fmtA(b.v)}`:"").filter(Boolean).join(" · ");
+  const card=s=>{const st=skState(f,s,mine),eq=eqd.includes(s.id),k=skillKind(s);
+    return `<div class="skc ${st.st} ${eq?"eq":""}"><div class="skc-ic">${s.passive?PIX.sk_rec:PIX["sk_"+k.k]}</div>
+     <div class="skc-m"><div class="skc-h"><b>${s.name}</b><span class="pips">${[1,2,3].map(i=>`<i class="${i<=st.r?"on":""}"></i>`).join("")}</span></div>
+      <small class="skc-t">${SK_ROWN[s.row]}${eq?' · <span class="goldt">ใช้ขึ้นชกอยู่</span>':""}</small>
+      <p class="skc-d">${s.desc}</p>
+      <p class="skc-s">${st.st==="can"?`<span class="ok">อัปได้ → ขั้น ${st.r+1}</span>`:st.st==="max"?'<span class="goldt">อัปเต็มแล้ว</span>':st.st==="nosp"?'<span class="dim">ไม่มีแต้มสกิล · รอเลเวลอัป</span>':`<span class="no">ยังอัปไม่ได้: ${why(st)}</span>`}</p></div>
+     ${mine?`<div class="skc-b">${st.st==="can"?`<button class="btn sm gold" data-act="learn" data-id="${f.id}" data-v="${s.id}" aria-label="อัป ${s.name}">+ อัป</button>`:""}${st.r&&!s.passive?`<button class="btn sm eqbtn ${eq?"on":""}" data-act="equip" data-id="${f.id}" data-v="${s.id}" ${!eq&&eqd.length>=MAX_EQUIP?"disabled":""}>${eq?"ถอด":"ใส่"}</button>`:""}</div>`:""}</div>`;};
+  return `<div class="skwrap">${mine?`<div class="skbar3"><div class="sppx"><small>แต้มสกิล</small><b class="num">★ ${f.sp}</b></div>
+     <div class="sk-info"><span>${f.sp?nCan?`อัปได้ตอนนี้ <b class="ok">${nCan}</b> ท่า`:"ยังไม่มีท่าที่อัปได้ ฝึกค่าพลังเพิ่ม":"ได้ 3 แต้มทุกเลเวลอัป"}</span>
+      <span class="sk-eq">ใช้ขึ้นชก ${[0,1,2].map(i=>{const s=eqd[i]&&skillDef(f.id,eqd[i]);return `<i class="${s?"on":""}" title="${s?s.name:"ว่าง"}">${s?PIX["sk_"+skillKind(s).k]:""}</i>`;}).join("")}</span></div></div>`:""}
+   <div class="seg sklines">${lines.map((n,i)=>`<button data-act="skline" data-id="${f.id}" data-v="${i}" aria-pressed="${li===i}">${n}${can(i)?'<i class="tdot2"></i>':""}</button>`).join("")}</div>
+   <div class="sklist pxscroll">${[0,1,2,3].map(row=>L.find(s=>s.line===li&&s.row===row)).filter(Boolean).map(card).join('<i class="skarrow" aria-hidden="true"></i>')}
+     ${SIGNATURE[f.id]?`<div class="skc sig ${hasSignature(f)?"has":"lock"}"><div class="skc-m"><div class="skc-h"><b>✦ ท่าไม้ตาย: ${SIGNATURE[f.id].name}</b></div><p class="skc-d">${SIGNATURE[f.id].desc}${hasSignature(f)?"":` · ปลดเมื่อความสนิทถึง 60 (ตอนนี้ ${Math.round(f.bond||0)})`}</p></div></div>`:""}</div>
+   ${mine?`<div class="skfoot"><button class="btn sm" data-act="skauto" data-id="${f.id}" data-v="${li}" ${[0,1,2,3].some(r=>{const s=L.find(x=>x.line===li&&x.row===r);return s&&skState(f,s,mine).st==="can";})?"":"disabled"}>อัปอัตโนมัติ · ${lines[li]}</button><span class="meta">ใส่ขึ้นชกได้ ${MAX_EQUIP} ท่า · ท่าติดตัวทำงานเองไม่ใช้ช่อง</span></div>`:""}</div>`;}
 function skillGrid(f,mine){if(hasTree(f.id))return skillTree(f,mine);const L=SKILLS[f.id]||[];const sc=SCHOOLS[L[0]&&L[0].school]||{name:"",motto:""};
   // v1.23: compact — unlocked moves as short rows (tap the name for details), locked ones folded away
   const op=L.filter(s=>(s.lv||1)<=f.lvl),lk=L.filter(s=>(s.lv||1)>f.lvl),eqd=equipped(f);
@@ -604,7 +614,7 @@ function reportHTML(){const r=G.lastReport;const ann=[];
    <div class="chips3"><span class="chip"><small>นักเรียน</small><b class="num pos">+${fmt(r.inc)}</b></span><span class="chip"><small>ค่าใช้จ่าย</small><b class="num neg">-${fmt(r.up+r.wg+(r.debtPay||0))}</b></span><span class="chip"><small>เงินสด</small><b class="num ${r.cash<0?"neg":""}">${fmt(r.cash)}</b></span></div>
    <details><summary>ผลการชกในวงการ (${r.log.length})</summary><div class="log">${r.log.map(l=>`<div>${esc(l)}</div>`).join("")||"<div>เงียบสงบ</div>"}</div></details>`;}
 function modalHTML(){const m=UI.modal;let body="",foot=true;
-  if(m.type==="fighter"){body=fighterHTML(G.F[m.id]);}
+  if(m.type==="fighter"){body=fighterHTML(G.F[m.id]);foot=false;}
   if(m.type==="consider"){const o=G.offers.find(x=>x.id===m.id);if(!o){UI.modal=null;return "";}body=considerHTML(o);foot=false;}
   if(m.type==="report")body=reportHTML();
   if(m.type==="repinfo")body=repInfoHTML();
@@ -630,7 +640,7 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
      <div class="mfoot"><button class="btn ghost" data-act="closeModal">รอก่อน</button><button class="btn primary" data-act="sign" data-v="${f.id}" data-ok="1">เซ็นเลย</button></div>`;}
   if(m.type==="levelup"){body=`<h2 class="lvup">LEVEL UP!</h2>${m.ids.map(id=>{const f=G.F[id];return `<div class="lvrow"><div class="l">${faceImg(f,"sm")}<b>${esc(f.name)} Lv.${f.lvl}</b></div>${coachOn()&&f.sp>0&&!hasTree(f.id)?`<p class="hinttxt"><img src="${faceSrc("coach")}" alt=""><span>${skillTip(f)}</span></p>`:""}${skillGrid(f,true)}</div>`;}).join("")}`;}
   if(typeof XMODAL!=="undefined"&&XMODAL[m.type]){const r=XMODAL[m.type](m);body=r.body;foot=r.foot;}
-  return `<div class="overlay" data-act="closeModalBg"><div class="px modal pxscroll m-${m.type}" data-sk="modal-${m.type}" role="dialog" aria-modal="true"><button class="xbtn" data-act="closeModal" aria-label="ปิด">✕</button>${body}
+  return `<div class="overlay" data-act="closeModalBg"><div class="px modal pxscroll m-${m.type}${m.type==="fighter"?" fpm t-"+(UI.ptab||"over"):""}" data-sk="modal-${m.type}" role="dialog" aria-modal="true"><button class="xbtn" data-act="closeModal" aria-label="ปิด">✕</button>${body}
     ${foot?`<div class="mfoot"><button class="btn primary" data-act="closeModal">${m.type==="report"||m.type==="levelup"?"ไปต่อ ▸":"ปิด"}</button></div>`:""}</div></div>`;}
 
 // ---------- montage ----------
@@ -761,7 +771,7 @@ function rinScene(done){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0||
   L.push(tired.length?`${tired.map(f=>f.name).join(", ")}ล้าเกินครึ่งแล้ว ให้พักฟื้นสักสัปดาห์ จะกลับมาแรงกว่าเดิม`:RW[Math.floor(G.week/3)%RW.length]);
   const net=weeklyNet(G),wl=weeksLeft();
   L.push(net<0?`เรื่องเงิน: ตอนนี้ขาดทุนสัปดาห์ละ ${fmt(-net)} อีกราว ${wl} สัปดาห์เงินจะหมด รับไฟต์เพิ่ม หรือเลือกกิจกรรมสอนคลาสพิเศษช่วยได้ค่ะ`:G.cash>40000?`เรื่องเงิน: มีเงินเหลือ ${fmt(G.cash)} ลองอัปเกรดค่ายหรือส่งครูแดงไปอบรม ระยะยาวคุ้มกว่าเก็บไว้ค่ะ`:`เรื่องเงิน: ได้กำไรสัปดาห์ละ ${fmt(net)} ยังไหวค่ะ แต่อย่าเพิ่งใช้จ่ายเยอะ`);
-  playScene([{n:"rin",f:"happy",l:"casual",t:["ผู้จัดการคะ ฉันสรุปข้อมูลสามสัปดาห์มาให้แล้วค่ะ","รายงานประจำรอบค่ะ อ่านจบในสามนาที …ถ้าอ่านเร็ว","ผู้จัดการคะ กราฟใหม่มาแล้วค่ะ ไม่ยาว สัญญาค่ะ","ฉันนอนดึกทำตารางนี้ค่ะ …ไม่ได้อยากให้ชมนะคะ","ข้อมูลสามสัปดาห์ล่าสุดค่ะ มีข่าวดีหนึ่ง ข่าวต้องระวังหนึ่ง"][Math.floor(G.week/3)%5]},...L.map(t=>({n:"rin",f:"happy",l:"casual",t})),{n:"rin",f:"flustered",l:"casual",t:["…แค่นี้แหละค่ะ ใช้ได้ก็ใช้นะ","จบรายงานค่ะ คำถามเชิญได้ …ไม่มีก็ดีค่ะ","ฉันพิมพ์สรุปไว้บนบอร์ดหน้าห้องซ้อมแล้วนะคะ","ถ้าทำตามนี้ ฉันประเมินว่าเราจะดีขึ้นแน่นอนค่ะ"][Math.floor(G.week/3)%4]}],()=>{AU.startMusic("hub");save();done();},{bg:"gym",look:"casual"});}
+  G.rinNote={wk:G.week,steps:[{n:"rin",f:"happy",l:"casual",t:["ผู้จัดการคะ ฉันสรุปข้อมูลสามสัปดาห์มาให้แล้วค่ะ","รายงานประจำรอบค่ะ อ่านจบในสามนาที …ถ้าอ่านเร็ว","ผู้จัดการคะ กราฟใหม่มาแล้วค่ะ ไม่ยาว สัญญาค่ะ","ฉันนอนดึกทำตารางนี้ค่ะ …ไม่ได้อยากให้ชมนะคะ","ข้อมูลสามสัปดาห์ล่าสุดค่ะ มีข่าวดีหนึ่ง ข่าวต้องระวังหนึ่ง"][Math.floor(G.week/3)%5]},...L.map(t=>({n:"rin",f:"happy",l:"casual",t})),{n:"rin",f:"flustered",l:"casual",t:["…แค่นี้แหละค่ะ ใช้ได้ก็ใช้นะ","จบรายงานค่ะ คำถามเชิญได้ …ไม่มีก็ดีค่ะ","ฉันพิมพ์สรุปไว้บนบอร์ดหน้าห้องซ้อมแล้วนะคะ","ถ้าทำตามนี้ ฉันประเมินว่าเราจะดีขึ้นแน่นอนค่ะ"][Math.floor(G.week/3)%4]}]};done();}
 
 // ---------- week flow ----------
 function endWeek(){if(UI.scene||UI.fight||UI.montage)return;AU.resume();UI.tipIdx=0;
@@ -1047,7 +1057,11 @@ const ACT={
   fighter:d=>{UI.ptab=d.v||"over";UI.look=G.F[d.id].camp==="player"?"train":"fight";UI.modal={type:"fighter",id:d.id};render();},
   ptab:d=>{UI.ptab=d.v;render();},
   plook:d=>{UI.look=d.v;render();},
-  learn:d=>{if(learnSkill(G,d.id,d.v)){UI.skSel=d.id+":"+d.v;AU.sfx("level");save();render();}},
+  learn:d=>{const sl=document.querySelector(".sklist"),y=sl?sl.scrollTop:0;if(learnSkill(G,d.id,d.v)){AU.sfx("level");save();render();const n=document.querySelector(".sklist");if(n)n.scrollTop=y;}},
+  rinread:()=>{const n=G.rinNote;if(!n)return;G.rinNote=null;save();playScene(n.steps,()=>{save();render();},{bg:"gym",look:"casual"});},
+  skline:d=>{UI.skLine={id:d.id,li:+d.v};AU.sfx("ui");render();},
+  skauto:d=>{const f=G.F[d.id],li=+d.v;let n=0;for(let guard=0;guard<30&&f.sp>0;guard++){const s=(SKILLS[f.id]||[]).filter(x=>x.line===li).sort((a,b)=>a.row-b.row||(f.skills[a.id]||0)-(f.skills[b.id]||0)).find(x=>!skillBlock(f,x.id).length);if(!s||!learnSkill(G,f.id,s.id))break;n++;}
+    if(n){AU.sfx("level");save();toast(`อัป${(SK_LINES[f.id]||[])[li]||""} ${n} ครั้ง`);}render();},
   sksel:d=>{UI.skSel=d.id+":"+d.v;AU.sfx("ui");render();},
   closeModal:()=>{const m=UI.modal;UI.modal=null;render();if(m&&m.after)m.after();},
   closeModalBg:(d,e)=>{if(e.target.classList.contains("overlay")&&UI.modal&&!["report","levelup"].includes(UI.modal.type)){UI.modal=null;render();}},
