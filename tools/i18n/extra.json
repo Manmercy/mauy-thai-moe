@@ -1960,5 +1960,6 @@
 ">สุ่มการ์ด ": ">Pull a card ",
 " ครั้ง</small></span><button class=\"btn sm gold\" data-act=\"gacha\" ": " more</small></span><button class=\"btn sm gold\" data-act=\"gacha\" ",
 "</b> เศษดาว<small>ได้จากชนะไฟต์ การ์ดใหม่ และการ์ดซ้ำ · การันตี SSR อีก ": "</b> stardust<small>Earned from wins, new cards and duplicates · guaranteed SSR in ",
-" ใบ · แตะการ์ดเพื่อดูเรื่องราว · ใบที่ยังไม่ได้แสดงเป็นเงาพร้อมคำใบ้</p>\n     <div class=\"gacha\"><span><b class=\"goldt\">✦ ": " cards · tap a card to view its story · cards you don't have yet show as a silhouette with a hint</p>\n     <div class=\"gacha\"><span><b class=\"goldt\">✦ "
+" ใบ · แตะการ์ดเพื่อดูเรื่องราว · ใบที่ยังไม่ได้แสดงเป็นเงาพร้อมคำใบ้</p>\n     <div class=\"gacha\"><span><b class=\"goldt\">✦ ": " cards · tap a card to view its story · cards you don't have yet show as a silhouette with a hint</p>\n     <div class=\"gacha\"><span><b class=\"goldt\">✦ ",
+"<p class=\"meta redt center\">👑 อัจฉริยะไร้พ่าย · ปีนี้ยังไม่มีใครล้มเธอได้ เธออ่านเกมขาดกว่าทุกคน</p>": "<p class=\"meta redt center\">👑 Undefeated genius · nobody has beaten her this year. She reads the fight better than anyone</p>"
 }

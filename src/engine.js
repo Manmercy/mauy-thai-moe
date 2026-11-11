@@ -390,7 +390,7 @@ const TIER={local:{name:"ระดับตำบล",win:4000,lose:2000,rep:1.5
 function stageOf(w){return w<=20?"local":w<=40?"district":w<=50?"final":"off";}
 const STAGE_NAME={local:"รอบตำบล",district:"รอบอำเภอ",final:"ชิงแชมป์จังหวัด",off:"ปิดปี"};
 
-function ployAura(w){return Math.max(0,.42*(1-(w-1)/27));} // v1.23: Ploy's early edge is gone by week 28
+function ployAura(w,G){const b=Math.max(0,.42*(1-(w-1)/27));if(!G||!G.F||!G.F.ploy||G.F.ploy.camp!=="rival")return G&&G.F&&G.F.ploy&&G.F.ploy.camp==="player"?0:b;if(G.flags&&G.flags.beatS_ploy===(G.season||1))return b;/* v1.59: the undefeated genius keeps her edge until someone beats her this year */return Math.max(b,w<41?.2:w<49?.14:.05);} // v1.23: Ploy's early edge is gone by week 28
 function startLv(f){if(f.id==="ploy")f.aura=ployAura(1);if(f.id==="ploy")f.lvl=5;else if(f.id==="fah")f.lvl=3;else if(f.camp==="npc")f.lvl=clamp(Math.round(ovr(f.a)-7),1,6);}
 // v1.22 difficulty: easy = rivals grow slower + more class income; hard = rivals grow faster and use skills harder
 const DIFF={easy:{rival:.7,ai:.6,inc:1.2,train:1.12,name:"ง่าย"},normal:{rival:1,ai:.8,inc:1,train:1,name:"ปกติ"},hard:{rival:1.12,ai:.95,inc:.9,train:.97,name:"ยาก"}};
@@ -451,7 +451,7 @@ const hasStaff=(G,k)=>(G.staff||[]).includes(k);
 const staffLocked=(G,k)=>{const r=STAFF[k].req;if(!r)return "";if(r.lv&&campLevel(G)<r.lv)return `ค่าย Lv.${r.lv}`;if(r.rep&&G.rep<r.rep)return `ชื่อเสียง ${r.rep}`;return "";};
 function hireStaff(G,k){const S=STAFF[k];G.staff=G.staff||[];if(!S||hasStaff(G,k)||G.staff.length>=staffSlots(G)||staffLocked(G,k)||G.cash<S.fee)return false;G.cash-=S.fee;G.staff.push(k);G.fac.assistants=G.staff.length;return true;}
 function fireStaff(G,k){G.staff=(G.staff||[]).filter(x=>x!==k);G.fac.assistants=G.staff.length;return true;}
-function fixSave(G){if(G&&G.coachAway&&G.coachAway-G.week>4)G.coachAway=null; /* v1.55.1: a leave from last year must not carry into the new year */
+function fixSave(G){if(G&&G.flags&&G.flags.beat_ploy&&G.flags.beatS_ploy==null)G.flags.beatS_ploy=G.season||1; /* v1.59: old saves that already beat Ploy keep it */if(G&&G.coachAway&&G.coachAway-G.week>4)G.coachAway=null; /* v1.55.1: a leave from last year must not carry into the new year */
 if(G.F)for(const id in G.F){const f=G.F[id];if(f&&hasTree(id)&&!f.spv){f.sp=(f.sp||0)+2*Math.max(0,(f.lvl||1)-1);f.spv=2;}}G.fac=G.fac||{};for(const k of Object.keys(FACILITIES))G.fac[k]=G.fac[k]||0;G.fac.daeng=G.fac.daeng||1;
   if(!G.staff){G.staff=["nok","paeng"].slice(0,G.fac.assistants||0);}G.fac.assistants=G.staff.length;
   if(G.stu==null)G.stu=Math.min(studentCap(G),studentDemand(G));G.mail=G.mail||[];G.cal=G.cal||[];return G;}
@@ -621,7 +621,7 @@ function applyResult(G,F,booking){
       if(res==="W"&&!G.flags.firstWin)G.flags.firstWin=me.id;
       if(res==="L"&&!G.flags.firstLoss)G.flags.firstLoss=me.id;
       if(op.id==="fah"||op.id==="ploy"){G.flags[`vs_${op.id}`]=res;
-        if(res==="W"){op.surge=(op.surge||0)+7;op.potential=Math.min(20,op.potential+.5);G.flags[`beat_${op.id}`]=(G.flags[`beat_${op.id}`]||0)+1;G.flags[`surgeWk_${op.id}`]=G.week;}}
+        if(res==="W"){op.surge=(op.surge||0)+7;op.potential=Math.min(20,op.potential+.5);G.flags[`beat_${op.id}`]=(G.flags[`beat_${op.id}`]||0)+1;G.flags[`surgeWk_${op.id}`]=G.week;G.flags[`beatS_${op.id}`]=G.season||1;if(op.id==="ploy")op.aura=ployAura(G.week,G);}}
       gainXP(G,me,Math.round((res==="W"?45*(upset?1.3:1):res==="D"?35:30)*(1+pmods.fightXp+(res==="L"?pmods.lossXp:0))*(booking.tier==="district"?1.3:booking.tier==="semi"?1.6:booking.tier==="final"?2:1)));
       G.cal=G.cal||[];G.cal.push({wk:G.week,a:me.id,b:op.id,bn:op.name,tier:booking.tier,res,type:r.type,cards:(F.cards||[]).map(c=>[...c]),pay});
       ret={pay,res,upset};
@@ -697,7 +697,7 @@ function weekTrain(G){
   const rng=mulberry32(G.seed+G.week*977);G.log=[];
   for(const f of roster(G))trainWeek(G,f,rng);
   // v1.15: Ploy's raw talent makes her near-untouchable early; the edge fades by the district round
-  if(G.F.ploy)G.F.ploy.aura=ployAura(G.week);
+  if(G.F.ploy)G.F.ploy.aura=ployAura(G.week,G);
   for(const f of Object.values(G.F)){if(f.camp==="player")continue;
     if(f.injury>0){f.injury--;}f.fatigue=clamp(f.fatigue-8,0,100);
     // v1.23: the two stars coast until someone beats them — a loss lights a fire (surge) that carries them to the final
