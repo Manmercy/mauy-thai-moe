@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.45";
+const VERSION="1.46";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -109,7 +109,7 @@ const moveIcon=m=>!m?'<span class="mv eq">–</span>':m>0?`<span class="mv up">�
 
 // ---------- root render ----------
 function render(){
-  document.documentElement.classList.toggle("vnopen",!!(UI&&UI.scene));
+  document.documentElement.classList.toggle("vnopen",!!(UI&&(UI.scene||UI.fight)));
   let h="";
   if(!G)h=UI.creator?creatorHTML():titleHTML();
   else if(UI.ending)h=endingHTML();
@@ -230,7 +230,7 @@ function newsItems(){const N=[...(G.lvNews||[]).slice(0,1)],st=standings(G,"A").
   N.push(["Muay oil prices up 5 baht. Vendor says 'business is good lately'","The district stadium installs new air con. No more fanning for spectators","An 80-year-old Korat coach still teaches the buffalo swing every morning","Women's Muay Thai is booming; attendance nearly doubled","Foreigners flock to learn Muay Thai in high season"][G.week%5]);
   return N;}
 function weekTodo(){const R=roster(G),todo=[];if(R.some(f=>!f.injury&&!trLocked(f)))todo.push("Some training programs aren't confirmed yet");if(!G.campUsed)todo.push("No camp activity chosen yet");
-  if(!G.freeUsed)todo.push("Free time with a fighter not used yet");if(G.offers.length&&!G.bookings.some(b=>G.F[b.a].camp==="player"))todo.push("No fights scheduled yet");return todo;}
+  if(G.offers.length&&!G.bookings.some(b=>G.F[b.a].camp==="player"))todo.push("No fights scheduled yet");return todo;}
 // v1.15: what reputation actually does, and what it unlocks next
 function repSteps(){const L=Object.values(CAMP_ACTIONS).filter(a=>a.rep&&!a.fac).map(a=>[a.rep,"Activity: "+a.name]);L.push([14,"Local TV asks to film the camp (event)"],[20,"District paper covers the camp · more students"],[30,"Fight offers rise to 3 per fighter"],[36,"Provincial TV interviews the manager"],[50,"Regular sponsor ฿1,500/week"],[60,"Province's famous-camp sign"]);return L.sort((a,b)=>a[0]-b[0]);}
 function repInfoHTML(){const r=G.rep;
@@ -245,7 +245,7 @@ function rinBrief(){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0)retur
   else{const w=R.map(f=>[f,RADAR_AX.map(([n,fn])=>[n,fn(f.a)]).sort((a,b)=>a[1]-b[1])[0]]).sort((a,b)=>a[1][1]-b[1][1])[0];t=`The weakest spot in the team right now is ${w[1][0]} of ${w[0].name}. Fix it and the win rate should rise a lot`;}
   return `<div class="px rinnote"><img src="${faceSrc("rin","happy")}" alt=""><span><b>Rin's report</b>${t}</span></div>`;}
 function hubHTML(){
-  const dots={fights:G.offers.length>0||dmOfferOn(G),people:!G.freeUsed||(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>!f.injury&&!trLocked(f))};
+  const dots={fights:G.offers.some(o=>!G.bookings.some(b=>b.a===o.a))||dmOfferOn(G),people:(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>!f.injury&&!trLocked(f))};
   return `<header class="hud"><div class="hud-in">
     <div class="brand">MUAY THAI <b>MOE</b></div>
     <div class="wk"><strong class="num">Week ${Math.min(G.week,52)}<small>/52</small></strong><span>${G.season>1?`Season ${G.season} · `:""}${stageLabel()}</span></div>
@@ -879,6 +879,11 @@ const CHEER={kati:[["Grandpa Chai is watching. Make him proud","…Yes! I'll fig
   rin:[["Trust the data you analyzed","…Yes. It's all in my head. Now I just have to do it",1],["Go get 'em, Rin!","Thank you… I'll try",0],["Have fun out there","Fun… I'll try",0]]};
 function cheerLines(f){return CHEER[f.id]||[["You can do it!","Yes!",1],["Follow the plan","Understood",0],["Don't get hurt","",0]];}
 function openFight2(b,done){UI.fight={b,done,stage:"pre",plan:b.plan||"balanced",tac:{focus:"auto",pace:"steady",target:(b.tac&&b.tac.target)||"body"},F:null,shown:[],pending:[],timer:null,res:null,caption:null};render();}
+// v1.46: side-by-side numbers before the bell (opponent hidden until scouted)
+function preCompare(me,op,b){const sc=scouted(op.id)||op.camp==="player";const v=verdictOf(adviseCached(me.id,op.id,b.rounds||3).bestRate);
+  const rows=[["Punch",a=>a.punch],["Kick",a=>a.kick],["Knee/Elbow",a=>(a.knee+a.elbow)/2],["Guard",a=>(a.guard+a.counter)/2],["Stamina",a=>(a.stamina+a.dur)/2]];
+  return `<div class="pcmp"><div class="pcmp-h"><span class="pill dtag ${v.c}">${v.t}</span>${sc?"":`<small class="mutt">Not scouted · opponent stats hidden</small>`}</div>${rows.map(([n,g])=>{const x=g(me.a),y=g(op.a);
+    return `<div class="pcr"><b class="num ${sc&&x>y+.4?"goldt":""}">${x.toFixed(1)}</b><i class="pb l" style="--v:${clamp(x/20*100,0,100)}%"></i><span>${n}</span><i class="pb r" style="--v:${sc?clamp(y/20*100,0,100):0}%"></i><b class="num ${sc&&y>x+.4?"redt":""}">${sc?y.toFixed(1):"?"}</b></div>`;}).join("")}</div>`;}
 function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
   const last=U.shown.filter(x=>x.ha!=null).slice(-1)[0];const sv=(s,k)=>F?(last?last[k]:s):100;
   const side=(f,cls,hp,sta)=>`<div class="fside ${cls}"><div class="fn">${f.canon?`<img class="face sm" src="${faceSrc(f.id,"happy")}" alt="">`:""}<b>${esc(f.name)}</b><span class="meta">Lv.${f.lvl}</span></div>
@@ -890,6 +895,7 @@ function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
      ${P?`<p class="quote">“${esc(P.line)}”</p>`:""}${h2hText(op)?`<p class="meta goldt center">${h2hText(op)}</p>`:""}
      <div class="prebox"><div><small>Plan</small><b>${PLANS[U.plan].name}</b></div><div><small>Target</small><b>${TGT[U.tac.target]}</b></div><div><small>Readiness</small><b class="num">${c}</b></div></div>
      ${me.fatigue>25?`<p class="meta center warnt">Fatigue ${Math.round(me.fatigue)} · entering the ring at ${Math.round(clamp(100-me.fatigue*.4,40,100))}% energy and tiring faster than usual</p>`:""}
+     ${preCompare(me,op,b)}
      <p class="meta center">${me.prepBonus?"Plan drilled · ":""}${me.injury?"Injured! · ":""}Change the plan in the Train tab before fight day</p>
      <div class="ctrl">${me.injury?`<button class="btn" data-act="withdraw">Withdraw</button>`:""}<button class="btn primary big" data-act="fstart">Fight! ▸</button></div></div>`;}
   else{const cap=U.caption;

@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.45";
+const VERSION="1.46";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -109,7 +109,7 @@ const moveIcon=m=>!m?'<span class="mv eq">–</span>':m>0?`<span class="mv up">�
 
 // ---------- root render ----------
 function render(){
-  document.documentElement.classList.toggle("vnopen",!!(UI&&UI.scene));
+  document.documentElement.classList.toggle("vnopen",!!(UI&&(UI.scene||UI.fight)));
   let h="";
   if(!G)h=UI.creator?creatorHTML():titleHTML();
   else if(UI.ending)h=endingHTML();
@@ -230,7 +230,7 @@ function newsItems(){const N=[...(G.lvNews||[]).slice(0,1)],st=standings(G,"A").
   N.push(["ราคาน้ำมันมวยปรับขึ้น 5 บาท แม่ค้าบอก 'ช่วงนี้ขายดี'","สนามมวยอำเภอติดแอร์ใหม่ คนดูไม่ต้องพัดวีแล้ว","ครูมวยโคราชวัย 80 ยังสอนหมัดเหวี่ยงควายทุกเช้า","มวยหญิงได้รับความนิยมขึ้น ผู้ชมเพิ่มเกือบเท่าตัว","ชาวต่างชาติแห่เรียนมวยไทยช่วงไฮซีซัน"][G.week%5]);
   return N;}
 function weekTodo(){const R=roster(G),todo=[];if(R.some(f=>!f.injury&&!trLocked(f)))todo.push("ยังไม่ได้ยืนยันโปรแกรมฝึกบางคน");if(!G.campUsed)todo.push("ยังไม่ได้เลือกกิจกรรมค่าย");
-  if(!G.freeUsed)todo.push("ยังไม่ได้ใช้เวลาว่างกับนักมวย");if(G.offers.length&&!G.bookings.some(b=>G.F[b.a].camp==="player"))todo.push("ยังไม่มีไฟต์ในตาราง");return todo;}
+  if(G.offers.length&&!G.bookings.some(b=>G.F[b.a].camp==="player"))todo.push("ยังไม่มีไฟต์ในตาราง");return todo;}
 // v1.15: what reputation actually does, and what it unlocks next
 function repSteps(){const L=Object.values(CAMP_ACTIONS).filter(a=>a.rep&&!a.fac).map(a=>[a.rep,"กิจกรรม: "+a.name]);L.push([14,"ทีวีท้องถิ่นขอมาถ่ายทำค่าย (เหตุการณ์)"],[20,"หนังสือพิมพ์อำเภอลงข่าวค่าย · นักเรียนเพิ่ม"],[30,"ข้อเสนอไฟต์เพิ่มเป็น 3 คู่ต่อคน"],[36,"ทีวีจังหวัดสัมภาษณ์ผู้จัดการ"],[50,"สปอนเซอร์ประจำ ฿1,500/สัปดาห์"],[60,"ป้ายค่ายมวยดังประจำจังหวัด"]);return L.sort((a,b)=>a[0]-b[0]);}
 function repInfoHTML(){const r=G.rep;
@@ -245,7 +245,7 @@ function rinBrief(){const r=G.F.rin;if(!r||r.camp!=="player"||G.week%3!==0)retur
   else{const w=R.map(f=>[f,RADAR_AX.map(([n,fn])=>[n,fn(f.a)]).sort((a,b)=>a[1]-b[1])[0]]).sort((a,b)=>a[1][1]-b[1][1])[0];t=`จุดอ่อนที่สุดในทีมตอนนี้คือ${w[1][0]}ของ${w[0].name} ถ้าแก้ได้ อัตราชนะน่าจะขึ้นอีกเยอะ`;}
   return `<div class="px rinnote"><img src="${faceSrc("rin","happy")}" alt=""><span><b>รินสรุปข้อมูล</b>${t}</span></div>`;}
 function hubHTML(){
-  const dots={fights:G.offers.length>0||dmOfferOn(G),people:!G.freeUsed||(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>!f.injury&&!trLocked(f))};
+  const dots={fights:G.offers.some(o=>!G.bookings.some(b=>b.a===o.a))||dmOfferOn(G),people:(typeof canChat==="function"&&CANON_IDS.some(id=>canChat(G.F[id]))),home:!G.campUsed,train:roster(G).some(f=>!f.injury&&!trLocked(f))};
   return `<header class="hud"><div class="hud-in">
     <div class="brand">MUAY THAI <b>MOE</b></div>
     <div class="wk"><strong class="num">สัปดาห์ ${Math.min(G.week,52)}<small>/52</small></strong><span>${G.season>1?`ฤดูกาล ${G.season} · `:""}${stageLabel()}</span></div>
@@ -879,6 +879,11 @@ const CHEER={kati:[["ปู่ชัยดูอยู่นะ ชกให้�
   rin:[["เชื่อในข้อมูลที่เธอวิเคราะห์มา","…ค่ะ ทุกอย่างอยู่ในหัวแล้ว เหลือแค่ทำให้ได้",1],["สู้ ๆ นะริน!","ขอบคุณค่ะ… ฉันจะพยายาม",0],["ชกให้สนุกนะ","สนุก… จะลองดูค่ะ",0]]};
 function cheerLines(f){return CHEER[f.id]||[["เธอทำได้!","ค่ะ!",1],["ตามแผนนะ","รับทราบ",0],["อย่าเจ็บตัวล่ะ","ค่ะ",0]];}
 function openFight2(b,done){UI.fight={b,done,stage:"pre",plan:b.plan||"balanced",tac:{focus:"auto",pace:"steady",target:(b.tac&&b.tac.target)||"body"},F:null,shown:[],pending:[],timer:null,res:null,caption:null};render();}
+// v1.46: side-by-side numbers before the bell (opponent hidden until scouted)
+function preCompare(me,op,b){const sc=scouted(op.id)||op.camp==="player";const v=verdictOf(adviseCached(me.id,op.id,b.rounds||3).bestRate);
+  const rows=[["หมัด",a=>a.punch],["เตะ",a=>a.kick],["เข่า/ศอก",a=>(a.knee+a.elbow)/2],["การ์ด",a=>(a.guard+a.counter)/2],["แรง",a=>(a.stamina+a.dur)/2]];
+  return `<div class="pcmp"><div class="pcmp-h"><span class="pill dtag ${v.c}">${v.t}</span>${sc?"":`<small class="mutt">ยังไม่ได้ดูเทป · ไม่เห็นค่าพลังคู่ชก</small>`}</div>${rows.map(([n,g])=>{const x=g(me.a),y=g(op.a);
+    return `<div class="pcr"><b class="num ${sc&&x>y+.4?"goldt":""}">${x.toFixed(1)}</b><i class="pb l" style="--v:${clamp(x/20*100,0,100)}%"></i><span>${n}</span><i class="pb r" style="--v:${sc?clamp(y/20*100,0,100):0}%"></i><b class="num ${sc&&y>x+.4?"redt":""}">${sc?y.toFixed(1):"?"}</b></div>`;}).join("")}</div>`;}
 function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
   const last=U.shown.filter(x=>x.ha!=null).slice(-1)[0];const sv=(s,k)=>F?(last?last[k]:s):100;
   const side=(f,cls,hp,sta)=>`<div class="fside ${cls}"><div class="fn">${f.canon?`<img class="face sm" src="${faceSrc(f.id,"happy")}" alt="">`:""}<b>${esc(f.name)}</b><span class="meta">Lv.${f.lvl}</span></div>
@@ -890,6 +895,7 @@ function fightHTML(){const U=UI.fight,b=U.b,me=G.F[b.a],op=G.F[b.b],F=U.F;
      ${P?`<p class="quote">“${esc(P.line)}”</p>`:""}${h2hText(op)?`<p class="meta goldt center">${h2hText(op)}</p>`:""}
      <div class="prebox"><div><small>แผน</small><b>${PLANS[U.plan].name}</b></div><div><small>เป้าหมาย</small><b>${TGT[U.tac.target]}</b></div><div><small>ความพร้อม</small><b class="num">${c}</b></div></div>
      ${me.fatigue>25?`<p class="meta center warnt">ล้า ${Math.round(me.fatigue)} · ขึ้นเวทีด้วยแรง ${Math.round(clamp(100-me.fatigue*.4,40,100))}% และหมดแรงเร็วกว่าปกติ</p>`:""}
+     ${preCompare(me,op,b)}
      <p class="meta center">${me.prepBonus?"ซ้อมแผนมาแล้ว · ":""}${me.injury?"บาดเจ็บอยู่! · ":""}เปลี่ยนแผนได้ที่แท็บฝึกก่อนวันชก</p>
      <div class="ctrl">${me.injury?`<button class="btn" data-act="withdraw">ถอนตัว</button>`:""}<button class="btn primary big" data-act="fstart">ขึ้นชก! ▸</button></div></div>`;}
   else{const cap=U.caption;
