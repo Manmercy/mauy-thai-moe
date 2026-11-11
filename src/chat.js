@@ -190,7 +190,7 @@ function chatPick(k){const C=UI.chat;if(!C||C.typing||C.i>=C.x.length)return;con
 const CHAT_PX=pxIcon(["kkkkkkkkk.","kwwwwwwwk.","kwkwkwkwk.","kwwwwwwwk.","kkkwkkkkk.","..kk......"],{k:"#1b1230",w:"#f4f1ea"});
 const HEART_PX=pxIcon([".kk.kk.","krrkrrk","krwrrrk","krrrrrk",".krrrk.","..krk..","...k..."],{k:"#4a1020",r:"#ff4d6d",w:"#ffd0da"});
 function chatHTML(){const C=UI.chat;if(!C)return {body:"",foot:true};const f=G.F[C.id];
-  const msgs=C.log.map(m=>`<div class="cmsg ${m.w}">${m.w==="them"?`<img class="cav" src="${faceSrc(f.id,"happy","casual")}" alt="">`:""}<p>${esc(m.t)}${m.s===2?`<i class="chrt">${HEART_PX}</i>`:""}</p></div>`).join("");
+  const msgs=C.log.map(m=>`<div class="cmsg ${m.w}">${m.w==="them"?`<img class="cav" src="${faceSrc(f.id,"happy","casual")}" alt="">`:""}<p>${esc(m.w==="them"&&typeof nameCall==="function"?nameCall(C.id,m.t):m.t)}${m.s===2?`<i class="chrt">${HEART_PX}</i>`:""}</p></div>`).join("");
   const e=!C.done&&!C.typing&&C.x[C.i];
   return {foot:false,body:`<div class="chatw px"><div class="chead"><img src="${faceSrc(f.id,"happy","casual")}" alt=""><span><b>${esc(f.name)}</b><small>${C.typing?"กำลังพิมพ์…":"ออนไลน์"}</small></span><span class="cbond">${HEART_PX}<b class="num">${Math.round(f.bond||0)}</b></span></div>
    <div class="cbody pxscroll" data-sk="chat">${msgs}${C.typing?`<div class="cmsg them typing"><img class="cav" src="${faceSrc(f.id,"happy","casual")}" alt=""><p><i></i><i></i><i></i></p></div>`:""}</div>

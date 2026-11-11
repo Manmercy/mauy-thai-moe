@@ -596,6 +596,32 @@ EVENTS.push(
  tempt("fah",22,[{n:"nar",t:"Fah shows up at the gate on a small motorbike"},{n:"fah",f:"angry",t:"Hey! Free? Let's go eat moo kratha, Fah's paying! …Don't get the wrong idea, just don't wanna eat alone!"}]));
 
 // v1.13: Kru Daeng goes home for a short break — no coach hints while he is away
+// v1.35: trust scenes, and the coach spells out what trust is for
+EVENTS.push(
+ {id:"trust_explain",look:"train",when:G=>G.week>=5,bg:"gym",steps:[
+  {n:"coach",t:G=>`${ME(G)}, do you know why some fighters follow the corner instantly, and others just stand there confused?`},
+  {n:"coach",t:"It's trust. If they trust us, corner orders turn into real weapons, and a loss doesn't break their spirit. Check the fighter info, that gold bar"},
+  {n:"kati",f:"happy",l:"train",t:G=>`I already trust ${ME(G)}! …Except when you say 'just one more lap'`},
+  {n:"coach",t:"Trust comes from making merit together, wai khru, not training until you break, and a camp that isn't in the red. It builds up slowly",fx:G=>add(G,"kati","trust",2)}]},
+ {id:"trust_merit_kati",look:"casual",when:G=>G.week>=9&&inCamp(G,"kati"),bg:"temple",steps:[
+  {n:"nar",t:"5:30 a.m. Kati knocks on the door with a bowl of hot rice. Today is Grandpa Chai's birthday"},
+  {n:"npc",who:"Grandma Pen, by the temple",t:"Oh, little Kati! And who's this… ah, the new manager Grandpa Chai left the camp to? He used to praise you to me all the time"},
+  {n:"kati",f:"flustered",l:"casual",t:G=>`Grandma, you're exaggerating! …But I'm glad ${ME(G)} came along. Every year I give alms by myself`},
+  {choice:[{t:"Let's come together again next year",fx:G=>{add(G,"kati","trust",6);add(G,"kati","bond",2);},then:[{n:"kati",f:"happy",l:"casual",t:"It's a promise! I'm writing it on the calendar"},{n:"npc",who:"Grandma Pen, by the temple",t:"Good, good. Grandma has leftover mango sticky rice, take some back to camp"}]},
+   {t:"Grandpa Chai must be proud of you, Kati",fx:G=>{add(G,"kati","trust",4);add(G,"kati","morale",6);},then:[{n:"kati",f:"sad",l:"casual",t:"…Thank you. I'll fight lots more for Grandpa to see"}]}]},
+  {n:"nar",t:"(Kati's trust went up)"}]},
+ {id:"trust_fish_mali",look:"casual",when:G=>G.week>=12&&inCamp(G,"mali"),bg:"river",steps:[
+  {n:"nar",t:"Mali brings home a bag of three eels from the market, saying she'll release them to make merit"},
+  {n:"mali",f:"happy",l:"casual",t:G=>`Back home in Chaiya, Mom takes me to release fish every year. She can't come this year… ${ME(G)}, would you stand in for Mom?`},
+  {n:"nar",t:"The third eel refuses to go in the water and wraps around Mali's leg instead. The scream reaches the bridge"},
+  {choice:[{t:"(calmly help catch the eel)",fx:G=>{add(G,"mali","trust",6);},then:[{n:"mali",f:"flustered",l:"casual",t:G=>`${ME(G)}, you're so good at this… I'm telling Mom someone caught an eel for me`}]},
+   {t:"(laugh until your stomach hurts)",fx:G=>{add(G,"mali","trust",3);add(G,"mali","bond",3);},then:[{n:"mali",f:"pout",l:"casual",t:"It's not funny! …Hehe, okay, it's a little funny"}]}]},
+  {n:"nar",t:"(Mali's trust went up)"}]},
+ {id:"trust_plan_rin",look:"casual",when:G=>G.week>=16&&inCamp(G,"rin"),bg:"cafe",steps:[
+  {n:"rin",f:"happy",l:"casual",t:G=>`${ME(G)}, I made a three-page fight plan myself, the first one Coach Daeng hasn't checked. Will you let me use it?`},
+  {n:"nar",t:"The pages are full of arrows, numbers, and doodles of round fighters that look like steamed buns"},
+  {choice:[{t:"I trust your plan. Use it",fx:G=>{add(G,"rin","trust",8);add(G,"rin","morale",5);},then:[{n:"rin",f:"flustered",l:"casual",t:"…I can't measure 'trust', but I can feel it. Thank you"}]},
+   {t:"Let Coach Daeng look it over first",fx:G=>{add(G,"rin","trust",1);G.F.rin.a.iq=Math.min(20,G.F.rin.a.iq+.2);},then:[{n:"rin",f:"sad",l:"casual",t:"Understood. Caution makes sense… I'll do better"},{n:"nar",t:"(Coach Daeng fixes two spots; Rin writes down every word. Her ring IQ improves a little)"}]}]}]});
 EVENTS.push({id:"daeng_leave",look:"fight",when:G=>G.week>=29,bg:"camp",steps:[
   {n:"coach",t:"Boss, I'm taking two weeks' leave to go home to Surin. My niece is getting married"},
   {n:"coach",t:"I've written the training schedule on the wall. For now you make all the calls. I trust you"},
@@ -741,7 +767,23 @@ const POST_GENERIC={
 const QBUB={gang:{win:["Ha! Tell the vendors to get the interest ready!","Some fight camp! Go train again!"],lose:["Remember this! The helmet gang isn't done!","Ow… my helmet's dented, who's paying for it!","Tell the boss… this camp is the real deal!"],draw:["We'll let it go today!"]},
  rooster:{win:["Cock-a-doodle-doo!! (stands on the ropes crowing for three minutes)","(pecks the canvas three times as if counting its own points)"],lose:["…Bawk (walks out of the ring, head hanging)","Bok… (loses two feathers but keeps its beak high)"],draw:["Bawk?"]},
  bull:{win:["Moooooo!! (swishes its tail around the ring)","(pushes the corner post with its horns until it tilts)"],lose:["Moo… (lies down in the middle of the ring, won't get up until it gets grass)","(walks back to the pen, the cowbell silent now)"],draw:["Moo?"]}};
-function postBubble(op,res,seed){const R=a=>a[Math.abs(seed)%a.length];
+// v1.35: a lot more (and sillier) parting words; {me} becomes the player's name
+POST_GENERIC.win.push("Tell Manager {me} it's time to buy new gloves","Two plates of khao man gai this morning, full power!","Don't cry now… here, a tissue","My mom's watching live! Mom! I won!",
+ "Sirichai Camp… nice name. I'll remember it","Selfie? For my page, so people know who I beat","Come back next time, but train first, okay?","{me}! If you get bored of that camp, come to mine!",
+ "I won because I prayed at the spirit house twice this morning","Right, moo kratha to celebrate! …You're not invited");
+POST_GENERIC.lose.push("I didn't lose, the gloves were slippery!","Manager {me}, right? Your fighter hits like a truck","I was going easy on you… really… you don't believe me?",
+ "My mom's watching the livestream… Mom, turn it off please","Can I borrow an ice pack? My camp forgot to bring one","I'm going home to sell som tam with Mom… kidding, see you again!",
+ "Who turned on the AC in the ring! I'm too cold to punch!","Wait, round five already? I only counted three","What did you eat today? Give me the recipe","Good… very good… could someone call an ambulance, no siren please");
+POST_GENERIC.draw.push("A draw… split the purse half and half? Kidding","Nobody lost, nobody won, but I'm more tired");
+POST_BUBBLE.ploy.win.push("Ten years too early… no, five. You keep getting faster","Tell Manager {me} I'm waiting in the final");
+POST_BUBBLE.ploy.lose.push("…I won't cry in front of you. Tonight, maybe","My grandma would be glad to see me lose to someone truly good");
+POST_BUBBLE.fah.win.push("Ha! Who's queen of the subdistrict? Fah!","Tell {me} Fah's treating everyone to sausage to celebrate, and he's not invited!","Iron Fist is watching from home! He must be so proud!");
+POST_BUBBLE.fah.lose.push("…Fah's not crying! Dust in the eye! This ring is dusty!","Rematch! Tomorrow! Right now! …Let me sit down for a sec first","Tell {me} not to send someone this good next time!");
+QBUB.gang.win.push("The boss is giving me a bonus for sure, haha!","Tell {me} this month's interest just went up ten percent!");
+QBUB.gang.lose.push("Mom! My helmet's dented! …Er, not Mom, Boss!","I just came to buy vegetables, not collect interest, honest","Can I get the camp's number? …I want to sign up for classes");
+QBUB.rooster.win.push("(struts around the ring like a beauty queen)","Cock-a-doodle! (crows into the announcer's mic until the whole fair hears feedback)");QBUB.rooster.lose.push("(plays dead mid-ring, one eye open, peeking)","(flies onto the tent roof and refuses to come down)");
+QBUB.bull.win.push("(chews its cud like a champion)","MOO! (stands on the canvas until one corner of the ring caves in)");QBUB.bull.lose.push("(turns its rear to the referee and walks off)","Moo… (walks to its owner, asking to go home)");
+function postBubble(op,res,seed){const R=a=>a[Math.abs(seed)%a.length].replace(/\{me\}/g,typeof G!=="undefined"&&G?G.player.name:"");
   if(op.grp&&QBUB[op.grp])return R(QBUB[op.grp][res]||QBUB[op.grp].draw);
   if(POST_BUBBLE[op.id]&&res!=="draw")return R(POST_BUBBLE[op.id][res]);
   const P=typeof PERSONA!=="undefined"&&PERSONA[op.name];if(P&&res==="win"&&seed%3===0)return P.line;
