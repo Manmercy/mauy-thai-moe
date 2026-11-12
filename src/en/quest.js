@@ -373,7 +373,8 @@ function bagChart(G,dk,salt=0){const D=BAG_DIFF[dk],beat=60/D.bpm,half=beat/2,N=
 const MG_MODES={
  bag:{icon:"🥁",title:"Bag Kicks to the Khong Khaek Drum",L:"Dum",R:"Tek",Ls:"Kick",Rs:"Punch",note:"Kick/punch rhythm training · stats, morale, stardust",open:G=>G.week>=2},
  somtam:{icon:"🥗",title:"Som Tam at Auntie Taew's",L:"Pound",R:"Toss",Ls:"Pestle",Rs:"Spoon",note:"Help Auntie Taew's stall at rush hour · earn pay and a little fame",open:G=>G.week>=4}};
-function mgPlayed(G,m){const k=m||"bag";return !!(G.mini&&G.mini[k+"Wk"]===G.week&&G.mini[k+"S"]===(G.season||1));}
+const MG_ACT={bag:"drum",somtam:"somtam",live:"promo"};
+function mgPlayed(G,m){return !!G.campUsed;}/* v1.68: a minigame is the week's camp activity — once one is used, replays are practice */
 function bagPlayed(G){return mgPlayed(G,"bag");}
 function mgChipText(G){return Object.entries(MG_MODES).filter(([k,M])=>M.open(G)).map(([k,M])=>M.icon+(mgPlayed(G,k)?"✓":"")).join(" ");}
 function bagFighters(G){return roster(G).filter(f=>f.camp==="player"&&!f.injury);}
@@ -387,6 +388,8 @@ const BAG={st:null,
   open(){const F=bagFighters(G);if(!F.length){toast("No fighter is fit to train");return;}
     const pick=(G.mini&&G.mini.bagLast&&F.find(f=>f.id===G.mini.bagLast))||F.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];
     this.st={phase:"hub",mode:"bag",id:pick.id,dk:(G.mini&&G.mini.bagDk)||"normal",practice:false};this.mount();this.draw();},
+  openMode(m,act){const F=bagFighters(G);if(!F.length){toast("No fighter is fit to train");return;}const pick=(G.mini&&G.mini.bagLast&&F.find(f=>f.id===G.mini.bagLast))||F.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];
+    this.st={phase:"pick",mode:m,act,id:pick.id,dk:(G.mini&&G.mini.bagDk)||"normal",practice:false};this.mount();if(m==="live"){LIVE.pick();LIVE.st.practice=false;LIVE.st.act=act;LIVE.draw();}else this.draw();},
   mount(){let el=document.getElementById("minibag");if(!el){el=document.createElement("div");el.id="minibag";el.className="mgame";document.body.appendChild(el);}
     el.onclick=e=>{const lv=e.target.closest("[data-lv]");if(lv&&typeof LIVE!=="undefined"){LIVE.act(lv.dataset.lv,lv.dataset.v);return;}const b=e.target.closest("[data-mb]");if(!b)return;const a=b.dataset.mb,v=b.dataset.v;
       if(a==="mode"&&MG_MODES[v]&&MG_MODES[v].custom){this.st.mode=v;LIVE.pick();}else if(a==="mode"){this.st.mode=v;this.st.phase="pick";this.st.practice=mgPlayed(G,v);this.draw();}else if(a==="hub"){this.st.phase="hub";this.draw();}else if(a==="pick"){this.st.id=v;this.draw();}else if(a==="dk"){this.st.dk=v;this.draw();}else if(a==="go")this.start();else if(a==="close")this.close();else if(a==="claim")this.claim();else if(a==="again"){this.st.phase="pick";this.st.practice=mgPlayed(G,this.st.mode);this.draw();}};
@@ -406,7 +409,7 @@ const BAG={st:null,
        <div class="mbpick">${F.map(x=>`<button class="mbf ${x.id===S.id?"on":""}" data-mb="pick" data-v="${x.id}"><img src="${faceSrc(x.id,"happy")}" alt=""><small>${esc(x.name)}</small></button>`).join("")}</div>
        <div class="mbdk">${Object.entries(BAG_DIFF).map(([k,d])=>`<button class="btn sm ${k===S.dk?"primary":""}" data-mb="dk" data-v="${k}">${d.name}${best[k]?` · ${best[k]}`:""}</button>`).join("")}</div>
        <p class="meta center">${S.practice?"Already played this week · this run is practice, no rewards":S.mode==="bag"?"Weekly reward: kick/punch · morale · stardust ✦ · an S unlocks a card":"Weekly reward: pay from Auntie Taew · fame · stardust ✦ · an S unlocks a card"}</p>
-       <div class="mfoot roadbtns"><button class="btn" data-mb="hub">◂ Back</button><button class="btn primary" data-mb="go">Start! ▸</button></div></div>`;return;}
+       <div class="mfoot roadbtns"><button class="btn" data-mb="close">Later</button><button class="btn primary" data-mb="go">Start! ▸</button></div></div>`;return;}
     if(S.phase==="play"){el.innerHTML=`<div class="mplay"><div class="mhud"><b>${esc(f.name)}</b><span>Combo <b id="mbc">0</b></span><span>Score <b id="mbs">0</b></span><button class="xbtn" data-mb="close" aria-label="Quit">✕</button></div>
        <canvas id="mbcv" width="360" height="300"></canvas>
        <div class="mbtns"><button class="mbtn L ${S.mode}" id="mbL"><b>${M.L}</b><small>${M.Ls} · F</small></button><button class="mbtn R ${S.mode}" id="mbR"><b>${M.R}</b><small>${M.Rs} · J</small></button></div></div>`;
@@ -417,7 +420,7 @@ const BAG={st:null,
        <p class="center"><b>${R.score}</b> pts · Max combo ${R.maxc} · Accuracy ${Math.round(R.acc*100)}%</p>
        <p class="center meta">Perfect ${R.c.perfect} · Great ${R.c.great} · OK ${R.c.ok} · Miss ${R.c.miss}${R.best?" · <b class=\"goldt\">New record!</b>":""}</p>
        ${S.practice?`<p class="center meta">Practice mode · no rewards</p>`:`<p class="center">${R.rw}</p>`}
-       <div class="mfoot roadbtns"><button class="btn" data-mb="hub">Other games</button><button class="btn" data-mb="again">Play again</button><button class="btn primary" data-mb="close">Back to camp</button></div></div>`;}},
+       <div class="mfoot roadbtns"><button class="btn" data-mb="again">Play again (practice)</button><button class="btn primary" data-mb="close">Back to camp</button></div></div>`;}},
   start(){const S=this.st;AU.resume&&AU.resume();try{AU.stopMusic();}catch(e){}
     G.mini=G.mini||{};G.mini.bagLast=S.id;G.mini.bagDk=S.dk;
     const C=bagChart(G,S.dk,S.mode==="somtam"?5000:0);S.notes=C.notes;S.end=C.end;S.beat=C.beat;S.phase="play";S.score=0;S.combo=0;S.maxc=0;S.c={perfect:0,great:0,ok:0,miss:0};S.fx=[];S.hitT=-9;S.hitK="L";
@@ -468,7 +471,7 @@ const BAG={st:null,
     G.mini=G.mini||{};G.mini.best=G.mini.best||{};if(typeof G.mini.best.easy==="number"){G.mini.best={bag:G.mini.best};}const B=G.mini.best[S.mode]=G.mini.best[S.mode]||{};const isBest=S.score>(B[S.dk]||0);if(isBest)B[S.dk]=S.score;
     S.res={acc,grade,score:S.score,maxc:S.maxc,c,best:isBest,rw:""};
     if(!S.practice)S.res.rw=this.reward(grade,acc);save();this.draw();AU.sfx&&AU.sfx(grade==="S"||grade==="A"?"level":"ui");},
-  reward(grade,acc){const S=this.st;G.mini[S.mode+"Wk"]=G.week;G.mini[S.mode+"S"]=G.season||1;return S.mode==="somtam"?this.rewardTam(grade,acc):this.rewardBag(grade,acc);},
+  reward(grade,acc){const S=this.st;G.campUsed=S.act||MG_ACT[S.mode];const r=S.mode==="somtam"?this.rewardTam(grade,acc):this.rewardBag(grade,acc);G.campNote=`${CAMP_ACTIONS[G.campUsed].name} · grade ${grade}`;return r;},
   rewardTam(grade,acc){const S=this.st,f=G.F[S.id],D=BAG_DIFF[S.dk],out=[];
     const pay=Math.round({S:1200,A:850,B:550,C:250}[grade]*D.mul/50)*50;G.cash+=pay;out.push(`<b class="goldt">฿${pay.toLocaleString()}</b>`);
     if(grade==="S"||grade==="A"){G.rep=Math.round(((G.rep||0)+(grade==="S"?.3:.15))*100)/100;out.push(`Fame +${grade==="S"?.3:.15}`);}
@@ -555,7 +558,7 @@ const LIVE={st:null,
        <p class="meta center">${esc(LIVE_HOST[S.host]||"")}</p>
        <b class="meta">What to sell</b><div class="lvitems">${this.items(G).map(i=>`<button class="btn sm ${i.k===S.item?"primary":""}" data-lv="item" data-v="${i.k}">${i.name} ฿${i.price}</button>`).join("")}</div>
        <p class="meta center">${S.practice?"Already streamed this week · this run is practice, no income":"One live a week · earn profit from sales · fame · stardust"}${best?` · best sales ${best} sold`:""}</p>
-       <div class="mfoot roadbtns"><button class="btn" data-lv="hub">◂ Back</button><button class="btn primary" data-lv="go">Go live! ▸</button></div></div>`;return;}
+       <div class="mfoot roadbtns"><button class="btn" data-mb="close">Later</button><button class="btn primary" data-lv="go">Go live! ▸</button></div></div>`;return;}
     if(S.phase==="play"){const h=G.F[S.host];
       el.innerHTML=`<div class="mplay lv"><div class="lvphone"><img class="lvface" src="${faceSrc(S.host,"happy")}" alt="">
         <div class="lvtop"><span class="lvlive">● LIVE</span><span>👁 <b id="lvv">0</b></span><span>🛒 <b id="lvs">0</b></span><span id="lvt">45</span></div>
@@ -566,7 +569,7 @@ const LIVE={st:null,
       el.innerHTML=`<div class="mbox px"><h2>Live Ended</h2><div class="mgrade g${R.grade}">${R.grade}</div>
        <p class="center">Sold <b>${S.sold}</b> · peak viewers ${S.peak} · good answers ${S.good}/${S.asked}${R.best?" · <b class=\"goldt\">New record!</b>":""}</p>
        ${S.practice?`<p class="center meta">Practice mode · no income</p>`:`<p class="center">${R.rw}</p>`}
-       <div class="mfoot roadbtns"><button class="btn" data-lv="hub">Other games</button><button class="btn" data-lv="again">Go live again</button><button class="btn primary" data-mb="close">Back to camp</button></div></div>`;}},
+       <div class="mfoot roadbtns"><button class="btn" data-lv="again">Go live again (practice)</button><button class="btn primary" data-mb="close">Back to camp</button></div></div>`;}},
   item(){return LIVE_ITEMS.find(i=>i.k===this.st.item)||LIVE_ITEMS[0];},
   start(){const S=this.st;AU.resume&&AU.resume();G.mini=G.mini||{};G.mini.liveHost=S.host;G.mini.liveItem=S.item;
     const pool=LIVE_POOL.filter(c=>!c.need||c.need(G));const R=(i)=>srand(G,3100+i*17+(G.mini.liveN||0)*7);
@@ -602,7 +605,7 @@ const LIVE={st:null,
     G.mini=G.mini||{};G.mini.best=G.mini.best||{};if(typeof G.mini.best.easy==="number")G.mini.best={bag:G.mini.best};G.mini.liveN=(G.mini.liveN||0)+1;
     const isBest=S.sold>(G.mini.best.live||0);if(isBest)G.mini.best.live=S.sold;
     S.res={grade,best:isBest,rw:""};if(!S.practice)S.res.rw=this.reward(grade);save();this.draw();AU.sfx&&AU.sfx(grade==="S"||grade==="A"?"level":"ui");},
-  reward(grade){const S=this.st,it=this.item(),f=G.F[S.host],out=[];G.mini.liveWk=G.week;G.mini.liveS=G.season||1;
+  reward(grade){const S=this.st,it=this.item(),f=G.F[S.host],out=[];G.campUsed=S.act||"promo";G.campNote=`${CAMP_ACTIONS.promo.name} · grade ${grade}`;
     const pay=Math.round(S.sold*it.margin*.7/10)*10;G.cash+=pay;out.push(`Profit <b class="goldt">฿${pay.toLocaleString()}</b>`);
     const rp={S:.4,A:.25,B:.1,C:0}[grade];if(rp){G.rep=Math.round(((G.rep||0)+rp)*100)/100;out.push(`Fame +${rp}`);}
     const du={S:5,A:3,B:2,C:1}[grade];G.dust=(G.dust||0)+du;out.push(`<b class="goldt">✦ +${du}</b>`);

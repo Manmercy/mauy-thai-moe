@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.67";
+const VERSION="1.68";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -334,7 +334,7 @@ function homeHTML(){const R=roster(G);
     <div class="goal ov">${goalText()}</div></div>
     ${G.campUsed?`<button class="campact done" data-act="campacts"><span class="ci">✓</span><span><small>กิจกรรมค่ายสัปดาห์นี้</small><b>${esc(CAMP_ACTIONS[G.campUsed].name)}</b></span></button>`
       :`<button class="campact" data-act="campacts"><span class="ci"></span><span><small>กิจกรรมค่ายสัปดาห์นี้ · ยังไม่ได้เลือก</small><b>เลือกกิจกรรมค่าย</b></span><span class="chev">▸</span></button>`}
-    ${petsRowHTML()}${typeof BAG!=="undefined"&&G.week>=2?`<button class="minichip ${Object.keys(MG_MODES).every(k=>!MG_MODES[k].open(G)||mgPlayed(G,k))?"done":""}" data-act="minibag"><span class="mi">🎮</span><span><b>มินิเกม</b><small>${mgChipText(G)} · รางวัลเกมละครั้งต่อสัปดาห์</small></span><span class="chev">▸</span></button>`:""}
+    ${petsRowHTML()}
     <div class="camp-info"><button class="cinfo" data-act="tab" data-v="camp"><small>ระดับค่าย</small><b>Lv.${lv} ${CAMP_LV_NAME[lv]}</b></button><button class="cinfo" data-act="studinfo"><small>นักเรียน</small><b>${students(G)}/${studentCap(G)} คน</b></button></div></section>
    <div class="side">${guide}<div class="fgrid">${R.map(fighterChip).join("")}</div></div></div>`;}
 function fighterMini(f){const c=condition(f);const nb=nextBooking(f);
@@ -637,7 +637,7 @@ function considerHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,
    <p class="meta">สัปดาห์ ${o.week} · ${TIER[o.tier].name} · ค่าตัว ${fmt(o.lose)} · ชนะได้เพิ่ม ${fmt(o.win-o.lose)}</p>
    <div class="mfoot"><button class="btn primary" data-act="closeModal">ปิด</button></div>`;}
 function actNear(a){let s=0;if(a.rep)s+=Math.max(0,a.rep-G.rep)*2;if(a.week)s+=Math.max(0,a.week-G.week);if(a.fac)s+=20;if(a.lv)s+=15;return s;}
-function campActsHTML(){const pk=UI.modal.pick;if(pk){const a=CAMP_ACTIONS[pk];return `<h2>ยืนยันกิจกรรม?</h2><div class="px confirm"><b>${a.name}</b><p class="meta">${a.desc}${a.cost?` · ค่าใช้จ่าย ${fmt(a.cost)}`:""}</p><p class="meta">ทำได้สัปดาห์ละ 1 อย่าง</p></div><div class="mfoot"><button class="btn ghost" data-act="campback">ย้อนกลับ</button><button class="btn primary" data-act="campok">ยืนยัน</button></div>`;}
+function campActsHTML(){const pk=UI.modal.pick;if(pk){const a=CAMP_ACTIONS[pk];return `<h2>ยืนยันกิจกรรม?</h2><div class="px confirm"><b>${a.name}</b><p class="meta">${a.desc}${a.cost?` · ค่าใช้จ่าย ${fmt(a.cost)}`:""}</p><p class="meta">ทำได้สัปดาห์ละ 1 อย่าง</p>${a.mg?`<p class="meta">เล่นมินิเกมเองได้ผลตามฝีมือ · หรือข้ามแล้วรับผลกลาง ๆ: ${a.skip}</p>`:""}</div><div class="mfoot"><button class="btn ghost" data-act="campback">ย้อนกลับ</button>${a.mg?`<button class="btn" data-act="campok">ข้าม (ผลกลาง ๆ)</button><button class="btn primary" data-act="campmg">🎮 เล่นเอง</button>`:`<button class="btn primary" data-act="campok">ยืนยัน</button>`}</div>`;}
   // v1.23: locked activities stay hidden except the next one to open, so the list stays short
   const all=Object.entries(CAMP_ACTIONS),open=all.filter(([k,a])=>!campActLocked(G,a)),lockd=all.filter(([k,a])=>campActLocked(G,a));
   const nx=lockd.sort((x,y)=>actNear(x[1])-actNear(y[1]))[0];
@@ -1206,6 +1206,7 @@ const ACT={
   studinfo:()=>{UI.modal={type:"studinfo"};render();},
   campick:d=>{UI.modal.pick=d.v;render();},campback:()=>{UI.modal.pick=null;render();},
   campok:()=>{ACT.campact({v:UI.modal.pick});},
+  campmg:()=>{const k=UI.modal.pick,a=CAMP_ACTIONS[k];if(!a||!a.mg||G.campUsed)return;UI.modal=null;render();BAG.openMode(a.mg,k);},
   cfxskip:()=>{if(UI.modal&&UI.modal.type==="campres"&&!UI.modal.skip){UI.modal.skip=true;const el=document.querySelector(".campres");if(el)el.classList.add("skip");}},
   campact:d=>{const note=doCampAction(G,d.v);if(note==null)return;G.campNote=note;AU.sfx("level");UI.modal={type:"campres",k:d.v,note};save();render();},
   date:d=>{UI.modal=null;UI.tab="people";const steps=dateScene(G,d.id,d.v);AU.startMusic("date");playScene(steps,()=>{AU.startMusic("hub");render();},{bg:ACTIVITIES[d.v].bg==="camp"?"gym":ACTIVITIES[d.v].bg,look:"casual"});},

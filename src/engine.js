@@ -473,8 +473,11 @@ function buyFacility(G,k){const F=FACILITIES[k],lv=G.fac[k]||0;if(lv>=F.cost.len
 function upgradeDaeng(G){const lv=G.fac.daeng;if(lv>=3)return false;const c=DAENG_COST[lv];if(G.cash<c)return false;G.cash-=c;G.fac.daeng++;return true;}
 const CAMP_ACTIONS={
   rest:{name:"วันหยุดค่าย (ไม่จัดกิจกรรม)",desc:"ไม่เสียเงิน ทุกคนได้พัก ความล้า -4",cost:0},
+  // v1.68: minigames live inside camp activities — play it yourself, or skip for an average result
+  drum:{name:"ซ้อมเตะกระสอบตามกลองแขก",desc:"🎮 มินิเกมจังหวะ · ค่าเตะ/หมัด กำลังใจ เศษดาว",skip:"ค่าเตะ/หมัด +0.1 · กำลังใจ +3 · ✦ +2",cost:0,mg:"bag"},
+  somtam:{name:"ช่วยร้านส้มตำป้าแต๋ว",desc:"🎮 มินิเกมจังหวะ · ค่าจ้าง ชื่อเสียง เศษดาว",skip:"ได้ ฿550 · กำลังใจ +3 · ✦ +1",cost:0,mg:"somtam"},
   class:{name:"สอนคลาสพิเศษวันอาทิตย์",desc:"ได้ ฿1,000 แต่นักมวยต้องช่วยสอน ความล้า +6",cost:0},
-  promo:{name:"โปรโมทค่ายออนไลน์",desc:"ชื่อเสียง +0.6",cost:1000},
+  promo:{name:"ไลฟ์ขายของ / โปรโมทค่ายออนไลน์",desc:"🎮 มินิเกมไลฟ์ · กำไรจากยอดขาย ชื่อเสียง เศษดาว",skip:"ชื่อเสียง +0.4",cost:0,mg:"live"},
   repair:{name:"ซ่อมแซมค่ายด้วยกัน",desc:"ค่ายสวยขึ้น กำลังใจ +3",cost:1500},
   merit:{name:"ทำบุญตักบาตรเช้า",desc:"กำลังใจทุกคน +5 ความเชื่อใจ +1",cost:300},
   // v1.13: more activities unlock as the camp's name grows
@@ -497,7 +500,9 @@ const campActLocked=(G,a)=>a.rep&&G.rep<a.rep?`ชื่อเสียง ${a.r
 function doCampAction(G,k){const A=CAMP_ACTIONS[k];if(!A||G.campUsed||G.cash<A.cost||campActLocked(G,A))return null;G.cash-=A.cost;G.campUsed=k;const R=roster(G);let note="";
   if(k==="rest"){R.forEach(f=>f.fatigue=clamp(f.fatigue-4,0,100));note="ทุกคนได้พักหายใจ ความล้าลดลงนิดหน่อย";}
   if(k==="class"){G.cash+=1000;R.forEach(f=>f.fatigue=clamp(f.fatigue+6,0,100));note="ได้เงินเพิ่ม ฿1,000 นักมวยเหนื่อยขึ้นนิดหน่อย";}
-  if(k==="promo"){G.rep+=.6;note="ชื่อเสียง +0.6";}
+  if(k==="promo"){G.rep+=.4;note="โพสต์โปรโมทค่ายตามปกติ ชื่อเสียง +0.4";}
+  if(k==="drum"){const f=R.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];if(f){f.a.kick=Math.min(20,f.a.kick+.1);f.a.punch=Math.min(20,f.a.punch+.1);}R.forEach(x=>x.morale=clamp(x.morale+3,0,100));G.dust=(G.dust||0)+2;note="ซ้อมตามกลองแขกกันเบา ๆ ค่าเตะ/หมัด +0.1 · ✦ +2";}
+  if(k==="somtam"){G.cash+=550;R.forEach(x=>x.morale=clamp(x.morale+3,0,100));G.dust=(G.dust||0)+1;note="ช่วยป้าแต๋วตำส้มตำ ได้ ฿550 · ✦ +1";}
   if(k==="repair"){G.camp.beauty=Math.min(10,G.camp.beauty+1);R.forEach(f=>f.morale=clamp(f.morale+3,0,100));note=`ค่ายสวยขึ้น (ระดับ ${G.camp.beauty}/10)`;}
   if(k==="clip"){G.rep+=.9;R.forEach(f=>f.fatigue=clamp(f.fatigue+3,0,100));note="คลิปมีคนแชร์ ชื่อเสียง +0.9";}
   if(k==="spar"){R.forEach(f=>{gainXP(G,f,25);f.fatigue=clamp(f.fatigue+8,0,100);});note="ทุกคนได้ประสบการณ์ +25";}
