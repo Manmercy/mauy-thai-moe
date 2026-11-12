@@ -366,39 +366,50 @@ Object.assign(ACT,{
 const BAG_DIFF={easy:{name:"Easy",bpm:92,bars:8,dens:0,mul:1},normal:{name:"Normal",bpm:108,bars:10,dens:1,mul:1.25},hard:{name:"Hard",bpm:124,bars:12,dens:2,mul:1.6}};
 const BAG_PAT=[["L...L...","L...R...","R...R...","L.L.R...","L...R.R.","R...L..."],["L.R.L.R.","LLR.L...","L.RRL...","R.L.R.L.","L.L.RR.."],["LRLRL.R.","L.LRR.L.","RRL.RRL.","LLRRL.R.","LRRLLRR."]];
 const BAG_WIN={perfect:.06,great:.12,ok:.19};
-function bagChart(G,dk){const D=BAG_DIFF[dk],beat=60/D.bpm,half=beat/2,N=[];let t=4*beat;/* one bar of count-in */
-  for(let b=0;b<D.bars;b++){const pool=[].concat(...BAG_PAT.slice(0,D.dens+1));const p=b===D.bars-1?"L.......":pool[Math.floor(srand(G,700+b*13+D.dens*101+G.week)*pool.length)];
+function bagChart(G,dk,salt=0){const D=BAG_DIFF[dk],beat=60/D.bpm,half=beat/2,N=[];let t=4*beat;/* one bar of count-in */
+  for(let b=0;b<D.bars;b++){const pool=[].concat(...BAG_PAT.slice(0,D.dens+1));const p=b===D.bars-1?"L.......":pool[Math.floor(srand(G,700+salt+b*13+D.dens*101+G.week)*pool.length)];
     for(let i=0;i<8;i++){if(p[i]!==".")N.push({t:t+i*half,k:p[i],j:null});}t+=4*beat;}
   return {notes:N,end:t+beat,beat};}
-function bagPlayed(G){return !!(G.mini&&G.mini.bagWk===G.week&&G.mini.bagS===(G.season||1));}
+const MG_MODES={
+ bag:{icon:"🥁",title:"Bag Kicks to the Khong Khaek Drum",L:"Dum",R:"Tek",Ls:"Kick",Rs:"Punch",note:"Kick/punch rhythm training · stats, morale, stardust",open:G=>G.week>=2},
+ somtam:{icon:"🥗",title:"Som Tam at Auntie Taew's",L:"Pound",R:"Toss",Ls:"Pestle",Rs:"Spoon",note:"Help Auntie Taew's stall at rush hour · earn pay and a little fame",open:G=>G.week>=4}};
+function mgPlayed(G,m){const k=m||"bag";return !!(G.mini&&G.mini[k+"Wk"]===G.week&&G.mini[k+"S"]===(G.season||1));}
+function bagPlayed(G){return mgPlayed(G,"bag");}
+function mgChipText(G){return Object.entries(MG_MODES).filter(([k,M])=>M.open(G)).map(([k,M])=>M.icon+(mgPlayed(G,k)?"✓":"")).join(" ");}
 function bagFighters(G){return roster(G).filter(f=>f.camp==="player"&&!f.injury);}
 const BAG={st:null,
   clock(){return AU.ctx?AU.ctx.currentTime:performance.now()/1000;},
   drum(k,t){if(!AU.ctx||AU.muted)return;try{if(k==="L"){AU.tone(t,{f:150,to:55,type:"sine",dur:.28,peak:.9,bus:AU.sfxBus});AU.noiseHit(t,{f:420,dur:.08,peak:.5});}
     else{AU.noiseHit(t,{f:2600,type:"bandpass",q:2.2,dur:.07,peak:.7});AU.tone(t,{f:340,to:300,type:"triangle",dur:.09,peak:.35,bus:AU.sfxBus});}}catch(e){}},
+  wood(k,t){if(!AU.ctx||AU.muted)return;try{if(k==="L"){AU.noiseHit(t,{f:700,dur:.06,peak:.8});AU.tone(t,{f:240,to:120,type:"triangle",dur:.12,peak:.6,bus:AU.sfxBus});}
+    else{AU.noiseHit(t,{f:5200,type:"highpass",q:.7,dur:.09,peak:.35,sweep:.6});}}catch(e){}},
   ching(t,open){if(!AU.ctx||AU.muted)return;try{AU.tone(t,{f:open?2350:2100,type:"sine",dur:open?.5:.08,peak:open?.16:.12,bus:AU.sfxBus});AU.tone(t,{f:open?3130:2900,type:"sine",dur:open?.35:.06,peak:.07,bus:AU.sfxBus});}catch(e){}},
   open(){const F=bagFighters(G);if(!F.length){toast("No fighter is fit to train");return;}
     const pick=(G.mini&&G.mini.bagLast&&F.find(f=>f.id===G.mini.bagLast))||F.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];
-    this.st={phase:"pick",id:pick.id,dk:(G.mini&&G.mini.bagDk)||"normal",practice:bagPlayed(G)};this.mount();this.draw();},
+    this.st={phase:"hub",mode:"bag",id:pick.id,dk:(G.mini&&G.mini.bagDk)||"normal",practice:false};this.mount();this.draw();},
   mount(){let el=document.getElementById("minibag");if(!el){el=document.createElement("div");el.id="minibag";el.className="mgame";document.body.appendChild(el);}
     el.onclick=e=>{const b=e.target.closest("[data-mb]");if(!b)return;const a=b.dataset.mb,v=b.dataset.v;
-      if(a==="pick"){this.st.id=v;this.draw();}else if(a==="dk"){this.st.dk=v;this.draw();}else if(a==="go")this.start();else if(a==="close")this.close();else if(a==="claim")this.claim();else if(a==="again"){this.st.phase="pick";this.st.practice=bagPlayed(G);this.draw();}};
+      if(a==="mode"){this.st.mode=v;this.st.phase="pick";this.st.practice=mgPlayed(G,v);this.draw();}else if(a==="hub"){this.st.phase="hub";this.draw();}else if(a==="pick"){this.st.id=v;this.draw();}else if(a==="dk"){this.st.dk=v;this.draw();}else if(a==="go")this.start();else if(a==="close")this.close();else if(a==="claim")this.claim();else if(a==="again"){this.st.phase="pick";this.st.practice=mgPlayed(G,this.st.mode);this.draw();}};
     if(!this.keyH){this.keyH=e=>{if(!this.st||this.st.phase!=="play")return;const k=e.key.toLowerCase();if(e.repeat)return;
       if(k==="f"||k==="d"||k==="arrowleft"){e.preventDefault();this.hit("L");}else if(k==="j"||k==="k"||k==="arrowright"){e.preventDefault();this.hit("R");}else if(k==="escape")this.close();};
       document.addEventListener("keydown",this.keyH);
       document.addEventListener("visibilitychange",()=>{if(document.hidden&&this.st&&this.st.phase==="play"){this.st.phase="abort";cancelAnimationFrame(this.raf);this.draw();}});}},
   close(){cancelAnimationFrame(this.raf);const el=document.getElementById("minibag");if(el)el.remove();this.st=null;try{AU.startMusic("hub");}catch(e){}if((G.cardPend||[]).length&&!UI.modal)UI.modal={type:"cardnew"};render();},
   draw(){const S=this.st,el=document.getElementById("minibag");if(!S||!el)return;const F=bagFighters(G),f=G.F[S.id];
-    if(S.phase==="pick"){const best=(G.mini&&G.mini.best)||{};
-      el.innerHTML=`<div class="mbox px"><h2>🥁 Bag Kicks to the Khong Khaek Drum</h2>
-       <p class="meta">Hit when a note reaches the circle · <b class="mbL">Dum</b> = kick (left button / F) · <b class="mbR">Tek</b> = punch (right button / J)</p>
+    const M=MG_MODES[S.mode];
+    if(S.phase==="hub"){el.innerHTML=`<div class="mbox px"><h2>🎮 Minigames</h2><p class="meta center">Each game gives a reward once a week · replay as practice anytime</p>
+       <div class="mghub">${Object.entries(MG_MODES).map(([k,X])=>{const op=X.open(G),pl=mgPlayed(G,k);return `<button class="mgitem ${pl?"done":""}" data-mb="mode" data-v="${k}" ${op?"":"disabled"}><span class="mi">${X.icon}</span><span><b>${X.title}</b><small>${op?(pl?"Reward claimed this week ✓":X.note):"Not open yet"}</small></span><span class="chev">▸</span></button>`;}).join("")}</div>
+       <div class="mfoot roadbtns"><button class="btn" data-mb="close">Back to camp</button></div></div>`;return;}
+    if(S.phase==="pick"){const best=((G.mini&&G.mini.best)||{})[S.mode]||{};
+      el.innerHTML=`<div class="mbox px"><h2>${M.icon} ${M.title}</h2>
+       <p class="meta">Hit when a note reaches the circle · <b class="mbL">${M.L}</b> = ${M.Ls} (left button / F) · <b class="mbR">${M.R}</b> = ${M.Rs} (right button / J)</p>
        <div class="mbpick">${F.map(x=>`<button class="mbf ${x.id===S.id?"on":""}" data-mb="pick" data-v="${x.id}"><img src="${faceSrc(x.id,"happy")}" alt=""><small>${esc(x.name)}</small></button>`).join("")}</div>
        <div class="mbdk">${Object.entries(BAG_DIFF).map(([k,d])=>`<button class="btn sm ${k===S.dk?"primary":""}" data-mb="dk" data-v="${k}">${d.name}${best[k]?` · ${best[k]}`:""}</button>`).join("")}</div>
-       <p class="meta center">${S.practice?"Already played this week · this run is practice, no rewards":"Weekly reward: kick/punch · morale · stardust ✦ · an S unlocks a card"}</p>
-       <div class="mfoot roadbtns"><button class="btn" data-mb="close">Later</button><button class="btn primary" data-mb="go">Start! ▸</button></div></div>`;return;}
+       <p class="meta center">${S.practice?"Already played this week · this run is practice, no rewards":S.mode==="bag"?"Weekly reward: kick/punch · morale · stardust ✦ · an S unlocks a card":"Weekly reward: pay from Auntie Taew · fame · stardust ✦ · an S unlocks a card"}</p>
+       <div class="mfoot roadbtns"><button class="btn" data-mb="hub">◂ Back</button><button class="btn primary" data-mb="go">Start! ▸</button></div></div>`;return;}
     if(S.phase==="play"){el.innerHTML=`<div class="mplay"><div class="mhud"><b>${esc(f.name)}</b><span>Combo <b id="mbc">0</b></span><span>Score <b id="mbs">0</b></span><button class="xbtn" data-mb="close" aria-label="Quit">✕</button></div>
        <canvas id="mbcv" width="360" height="300"></canvas>
-       <div class="mbtns"><button class="mbtn L" id="mbL"><b>Dum</b><small>Kick · F</small></button><button class="mbtn R" id="mbR"><b>Tek</b><small>Punch · J</small></button></div></div>`;
+       <div class="mbtns"><button class="mbtn L ${S.mode}" id="mbL"><b>${M.L}</b><small>${M.Ls} · F</small></button><button class="mbtn R ${S.mode}" id="mbR"><b>${M.R}</b><small>${M.Rs} · J</small></button></div></div>`;
       const pd=k=>e=>{e.preventDefault();this.hit(k);};document.getElementById("mbL").addEventListener("pointerdown",pd("L"));document.getElementById("mbR").addEventListener("pointerdown",pd("R"));return;}
     if(S.phase==="abort"){el.innerHTML=`<div class="mbox px"><h2>Stopped</h2><p class="meta center">You switched apps or the screen turned off, so the song stopped · this week's reward is still available</p><div class="mfoot roadbtns"><button class="btn" data-mb="close">Close</button><button class="btn primary" data-mb="again">Play again</button></div></div>`;return;}
     if(S.phase==="result"){const R=S.res;
@@ -406,16 +417,16 @@ const BAG={st:null,
        <p class="center"><b>${R.score}</b> pts · Max combo ${R.maxc} · Accuracy ${Math.round(R.acc*100)}%</p>
        <p class="center meta">Perfect ${R.c.perfect} · Great ${R.c.great} · OK ${R.c.ok} · Miss ${R.c.miss}${R.best?" · <b class=\"goldt\">New record!</b>":""}</p>
        ${S.practice?`<p class="center meta">Practice mode · no rewards</p>`:`<p class="center">${R.rw}</p>`}
-       <div class="mfoot roadbtns"><button class="btn" data-mb="again">Play again</button><button class="btn primary" data-mb="close">Back to camp</button></div></div>`;}},
+       <div class="mfoot roadbtns"><button class="btn" data-mb="hub">Other games</button><button class="btn" data-mb="again">Play again</button><button class="btn primary" data-mb="close">Back to camp</button></div></div>`;}},
   start(){const S=this.st;AU.resume&&AU.resume();try{AU.stopMusic();}catch(e){}
     G.mini=G.mini||{};G.mini.bagLast=S.id;G.mini.bagDk=S.dk;
-    const C=bagChart(G,S.dk);S.notes=C.notes;S.end=C.end;S.beat=C.beat;S.phase="play";S.score=0;S.combo=0;S.maxc=0;S.c={perfect:0,great:0,ok:0,miss:0};S.fx=[];S.hitT=-9;S.hitK="L";
+    const C=bagChart(G,S.dk,S.mode==="somtam"?5000:0);S.notes=C.notes;S.end=C.end;S.beat=C.beat;S.phase="play";S.score=0;S.combo=0;S.maxc=0;S.c={perfect:0,great:0,ok:0,miss:0};S.fx=[];S.hitT=-9;S.hitK="L";
     this.draw();S.t0=this.clock()+.6;const nb=Math.round(S.end/S.beat);for(let i=0;i<nb;i++)this.ching(S.t0+i*S.beat,i%2===0);
     const cv=document.getElementById("mbcv");S.x=cv.getContext("2d");S.x.imageSmoothingEnabled=false;const loop=()=>{if(!this.st||this.st.phase!=="play")return;this.frame();this.raf=requestAnimationFrame(loop);};this.raf=requestAnimationFrame(loop);},
   now(){return this.clock()-this.st.t0;},
   judge(n,q){const S=this.st;n.j=q;S.c[q]++;if(q==="miss"){S.combo=0;}else{S.combo++;S.maxc=Math.max(S.maxc,S.combo);S.score+=({perfect:100,great:70,ok:40})[q]+Math.min(50,S.combo*2);}
     S.fx.push({q,t:this.now()});const c=document.getElementById("mbc"),s=document.getElementById("mbs");if(c)c.textContent=S.combo;if(s)s.textContent=S.score;},
-  hit(k){const S=this.st;if(!S||S.phase!=="play")return;const t=this.now();this.drum(k,this.clock());S.hitT=t;S.hitK=k;
+  hit(k){const S=this.st;if(!S||S.phase!=="play")return;const t=this.now();if(S.mode==="somtam")this.wood(k,this.clock());else this.drum(k,this.clock());S.hitT=t;S.hitK=k;
     const btn=document.getElementById(k==="L"?"mbL":"mbR");if(btn){btn.classList.remove("hit");void btn.offsetWidth;btn.classList.add("hit");}
     let best=null,bd=9;for(const n of S.notes){if(n.j)continue;const d=Math.abs(n.t-t);if(d<bd){bd=d;best=n;}if(n.t-t>BAG_WIN.ok)break;}
     if(!best||bd>BAG_WIN.ok)return;/* stray tap: no penalty */
@@ -426,11 +437,17 @@ const BAG={st:null,
     if(t>S.end+.4){this.finish();return;}
     x.clearRect(0,0,W,H);x.fillStyle="#1b1530";x.fillRect(0,0,W,H);
     // fighter + heavy bag (same drawing as the training drill)
-    const dt=(t-S.hitT)*1000,hit=dt>=0&&dt<450;const row=hit?(S.hitK==="L"?"knee":"punch"):"guard";const fr=hit?Math.min(3,Math.floor(dt/90)):Math.floor(performance.now()/260)%4;
+    const dt=(t-S.hitT)*1000,hit=dt>=0&&dt<450;const row=hit?(S.mode==="somtam"?"punch":S.hitK==="L"?"knee":"punch"):(S.mode==="somtam"?"idle":"guard");const fr=hit?Math.min(3,Math.floor(dt/90)):Math.floor(performance.now()/260)%4;
     x.fillStyle="rgba(0,0,0,.35)";x.beginPath();x.ellipse(W*.4,196,40,6,0,0,7);x.fill();
-    const sw=hit?Math.sin(dt/80)*Math.max(0,1-dt/450)*9:Math.sin(performance.now()/700)*1.2,bx=W*.6+sw,by=34;
+    if(S.mode==="somtam"){/* stall table, clay mortar, wooden pestle */const mx=W*.62;x.fillStyle="#6b4a2b";x.fillRect(W*.42,150,W*.5,10);x.fillStyle="#4a3220";x.fillRect(W*.45,160,6,40);x.fillRect(W*.86,160,6,40);
+      x.fillStyle="#2a1a10";x.fillRect(mx-30,112,60,40);x.fillStyle="#b5653a";x.fillRect(mx-28,114,56,36);x.fillStyle="#d07a48";x.fillRect(mx-28,114,10,36);x.fillStyle="#7a3d20";x.fillRect(mx-24,114,48,6);
+      x.fillStyle="#9fd36a";for(let i=0;i<5;i++)x.fillRect(mx-20+i*9,108+(i%2)*2,6,6);x.fillStyle="#e84a3a";x.fillRect(mx-8,106,4,4);x.fillRect(mx+10,107,4,4);
+      const py=hit&&S.hitK==="L"?Math.min(1,dt/70)*26*Math.max(0,1-(dt-70)/300):0,pr=hit&&S.hitK==="R"?Math.sin(dt/40)*8*Math.max(0,1-dt/400):0;
+      x.fillStyle="#2a1a10";x.fillRect(mx-6+pr,56+py,12,58);x.fillStyle="#c89a62";x.fillRect(mx-4+pr,58+py,8,54);x.fillStyle="#e0b67e";x.fillRect(mx-4+pr,58+py,3,54);
+      x.fillStyle="#fff";x.font='bold 12px sans-serif';x.textAlign="center";x.fillText("Auntie Taew's",mx,176);}
+    else{const sw=hit?Math.sin(dt/80)*Math.max(0,1-dt/450)*9:Math.sin(performance.now()/700)*1.2,bx=W*.6+sw,by=34;
     x.fillStyle="#555";x.fillRect(W*.6-1,0,2,by);x.fillStyle="#2b2530";x.fillRect(bx-19,by-2,38,124);x.fillStyle="#c8283c";x.fillRect(bx-17,by,34,120);x.fillStyle="#e23b4e";x.fillRect(bx-17,by,7,120);
-    x.fillStyle="#1f1f24";x.fillRect(bx-17,by+20,34,4);x.fillRect(bx-17,by+92,34,4);
+    x.fillStyle="#1f1f24";x.fillRect(bx-17,by+20,34,4);x.fillRect(bx-17,by+92,34,4);}
     try{drawFrame(x,sheetFor(f),ROW[row],fr,W*.38,198,180,false);}catch(e){}
     // judgement pop
     const last=S.fx[S.fx.length-1];if(last&&t-last.t<.5){const a=(t-last.t)/.5;x.globalAlpha=1-a;x.font=`bold ${22+a*6}px "Pixelify Sans",sans-serif`;x.textAlign="center";x.lineWidth=4;x.strokeStyle="#000";
@@ -441,17 +458,27 @@ const BAG={st:null,
     x.lineWidth=3;x.strokeStyle="#ffd34a";x.beginPath();x.arc(hx,ly,22,0,7);x.stroke();x.strokeStyle="rgba(255,211,74,.35)";x.beginPath();x.arc(hx,ly,15,0,7);x.stroke();
     for(let i=S.notes.length-1;i>=0;i--){const n=S.notes[i];if(n.j&&n.j!=="miss")continue;const nx=hx+(n.t-t)*sp;if(nx<-30||nx>W+30)continue;
       const L=n.k==="L",r=L?18:14;x.globalAlpha=n.j==="miss"?.35:1;x.fillStyle="#000";x.beginPath();x.arc(nx,ly,r+3,0,7);x.fill();x.fillStyle=L?"#e2443c":"#3c8be2";x.beginPath();x.arc(nx,ly,r,0,7);x.fill();
-      x.fillStyle="rgba(255,255,255,.35)";x.beginPath();x.arc(nx-r*.3,ly-r*.35,r*.35,0,7);x.fill();x.fillStyle="#fff";x.font=`bold ${L?13:11}px sans-serif`;x.textAlign="center";x.fillText(L?"Dum":"Tek",nx,ly+4);x.globalAlpha=1;}
+      x.fillStyle="rgba(255,255,255,.35)";x.beginPath();x.arc(nx-r*.3,ly-r*.35,r*.35,0,7);x.fill();x.fillStyle="#fff";x.font=`bold ${L?13:11}px sans-serif`;x.textAlign="center";x.fillText(L?MG_MODES[S.mode].L:MG_MODES[S.mode].R,nx,ly+4);x.globalAlpha=1;}
     // count-in
     if(t<4*bt){const n=4-Math.floor(Math.max(0,t)/bt);x.font='bold 40px "Pixelify Sans",sans-serif';x.textAlign="center";x.fillStyle="#fff";x.strokeStyle="#000";x.lineWidth=5;const s=t<0?"Ready":String(n);x.strokeText(s,W/2,120);x.fillText(s,W/2,120);}
     // progress
     x.fillStyle="#2c2448";x.fillRect(0,H-4,W,4);x.fillStyle="#ffd34a";x.fillRect(0,H-4,W*Math.min(1,Math.max(0,t/S.end)),4);},
   finish(){const S=this.st;cancelAnimationFrame(this.raf);S.phase="result";const n=S.notes.length,c=S.c;
     const acc=(c.perfect+c.great*.75+c.ok*.4)/Math.max(1,n);const grade=acc>=.92&&c.miss===0?"S":acc>=.78?"A":acc>=.6?"B":"C";
-    G.mini=G.mini||{};G.mini.best=G.mini.best||{};const isBest=S.score>(G.mini.best[S.dk]||0);if(isBest)G.mini.best[S.dk]=S.score;
+    G.mini=G.mini||{};G.mini.best=G.mini.best||{};if(typeof G.mini.best.easy==="number"){G.mini.best={bag:G.mini.best};}const B=G.mini.best[S.mode]=G.mini.best[S.mode]||{};const isBest=S.score>(B[S.dk]||0);if(isBest)B[S.dk]=S.score;
     S.res={acc,grade,score:S.score,maxc:S.maxc,c,best:isBest,rw:""};
     if(!S.practice)S.res.rw=this.reward(grade,acc);save();this.draw();AU.sfx&&AU.sfx(grade==="S"||grade==="A"?"level":"ui");},
-  reward(grade,acc){const S=this.st,f=G.F[S.id],D=BAG_DIFF[S.dk],out=[];G.mini.bagWk=G.week;G.mini.bagS=G.season||1;
+  reward(grade,acc){const S=this.st;G.mini[S.mode+"Wk"]=G.week;G.mini[S.mode+"S"]=G.season||1;return S.mode==="somtam"?this.rewardTam(grade,acc):this.rewardBag(grade,acc);},
+  rewardTam(grade,acc){const S=this.st,f=G.F[S.id],D=BAG_DIFF[S.dk],out=[];
+    const pay=Math.round({S:1200,A:850,B:550,C:250}[grade]*D.mul/50)*50;G.cash+=pay;out.push(`<b class="goldt">฿${pay.toLocaleString()}</b>`);
+    if(grade==="S"||grade==="A"){G.rep=Math.round(((G.rep||0)+(grade==="S"?.3:.15))*100)/100;out.push(`Fame +${grade==="S"?.3:.15}`);}
+    f.fatigue=Math.min(100,(f.fatigue||0)+2);f.morale=Math.min(100,(f.morale||0)+3);out.push("Morale +3");
+    const du=Math.max(1,Math.round({S:3,A:2,B:1,C:1}[grade]*D.mul));G.dust=(G.dust||0)+du;out.push(`<b class="goldt">✦ +${du}</b>`);
+    out.push(esc(TAM_LINE[grade]));
+    if(grade==="S"){G.flags.tamS=(G.flags.tamS||0)+1;}
+    if(typeof cardCheck==="function"){const got=cardCheck(G);if(got.length){G.cardPend=(G.cardPend||[]).concat(got);out.push(`🃏 New card ×${got.length}`);}}
+    return `<span class="rwl">${out.map(x=>`<span class="rwi">${x}</span>`).join("")}</span>`;},
+  rewardBag(grade,acc){const S=this.st,f=G.F[S.id],D=BAG_DIFF[S.dk],out=[];
     const g=Math.round(acc*.3*D.mul*100)/100;const up=k=>{const cap=Math.min(20,(f.potential||14)+1.5);const before=f.a[k];f.a[k]=Math.min(cap,Math.round((f.a[k]+g/2)*100)/100);return f.a[k]>before;};
     if(g>0){const a=up("kick"),b=up("punch");if(a||b)out.push(`Kick/punch +${(g/2).toFixed(2)}`);else out.push("Kick/punch already at potential");}
     const mo={S:8,A:5,B:3,C:1}[grade];f.morale=Math.min(100,(f.morale||0)+mo);out.push(`Morale +${mo}`);
@@ -463,12 +490,18 @@ const BAG={st:null,
     return `<span class="rwl">${out.map(x=>`<span class="rwi">${x}</span>`).join("")}</span>`;},
   claim(){this.close();}};
 Object.assign(ACT,{minibag:()=>BAG.open()});
+const TAM_LINE={S:"Auntie Taew: \"Heavy hands but right on target! Come help me every week, dear.\"",A:"Auntie Taew: \"Not bad, not bad. Customers say the papaya isn't mushy.\"",B:"Auntie Taew: \"The mortar's still in one piece. That's a pass.\"",C:"Auntie Taew: \"Half the papaya flew out of the mortar… It's fine, keep practicing.\""};
 Object.assign(CARDS,{
  m_bag:{c:"kati",r:"R",t:"Grandpa's Rhythm",hint:"Get an S in the bag-kick drum minigame",bg:"camp",need:G=>(G.flags.bagS||0)>=1,steps:[
   {n:"nar",t:"The khong khaek drum blares from the old speaker across the camp. Kati kicks the bag on every beat without missing a single note."},
   {n:"coach",t:"Grandpa Chai played this song for morning training. When I was young I never kept up, not once."},
   {n:"kati",f:"happy",l:"fight",t:"I've heard this song since before I could walk properly. Dum, tek, dum, dum, tek… my body just remembers."},
   {n:"kati",f:"flustered",l:"fight",t:"Did you see, Manager? Every single beat! …If Grandpa were here, he'd be playing the drum himself."}]},
+ m_tam:{c:"mali",r:"R",t:"The Hundredth Mortar",hint:"Get an S in the som tam minigame at Auntie Taew's stall",bg:"market",need:G=>(G.flags.tamS||0)>=1,steps:[
+  {n:"nar",t:"Friday evening. Auntie Taew's line stretches to the temple gate. Today's mortar has pounded almost a hundred plates."},
+  {n:"mali",f:"happy",l:"casual",t:"Pounding like this is just like Mom. Pound three times, toss once, pound three times, toss once… I grew up with this sound."},
+  {n:"nar",t:"Auntie Taew hands over a special plate piled with blue crab. It isn't on the menu."},
+  {n:"mali",f:"flustered",l:"casual",t:"You eat first, Manager. I pounded this one myself… Is it spicy? I only put in seven chilies~"}]},
  m_baghard:{c:"rin",r:"SR",t:"A Record With No Gaps",hint:"Get an S on Hard",bg:"camp",need:G=>(G.flags.bagSH||0)>=1,steps:[
   {n:"nar",t:"Rin stands by the bag with her clipboard the whole round. Her three-color pen never moves once."},
   {n:"rin",f:"surprised",l:"casual",t:"…124 BPM, every note, and not a single gap for me to log a mistake."},

@@ -1399,3 +1399,7 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .mgrade{font:bold 64px "Pixelify Sans",sans-serif;text-align:center;line-height:1}
 .mgrade.gS{color:#ffd34a;text-shadow:0 0 12px rgba(255,211,74,.6)}.mgrade.gA{color:#8ef0a0}.mgrade.gB{color:#7ab4ff}.mgrade.gC{color:#bbb}
 .mgame .rwl{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.mgame .rwi{background:#2a2340;padding:2px 8px;font-size:13px;box-shadow:inset 0 0 0 1px #4a3f6b}
+.mghub{display:grid;gap:6px}
+.mgitem{display:flex;align-items:center;gap:8px;padding:8px 10px;border:0;cursor:pointer;text-align:left;font:inherit;color:var(--fg);background:#2a2340;box-shadow:inset 0 0 0 2px #4a3f6b}
+.mgitem .mi{font-size:24px}.mgitem small{display:block;color:var(--mute);font-size:11px}.mgitem .chev{margin-left:auto}.mgitem.done{opacity:.75}.mgitem:disabled{opacity:.4;cursor:default}
+.mbtn.L.somtam{background:#8a5a2b}.mbtn.R.somtam{background:#4f8a2b}

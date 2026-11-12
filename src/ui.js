@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.64";
+const VERSION="1.65";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -334,7 +334,7 @@ function homeHTML(){const R=roster(G);
     <div class="goal ov">${goalText()}</div></div>
     ${G.campUsed?`<button class="campact done" data-act="campacts"><span class="ci">✓</span><span><small>กิจกรรมค่ายสัปดาห์นี้</small><b>${esc(CAMP_ACTIONS[G.campUsed].name)}</b></span></button>`
       :`<button class="campact" data-act="campacts"><span class="ci"></span><span><small>กิจกรรมค่ายสัปดาห์นี้ · ยังไม่ได้เลือก</small><b>เลือกกิจกรรมค่าย</b></span><span class="chev">▸</span></button>`}
-    ${petsRowHTML()}${typeof BAG!=="undefined"&&G.week>=2?`<button class="minichip ${bagPlayed(G)?"done":""}" data-act="minibag"><span class="mi">🥁</span><span><b>เตะกระสอบตามกลองแขก</b><small>${bagPlayed(G)?"เล่นแล้วสัปดาห์นี้ ✓ · ซ้อมต่อได้":"มินิเกม · รางวัลสัปดาห์ละครั้ง"}</small></span><span class="chev">▸</span></button>`:""}
+    ${petsRowHTML()}${typeof BAG!=="undefined"&&G.week>=2?`<button class="minichip ${Object.keys(MG_MODES).every(k=>!MG_MODES[k].open(G)||mgPlayed(G,k))?"done":""}" data-act="minibag"><span class="mi">🎮</span><span><b>มินิเกม</b><small>${mgChipText(G)} · รางวัลเกมละครั้งต่อสัปดาห์</small></span><span class="chev">▸</span></button>`:""}
     <div class="camp-info"><button class="cinfo" data-act="tab" data-v="camp"><small>ระดับค่าย</small><b>Lv.${lv} ${CAMP_LV_NAME[lv]}</b></button><button class="cinfo" data-act="studinfo"><small>นักเรียน</small><b>${students(G)}/${studentCap(G)} คน</b></button></div></section>
    <div class="side">${guide}<div class="fgrid">${R.map(fighterChip).join("")}</div></div></div>`;}
 function fighterMini(f){const c=condition(f);const nb=nextBooking(f);
