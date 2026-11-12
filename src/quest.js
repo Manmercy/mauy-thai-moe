@@ -360,3 +360,117 @@ Object.assign(ACT,{
   dmgo:d=>dmFight(d.id,d.v),
   dmclose:()=>{const D=G.dm;UI.modal=null;if(D&&D.best===4)playScene([{n:"nar",t:"กระดาษสีทองโปรยลงมาทั่วเวที เสียงคนดูดังจนพื้นสั่น"},{n:D.champ,f:"happy",l:"fight",t:G=>`${ME(G)}!! เราทำได้! ชนะรวดทุกคนเลย!`},{n:"coach",t:"ปู่ชัยเคยบอกว่าค่ายเราไม่มีวันได้แชมป์ Death Match …ปู่ผิดแล้วล่ะ"}],()=>render(),{bg:"hall",look:"fight"});else render();},
 });
+
+// ===== v1.64: MINIGAME — kick the heavy bag to the khong khaek drum (rhythm, taiko-style) =====
+// self-contained overlay: its own DOM + animation loop, so the main render() never touches it mid-song
+const BAG_DIFF={easy:{name:"ง่าย",bpm:92,bars:8,dens:0,mul:1},normal:{name:"ปกติ",bpm:108,bars:10,dens:1,mul:1.25},hard:{name:"ยาก",bpm:124,bars:12,dens:2,mul:1.6}};
+const BAG_PAT=[["L...L...","L...R...","R...R...","L.L.R...","L...R.R.","R...L..."],["L.R.L.R.","LLR.L...","L.RRL...","R.L.R.L.","L.L.RR.."],["LRLRL.R.","L.LRR.L.","RRL.RRL.","LLRRL.R.","LRRLLRR."]];
+const BAG_WIN={perfect:.06,great:.12,ok:.19};
+function bagChart(G,dk){const D=BAG_DIFF[dk],beat=60/D.bpm,half=beat/2,N=[];let t=4*beat;/* one bar of count-in */
+  for(let b=0;b<D.bars;b++){const pool=[].concat(...BAG_PAT.slice(0,D.dens+1));const p=b===D.bars-1?"L.......":pool[Math.floor(srand(G,700+b*13+D.dens*101+G.week)*pool.length)];
+    for(let i=0;i<8;i++){if(p[i]!==".")N.push({t:t+i*half,k:p[i],j:null});}t+=4*beat;}
+  return {notes:N,end:t+beat,beat};}
+function bagPlayed(G){return !!(G.mini&&G.mini.bagWk===G.week&&G.mini.bagS===(G.season||1));}
+function bagFighters(G){return roster(G).filter(f=>f.camp==="player"&&!f.injury);}
+const BAG={st:null,
+  clock(){return AU.ctx?AU.ctx.currentTime:performance.now()/1000;},
+  drum(k,t){if(!AU.ctx||AU.muted)return;try{if(k==="L"){AU.tone(t,{f:150,to:55,type:"sine",dur:.28,peak:.9,bus:AU.sfxBus});AU.noiseHit(t,{f:420,dur:.08,peak:.5});}
+    else{AU.noiseHit(t,{f:2600,type:"bandpass",q:2.2,dur:.07,peak:.7});AU.tone(t,{f:340,to:300,type:"triangle",dur:.09,peak:.35,bus:AU.sfxBus});}}catch(e){}},
+  ching(t,open){if(!AU.ctx||AU.muted)return;try{AU.tone(t,{f:open?2350:2100,type:"sine",dur:open?.5:.08,peak:open?.16:.12,bus:AU.sfxBus});AU.tone(t,{f:open?3130:2900,type:"sine",dur:open?.35:.06,peak:.07,bus:AU.sfxBus});}catch(e){}},
+  open(){const F=bagFighters(G);if(!F.length){toast("ไม่มีนักมวยที่พร้อมซ้อม");return;}
+    const pick=(G.mini&&G.mini.bagLast&&F.find(f=>f.id===G.mini.bagLast))||F.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];
+    this.st={phase:"pick",id:pick.id,dk:(G.mini&&G.mini.bagDk)||"normal",practice:bagPlayed(G)};this.mount();this.draw();},
+  mount(){let el=document.getElementById("minibag");if(!el){el=document.createElement("div");el.id="minibag";el.className="mgame";document.body.appendChild(el);}
+    el.onclick=e=>{const b=e.target.closest("[data-mb]");if(!b)return;const a=b.dataset.mb,v=b.dataset.v;
+      if(a==="pick"){this.st.id=v;this.draw();}else if(a==="dk"){this.st.dk=v;this.draw();}else if(a==="go")this.start();else if(a==="close")this.close();else if(a==="claim")this.claim();else if(a==="again"){this.st.phase="pick";this.st.practice=bagPlayed(G);this.draw();}};
+    if(!this.keyH){this.keyH=e=>{if(!this.st||this.st.phase!=="play")return;const k=e.key.toLowerCase();if(e.repeat)return;
+      if(k==="f"||k==="d"||k==="arrowleft"){e.preventDefault();this.hit("L");}else if(k==="j"||k==="k"||k==="arrowright"){e.preventDefault();this.hit("R");}else if(k==="escape")this.close();};
+      document.addEventListener("keydown",this.keyH);
+      document.addEventListener("visibilitychange",()=>{if(document.hidden&&this.st&&this.st.phase==="play"){this.st.phase="abort";cancelAnimationFrame(this.raf);this.draw();}});}},
+  close(){cancelAnimationFrame(this.raf);const el=document.getElementById("minibag");if(el)el.remove();this.st=null;try{AU.startMusic("hub");}catch(e){}if((G.cardPend||[]).length&&!UI.modal)UI.modal={type:"cardnew"};render();},
+  draw(){const S=this.st,el=document.getElementById("minibag");if(!S||!el)return;const F=bagFighters(G),f=G.F[S.id];
+    if(S.phase==="pick"){const best=(G.mini&&G.mini.best)||{};
+      el.innerHTML=`<div class="mbox px"><h2>🥁 เตะกระสอบตามกลองแขก</h2>
+       <p class="meta">กดตามโน้ตตอนที่ลอยมาถึงวงกลม · <b class="mbL">ตุ๊บ</b> = เตะ (ปุ่มซ้าย / F) · <b class="mbR">ติ๊ง</b> = หมัด (ปุ่มขวา / J)</p>
+       <div class="mbpick">${F.map(x=>`<button class="mbf ${x.id===S.id?"on":""}" data-mb="pick" data-v="${x.id}"><img src="${faceSrc(x.id,"happy")}" alt=""><small>${esc(x.name)}</small></button>`).join("")}</div>
+       <div class="mbdk">${Object.entries(BAG_DIFF).map(([k,d])=>`<button class="btn sm ${k===S.dk?"primary":""}" data-mb="dk" data-v="${k}">${d.name}${best[k]?` · ${best[k]}`:""}</button>`).join("")}</div>
+       <p class="meta center">${S.practice?"สัปดาห์นี้เล่นไปแล้ว · รอบนี้เป็นโหมดซ้อม ไม่มีรางวัล":"รางวัลสัปดาห์ละครั้ง: ค่าเตะ/หมัด · กำลังใจ · เศษดาว ✦ · เกรด S ปลดการ์ด"}</p>
+       <div class="mfoot roadbtns"><button class="btn" data-mb="close">ไว้ก่อน</button><button class="btn primary" data-mb="go">เริ่ม! ▸</button></div></div>`;return;}
+    if(S.phase==="play"){el.innerHTML=`<div class="mplay"><div class="mhud"><b>${esc(f.name)}</b><span>คอมโบ <b id="mbc">0</b></span><span>คะแนน <b id="mbs">0</b></span><button class="xbtn" data-mb="close" aria-label="ออก">✕</button></div>
+       <canvas id="mbcv" width="360" height="300"></canvas>
+       <div class="mbtns"><button class="mbtn L" id="mbL"><b>ตุ๊บ</b><small>เตะ · F</small></button><button class="mbtn R" id="mbR"><b>ติ๊ง</b><small>หมัด · J</small></button></div></div>`;
+      const pd=k=>e=>{e.preventDefault();this.hit(k);};document.getElementById("mbL").addEventListener("pointerdown",pd("L"));document.getElementById("mbR").addEventListener("pointerdown",pd("R"));return;}
+    if(S.phase==="abort"){el.innerHTML=`<div class="mbox px"><h2>หยุดกลางคัน</h2><p class="meta center">สลับแอปหรือปิดหน้าจอระหว่างเล่น เพลงเลยหยุด · ยังไม่เสียสิทธิ์รางวัลสัปดาห์นี้</p><div class="mfoot roadbtns"><button class="btn" data-mb="close">ปิด</button><button class="btn primary" data-mb="again">เล่นใหม่</button></div></div>`;return;}
+    if(S.phase==="result"){const R=S.res;
+      el.innerHTML=`<div class="mbox px"><h2>ผลการซ้อม</h2><div class="mgrade g${R.grade}">${R.grade}</div>
+       <p class="center"><b>${R.score}</b> คะแนน · คอมโบสูงสุด ${R.maxc} · แม่นยำ ${Math.round(R.acc*100)}%</p>
+       <p class="center meta">เพอร์เฟกต์ ${R.c.perfect} · ดี ${R.c.great} · พอได้ ${R.c.ok} · พลาด ${R.c.miss}${R.best?" · <b class=\"goldt\">สถิติใหม่!</b>":""}</p>
+       ${S.practice?`<p class="center meta">โหมดซ้อม · ไม่มีรางวัล</p>`:`<p class="center">${R.rw}</p>`}
+       <div class="mfoot roadbtns"><button class="btn" data-mb="again">เล่นอีกรอบ</button><button class="btn primary" data-mb="close">กลับค่าย</button></div></div>`;}},
+  start(){const S=this.st;AU.resume&&AU.resume();try{AU.stopMusic();}catch(e){}
+    G.mini=G.mini||{};G.mini.bagLast=S.id;G.mini.bagDk=S.dk;
+    const C=bagChart(G,S.dk);S.notes=C.notes;S.end=C.end;S.beat=C.beat;S.phase="play";S.score=0;S.combo=0;S.maxc=0;S.c={perfect:0,great:0,ok:0,miss:0};S.fx=[];S.hitT=-9;S.hitK="L";
+    this.draw();S.t0=this.clock()+.6;const nb=Math.round(S.end/S.beat);for(let i=0;i<nb;i++)this.ching(S.t0+i*S.beat,i%2===0);
+    const cv=document.getElementById("mbcv");S.x=cv.getContext("2d");S.x.imageSmoothingEnabled=false;const loop=()=>{if(!this.st||this.st.phase!=="play")return;this.frame();this.raf=requestAnimationFrame(loop);};this.raf=requestAnimationFrame(loop);},
+  now(){return this.clock()-this.st.t0;},
+  judge(n,q){const S=this.st;n.j=q;S.c[q]++;if(q==="miss"){S.combo=0;}else{S.combo++;S.maxc=Math.max(S.maxc,S.combo);S.score+=({perfect:100,great:70,ok:40})[q]+Math.min(50,S.combo*2);}
+    S.fx.push({q,t:this.now()});const c=document.getElementById("mbc"),s=document.getElementById("mbs");if(c)c.textContent=S.combo;if(s)s.textContent=S.score;},
+  hit(k){const S=this.st;if(!S||S.phase!=="play")return;const t=this.now();this.drum(k,this.clock());S.hitT=t;S.hitK=k;
+    const btn=document.getElementById(k==="L"?"mbL":"mbR");if(btn){btn.classList.remove("hit");void btn.offsetWidth;btn.classList.add("hit");}
+    let best=null,bd=9;for(const n of S.notes){if(n.j)continue;const d=Math.abs(n.t-t);if(d<bd){bd=d;best=n;}if(n.t-t>BAG_WIN.ok)break;}
+    if(!best||bd>BAG_WIN.ok)return;/* stray tap: no penalty */
+    if(best.k!==k){this.judge(best,"miss");return;}
+    this.judge(best,bd<=BAG_WIN.perfect?"perfect":bd<=BAG_WIN.great?"great":"ok");},
+  frame(){const S=this.st,x=S.x,W=360,H=300,t=this.now(),f=G.F[S.id];
+    for(const n of S.notes){if(!n.j&&t-n.t>BAG_WIN.ok)this.judge(n,"miss");}
+    if(t>S.end+.4){this.finish();return;}
+    x.clearRect(0,0,W,H);x.fillStyle="#1b1530";x.fillRect(0,0,W,H);
+    // fighter + heavy bag (same drawing as the training drill)
+    const dt=(t-S.hitT)*1000,hit=dt>=0&&dt<450;const row=hit?(S.hitK==="L"?"knee":"punch"):"guard";const fr=hit?Math.min(3,Math.floor(dt/90)):Math.floor(performance.now()/260)%4;
+    x.fillStyle="rgba(0,0,0,.35)";x.beginPath();x.ellipse(W*.4,196,40,6,0,0,7);x.fill();
+    const sw=hit?Math.sin(dt/80)*Math.max(0,1-dt/450)*9:Math.sin(performance.now()/700)*1.2,bx=W*.6+sw,by=34;
+    x.fillStyle="#555";x.fillRect(W*.6-1,0,2,by);x.fillStyle="#2b2530";x.fillRect(bx-19,by-2,38,124);x.fillStyle="#c8283c";x.fillRect(bx-17,by,34,120);x.fillStyle="#e23b4e";x.fillRect(bx-17,by,7,120);
+    x.fillStyle="#1f1f24";x.fillRect(bx-17,by+20,34,4);x.fillRect(bx-17,by+92,34,4);
+    try{drawFrame(x,sheetFor(f),ROW[row],fr,W*.38,198,180,false);}catch(e){}
+    // judgement pop
+    const last=S.fx[S.fx.length-1];if(last&&t-last.t<.5){const a=(t-last.t)/.5;x.globalAlpha=1-a;x.font=`bold ${22+a*6}px "Pixelify Sans",sans-serif`;x.textAlign="center";x.lineWidth=4;x.strokeStyle="#000";
+      const T={perfect:["PERFECT!","#ffd34a"],great:["GREAT","#8ef0a0"],ok:["OK","#fff"],miss:["MISS","#ff6a6a"]}[last.q];x.strokeText(T[0],W*.6,26-a*10);x.fillStyle=T[1];x.fillText(T[0],W*.6,26-a*10);x.globalAlpha=1;}
+    // note lane (taiko style: notes slide in from the right to the drum circle)
+    const ly=252,hx=46,sp=210;x.fillStyle="#120e22";x.fillRect(0,ly-30,W,60);x.fillStyle="#2c2448";x.fillRect(0,ly-30,W,3);x.fillRect(0,ly+27,W,3);
+    const bt=S.beat;for(let b=Math.ceil((t-.5)/bt)*bt;b<t+1.8;b+=bt){const bx2=hx+(b-t)*sp;if(bx2>0&&bx2<W){x.fillStyle="rgba(255,255,255,.08)";x.fillRect(bx2,ly-26,2,52);}}
+    x.lineWidth=3;x.strokeStyle="#ffd34a";x.beginPath();x.arc(hx,ly,22,0,7);x.stroke();x.strokeStyle="rgba(255,211,74,.35)";x.beginPath();x.arc(hx,ly,15,0,7);x.stroke();
+    for(let i=S.notes.length-1;i>=0;i--){const n=S.notes[i];if(n.j&&n.j!=="miss")continue;const nx=hx+(n.t-t)*sp;if(nx<-30||nx>W+30)continue;
+      const L=n.k==="L",r=L?18:14;x.globalAlpha=n.j==="miss"?.35:1;x.fillStyle="#000";x.beginPath();x.arc(nx,ly,r+3,0,7);x.fill();x.fillStyle=L?"#e2443c":"#3c8be2";x.beginPath();x.arc(nx,ly,r,0,7);x.fill();
+      x.fillStyle="rgba(255,255,255,.35)";x.beginPath();x.arc(nx-r*.3,ly-r*.35,r*.35,0,7);x.fill();x.fillStyle="#fff";x.font=`bold ${L?13:11}px sans-serif`;x.textAlign="center";x.fillText(L?"ตุ๊บ":"ติ๊ง",nx,ly+4);x.globalAlpha=1;}
+    // count-in
+    if(t<4*bt){const n=4-Math.floor(Math.max(0,t)/bt);x.font='bold 40px "Pixelify Sans",sans-serif';x.textAlign="center";x.fillStyle="#fff";x.strokeStyle="#000";x.lineWidth=5;const s=t<0?"พร้อม":String(n);x.strokeText(s,W/2,120);x.fillText(s,W/2,120);}
+    // progress
+    x.fillStyle="#2c2448";x.fillRect(0,H-4,W,4);x.fillStyle="#ffd34a";x.fillRect(0,H-4,W*Math.min(1,Math.max(0,t/S.end)),4);},
+  finish(){const S=this.st;cancelAnimationFrame(this.raf);S.phase="result";const n=S.notes.length,c=S.c;
+    const acc=(c.perfect+c.great*.75+c.ok*.4)/Math.max(1,n);const grade=acc>=.92&&c.miss===0?"S":acc>=.78?"A":acc>=.6?"B":"C";
+    G.mini=G.mini||{};G.mini.best=G.mini.best||{};const isBest=S.score>(G.mini.best[S.dk]||0);if(isBest)G.mini.best[S.dk]=S.score;
+    S.res={acc,grade,score:S.score,maxc:S.maxc,c,best:isBest,rw:""};
+    if(!S.practice)S.res.rw=this.reward(grade,acc);save();this.draw();AU.sfx&&AU.sfx(grade==="S"||grade==="A"?"level":"ui");},
+  reward(grade,acc){const S=this.st,f=G.F[S.id],D=BAG_DIFF[S.dk],out=[];G.mini.bagWk=G.week;G.mini.bagS=G.season||1;
+    const g=Math.round(acc*.3*D.mul*100)/100;const up=k=>{const cap=Math.min(20,(f.potential||14)+1.5);const before=f.a[k];f.a[k]=Math.min(cap,Math.round((f.a[k]+g/2)*100)/100);return f.a[k]>before;};
+    if(g>0){const a=up("kick"),b=up("punch");if(a||b)out.push(`เตะ/หมัด +${(g/2).toFixed(2)}`);else out.push("ค่าเตะ/หมัดเต็มศักยภาพแล้ว");}
+    const mo={S:8,A:5,B:3,C:1}[grade];f.morale=Math.min(100,(f.morale||0)+mo);out.push(`กำลังใจ +${mo}`);
+    f.fatigue=Math.min(100,(f.fatigue||0)+4);out.push("ล้า +4");
+    const du=Math.max(1,Math.round({S:6,A:4,B:2,C:1}[grade]*D.mul));G.dust=(G.dust||0)+du;out.push(`<b class="goldt">✦ +${du}</b>`);
+    if(grade==="S"||grade==="A"){add(G,f.id,"bond",2);out.push(`${esc(f.name)}สนิทขึ้น`);}
+    if(grade==="S"){G.flags.bagS=(G.flags.bagS||0)+1;if(S.dk==="hard")G.flags.bagSH=(G.flags.bagSH||0)+1;}
+    if(typeof cardCheck==="function"){const got=cardCheck(G);if(got.length){G.cardPend=(G.cardPend||[]).concat(got);out.push(`🃏 การ์ดใหม่ ×${got.length}`);}}
+    return `<span class="rwl">${out.map(x=>`<span class="rwi">${x}</span>`).join("")}</span>`;},
+  claim(){this.close();}};
+Object.assign(ACT,{minibag:()=>BAG.open()});
+Object.assign(CARDS,{
+ m_bag:{c:"kati",r:"R",t:"จังหวะเดียวกับปู่",hint:"ได้เกรด S ในมินิเกมเตะกระสอบตามกลองแขก",bg:"camp",need:G=>(G.flags.bagS||0)>=1,steps:[
+  {n:"nar",t:"เสียงกลองแขกจากลำโพงเก่าดังไปทั้งค่าย กะทิเตะกระสอบตามจังหวะได้ครบทุกโน้ตไม่พลาดสักครั้ง"},
+  {n:"coach",t:"เพลงนี้ปู่ชัยเปิดให้ซ้อมทุกเช้า สมัยครูยังหนุ่ม ครูเตะตามไม่เคยทันสักรอบ"},
+  {n:"kati",f:"happy",l:"fight",t:"หนูได้ยินเพลงนี้ตั้งแต่ยังเดินไม่คล่องเลยค่ะ ตุ๊บ ติ๊ง ตุ๊บ ตุ๊บ ติ๊ง …ตัวมันจำได้เอง"},
+  {n:"kati",f:"flustered",l:"fight",t:"ผู้จัดการเห็นไหมคะ ครบทุกจังหวะ! …ถ้าปู่อยู่ ปู่คงตีกลองให้เองแล้ว"}]},
+ m_baghard:{c:"rin",r:"SR",t:"สถิติที่ไม่มีช่องว่าง",hint:"ได้เกรด S ในระดับยาก",bg:"camp",need:G=>(G.flags.bagSH||0)>=1,steps:[
+  {n:"nar",t:"รินยืนถือคลิปบอร์ดอยู่ข้างกระสอบตลอดรอบ ปากกาสามสีไม่ได้ขยับเลยสักครั้ง"},
+  {n:"rin",f:"surprised",l:"casual",t:"…จังหวะร้อยยี่สิบสี่ ทุกโน้ต ไม่มีช่องให้ฉันจดข้อผิดพลาดเลย"},
+  {n:"rin",f:"pout",l:"casual",t:"ปกติฉันชอบตารางที่เต็ม แต่วันนี้ตารางว่างทั้งแผ่น แล้วฉันกลับชอบมากกว่า"},
+  {n:"rin",f:"flustered",l:"casual",t:"ไม่ต้องยิ้มแบบนั้นค่ะผู้จัดการ …ฉันจะแปะหน้านี้ไว้บนผนังห้อง ไม่ได้แปลว่าภูมิใจนะ แค่… ภูมิใจนิดหน่อย"}]}});

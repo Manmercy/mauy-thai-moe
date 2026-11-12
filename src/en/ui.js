@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.63";
+const VERSION="1.64";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -334,7 +334,7 @@ function homeHTML(){const R=roster(G);
     <div class="goal ov">${goalText()}</div></div>
     ${G.campUsed?`<button class="campact done" data-act="campacts"><span class="ci">✓</span><span><small>This week's camp activity</small><b>${esc(CAMP_ACTIONS[G.campUsed].name)}</b></span></button>`
       :`<button class="campact" data-act="campacts"><span class="ci"></span><span><small>This week's camp activity · not chosen</small><b>Choose a camp activity</b></span><span class="chev">▸</span></button>`}
-    ${petsRowHTML()}
+    ${petsRowHTML()}${typeof BAG!=="undefined"&&G.week>=2?`<button class="minichip ${bagPlayed(G)?"done":""}" data-act="minibag"><span class="mi">🥁</span><span><b>Bag Kicks to the Khong Khaek Drum</b><small>${bagPlayed(G)?"Played this week ✓ · practice anytime":"Minigame · rewards once a week"}</small></span><span class="chev">▸</span></button>`:""}
     <div class="camp-info"><button class="cinfo" data-act="tab" data-v="camp"><small>Camp level</small><b>Lv.${lv} ${CAMP_LV_NAME[lv]}</b></button><button class="cinfo" data-act="studinfo"><small>Students</small><b>${students(G)}/${studentCap(G)}</b></button></div></section>
    <div class="side">${guide}<div class="fgrid">${R.map(fighterChip).join("")}</div></div></div>`;}
 function fighterMini(f){const c=condition(f);const nb=nextBooking(f);
