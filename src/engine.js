@@ -474,10 +474,10 @@ function upgradeDaeng(G){const lv=G.fac.daeng;if(lv>=3)return false;const c=DAEN
 const CAMP_ACTIONS={
   rest:{name:"วันหยุดค่าย (ไม่จัดกิจกรรม)",desc:"ไม่เสียเงิน ทุกคนได้พัก ความล้า -4",cost:0},
   // v1.68: minigames live inside camp activities — play it yourself, or skip for an average result
-  drum:{name:"ซ้อมเตะกระสอบตามกลองแขก",desc:"🎮 มินิเกมจังหวะ · ค่าเตะ/หมัด กำลังใจ เศษดาว",skip:"ค่าเตะ/หมัด +0.1 · กำลังใจ +3 · ✦ +2",cost:0,mg:"bag"},
-  somtam:{name:"ช่วยร้านส้มตำป้าแต๋ว",desc:"🎮 มินิเกมจังหวะ · ค่าจ้าง ชื่อเสียง เศษดาว",skip:"ได้ ฿550 · กำลังใจ +3 · ✦ +1",cost:0,mg:"somtam"},
+  drum:{name:"ซ้อมเตะกระสอบตามกลองแขก",desc:"มินิเกมจังหวะ · ค่าเตะ/หมัด กำลังใจ เศษดาว",skip:"ค่าเตะ/หมัด +0.1 · กำลังใจ +3 · ✦ +2",cost:0,mg:"bag"},
+  somtam:{name:"ช่วยร้านส้มตำป้าแต๋ว",desc:"มินิเกมจังหวะ · ค่าจ้าง ชื่อเสียง เศษดาว",skip:"ได้ ฿550 · กำลังใจ +3 · ✦ +1",cost:0,mg:"somtam"},
   class:{name:"สอนคลาสพิเศษวันอาทิตย์",desc:"ได้ ฿1,000 แต่นักมวยต้องช่วยสอน ความล้า +6",cost:0},
-  promo:{name:"ไลฟ์ขายของ / โปรโมทค่ายออนไลน์",desc:"🎮 มินิเกมไลฟ์ · กำไรจากยอดขาย ชื่อเสียง เศษดาว",skip:"ชื่อเสียง +0.4",cost:0,mg:"live"},
+  promo:{name:"ไลฟ์ขายของ / โปรโมทค่ายออนไลน์",desc:"มินิเกมไลฟ์ · กำไรจากยอดขาย ชื่อเสียง เศษดาว",skip:"ชื่อเสียง +0.4",cost:0,mg:"live"},
   repair:{name:"ซ่อมแซมค่ายด้วยกัน",desc:"ค่ายสวยขึ้น กำลังใจ +3",cost:1500},
   merit:{name:"ทำบุญตักบาตรเช้า",desc:"กำลังใจทุกคน +5 ความเชื่อใจ +1",cost:300},
   // v1.13: more activities unlock as the camp's name grows

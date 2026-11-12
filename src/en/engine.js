@@ -474,10 +474,10 @@ function upgradeDaeng(G){const lv=G.fac.daeng;if(lv>=3)return false;const c=DAEN
 const CAMP_ACTIONS={
   rest:{name:"Camp day off (no activity)",desc:"Free, everyone rests, fatigue −4",cost:0},
   // v1.68: minigames live inside camp activities — play it yourself, or skip for an average result
-  drum:{name:"Bag kicks to the khong khaek drum",desc:"🎮 Rhythm minigame · kick/punch, morale, stardust",skip:"Kick/punch +0.1 · morale +3 · ✦ +2",cost:0,mg:"bag"},
-  somtam:{name:"Help at Auntie Taew's som tam stall",desc:"🎮 Rhythm minigame · pay, fame, stardust",skip:"Earn ฿550 · morale +3 · ✦ +1",cost:0,mg:"somtam"},
+  drum:{name:"Bag kicks to the khong khaek drum",desc:"Rhythm minigame · kick/punch, morale, stardust",skip:"Kick/punch +0.1 · morale +3 · ✦ +2",cost:0,mg:"bag"},
+  somtam:{name:"Help at Auntie Taew's som tam stall",desc:"Rhythm minigame · pay, fame, stardust",skip:"Earn ฿550 · morale +3 · ✦ +1",cost:0,mg:"somtam"},
   class:{name:"Special Sunday class",desc:"+฿1,000 but fighters help teach, fatigue +6",cost:0},
-  promo:{name:"Merch live / promote the camp online",desc:"🎮 Live minigame · profit from sales, fame, stardust",skip:"Fame +0.4",cost:0,mg:"live"},
+  promo:{name:"Merch live / promote the camp online",desc:"Live minigame · profit from sales, fame, stardust",skip:"Fame +0.4",cost:0,mg:"live"},
   repair:{name:"Fix up the camp together",desc:"Camp looks better, morale +3",cost:1500},
   merit:{name:"Morning alms offering",desc:"Everyone's morale +5, trust +1",cost:300},
   // v1.13: more activities unlock as the camp's name grows

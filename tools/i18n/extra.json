@@ -2405,5 +2405,8 @@
 " · เกรด ": " · grade ",
 "\n       <div class=\"mfoot roadbtns\"><button class=\"btn\" data-lv=\"again\">ไลฟ์อีกรอบ (ซ้อม)</button><button class=\"btn primary\" data-mb=\"close\">กลับค่าย</button></div></div>": "\n       <div class=\"mfoot roadbtns\"><button class=\"btn\" data-lv=\"again\">Go live again (practice)</button><button class=\"btn primary\" data-mb=\"close\">Back to camp</button></div></div>",
 "</p>\n       <div class=\"mfoot roadbtns\"><button class=\"btn\" data-mb=\"close\">ไว้ก่อน</button><button class=\"btn primary\" data-lv=\"go\">เริ่มไลฟ์! ▸</button></div></div>": "</p>\n       <div class=\"mfoot roadbtns\"><button class=\"btn\" data-mb=\"close\">Later</button><button class=\"btn primary\" data-lv=\"go\">Go live! ▸</button></div></div>",
-"\n       <div class=\"mfoot roadbtns\"><button class=\"btn\" data-mb=\"again\">เล่นอีกรอบ (ซ้อม)</button><button class=\"btn primary\" data-mb=\"close\">กลับค่าย</button></div></div>": "\n       <div class=\"mfoot roadbtns\"><button class=\"btn\" data-mb=\"again\">Play again (practice)</button><button class=\"btn primary\" data-mb=\"close\">Back to camp</button></div></div>"
+"\n       <div class=\"mfoot roadbtns\"><button class=\"btn\" data-mb=\"again\">เล่นอีกรอบ (ซ้อม)</button><button class=\"btn primary\" data-mb=\"close\">กลับค่าย</button></div></div>": "\n       <div class=\"mfoot roadbtns\"><button class=\"btn\" data-mb=\"again\">Play again (practice)</button><button class=\"btn primary\" data-mb=\"close\">Back to camp</button></div></div>",
+"มินิเกมไลฟ์ · กำไรจากยอดขาย ชื่อเสียง เศษดาว": "Live minigame · profit from sales, fame, stardust",
+"มินิเกมจังหวะ · ค่าจ้าง ชื่อเสียง เศษดาว": "Rhythm minigame · pay, fame, stardust",
+"มินิเกมจังหวะ · ค่าเตะ/หมัด กำลังใจ เศษดาว": "Rhythm minigame · kick/punch, morale, stardust"
 }
