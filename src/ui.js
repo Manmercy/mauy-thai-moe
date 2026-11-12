@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.69.2";
+const VERSION="1.70";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -553,11 +553,15 @@ function recruitHTML(recs){if(!recs.length)return "";
    <p class="meta">ค่าจ้างเป็นรายจ่ายทุกสัปดาห์ ดูเงินสดให้ไหวก่อนเซ็น</p></section>`;}
 // ---------- fighter popup (tabs) ----------
 function fighterHTML(f){const mine=f.camp==="player";const P=PROFILES[f.id];
-  const tabs=mine?[["rel","ประวัติ"],["over","ค่าพลัง"],["skill","สกิล"]]:[["rel","ประวัติ"],["over","ค่าพลัง"]];
+  const tabs=mine?[["rel","ประวัติ"],["over","ค่าพลัง"],["skill","สกิล"]].concat(f.canon&&KIT_MASK[f.id]?[["look","ชุด"]]:[]):[["rel","ประวัติ"],["over","ค่าพลัง"]];
   let t=UI.ptab;if(!tabs.some(x=>x[0]===t))t="over";
   const head=`<div class="fp-head">${faceImg(f)}<div><h2>${esc(f.full)}</h2><div class="meta">${P?P.age+" ปี · ":""}${f.camp==="player"?"ค่ายศิริชัย":f.camp==="rival"?"ค่ายพยัคฆ์ทอง":"นักมวยอิสระ"} · รุ่น ${f.div} · ${styleOf(f.a)} · ${rec(f)}</div>${G.belt&&Object.values(G.belt).some(x=>x.id===f.id)?`<div class="beltb">🏆 แชมป์เวทีท่าแพ</div>`:f.belts?`<div class="beltb old">อดีตแชมป์เวทีท่าแพ</div>`:""}${xpBar(f)}</div></div>
    <div class="seg ptabs">${tabs.map(([k,n])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${t===k}">${n}${k==="skill"&&skReady(f)?'<i class="tdot2"></i>':""}</button>`).join("")}</div>`;
   let body="";
+  if(t==="look"){const cur=f.outfit||"base";
+    body=`<div class="olook"><canvas width="170" height="160" data-sprite="${f.id}" data-floor="1" data-mode="guard" aria-label="${esc(f.name)}"></canvas><div class="olist">${Object.entries(OUTFITS).map(([k,O])=>{const ok=k==="base"||outfitOk(G,f,k);
+      return `<button class="obtn ${cur===k?"on":""}" data-act="outfit" data-id="${f.id}" data-v="${k}" ${ok?"":"disabled"}><i style="background:${O.sw||"transparent"}" class="${O.sw?"":"base"}"></i><span><b>${ok?esc(O.name):"???"}</b><small>${cur===k?"ใส่อยู่":ok?"แตะเพื่อใส่":"ปลดล็อก: "+esc(O.hint)}</small></span></button>`;}).join("")}</div></div>
+      <p class="meta center">ชุดเปลี่ยนแค่ตัวพิกเซลในค่าย ตอนซ้อม และตอนชก · ไม่มีผลกับค่าพลัง</p>`;}
   if(t==="over"){const c=condition(f);const nb=G.bookings.find(b=>b.a===f.id||b.b===f.id);
     body=`<div class="fp-over">${radarSVG(f,240)}<div><div class="bars">${bar("ความพร้อม",c,condColor(c))}${bar("ความล้า",f.fatigue,"var(--warn)")}${bar("กำลังใจ",f.morale,"var(--blue)")}</div>
       ${mine?`<p class="meta goldt">${masteryLine(f)}</p>`:""}<p class="meta">ฟอร์ม ${formHTML(f)}${nb?` · ไฟต์ถัดไปสัปดาห์ ${nb.week}`:""}</p><details><summary>ค่าสถานะละเอียด</summary>${attrsHTML(f,mine)}</details></div></div>`;}
@@ -828,7 +832,7 @@ function weeklyExtra(done){const rng=mulberry32(G.seed+G.week*313);if(typeof que
   let pick=null;if(chats2.length&&rng()<.6)pick=chats2[Math.floor(rng()*chats2.length)];else if(haps2.length&&rng()<.7)pick=haps2[Math.floor(rng()*haps2.length)];
   if(!pick){done();return;}G.seen[pick.id]=true;playScene(pick.steps,done,{bg:pick.bg==="camp"?"gym":pick.bg,look:pick.look||"train"});}
 function afterWeekFlow(){if(typeof cardCheck==="function"){const got=cardCheck(G);if(got.length){G.cardPend=(G.cardPend||[]).concat(got);}}if(typeof mailWeekly==="function"&&!G.ended)mailWeekly(G);if(typeof chatWeekly==="function"&&!G.ended)chatWeekly(G);runEvents(played=>{const fin=()=>{if(G.ended){startEnding();return;}
-    if(typeof cardCheck==="function"){const g2=cardCheck(G);if(g2.length)G.cardPend=(G.cardPend||[]).concat(g2);}relTierCheck();if(UI.relUp&&UI.relUp.length){const m=UI.relUp.join(" / ");UI.relUp=[];setTimeout(()=>toast("♥ "+m),300);}
+    if(typeof cardCheck==="function"){const g2=cardCheck(G);if(g2.length)G.cardPend=(G.cardPend||[]).concat(g2);}relTierCheck();if(typeof OUTFITS!=="undefined"){G.outSeen=G.outSeen||{};const nu=Object.keys(OUTFITS).filter(k=>k!=="base"&&k!=="heart"&&!G.outSeen[k]&&outfitOk(G,null,k));nu.forEach(k=>G.outSeen[k]=1);if(nu.length)setTimeout(()=>toast(`ปลดล็อกชุดใหม่: ${nu.map(k=>OUTFITS[k].name).join(", ")} · เปลี่ยนได้ที่โปรไฟล์นักมวย แท็บ "ชุด"`),400);}if(UI.relUp&&UI.relUp.length){const m=UI.relUp.join(" / ");UI.relUp=[];setTimeout(()=>toast("♥ "+m),300);}
     if(G.levelUps&&G.levelUps.length){const ids=[...new Set(G.levelUps)];G.levelUps=[];AU.sfx("level");UI.modal={type:"levelup",ids};}else if((G.cardPend||[]).length){AU.sfx&&AU.sfx("level");UI.modal={type:"cardnew"};}render();};
     const go=()=>coachBackScene(()=>aftermathScene(()=>tiredScene(()=>rinScene(fin))));if(played)go();else weeklyExtra(go);});}
 // v1.15: a worn-out fighter asks for a rest week herself
@@ -1208,6 +1212,7 @@ const ACT={
   studinfo:()=>{UI.modal={type:"studinfo"};render();},
   campick:d=>{UI.modal.pick=d.v;render();},campback:()=>{UI.modal.pick=null;render();},
   campok:()=>{ACT.campact({v:UI.modal.pick});},
+  outfit:d=>{const f=G.F[d.id];if(!f||f.camp!=="player")return;if(d.v!=="base"&&!outfitOk(G,f,d.v))return;f.outfit=d.v;AU.sfx&&AU.sfx("ui");save();render();},
   campmg:()=>{const k=UI.modal.pick,a=CAMP_ACTIONS[k];if(!a||!a.mg||G.campUsed)return;UI.modal=null;render();BAG.openMode(a.mg,k);},
   cfxskip:()=>{if(UI.modal&&UI.modal.type==="campres"&&!UI.modal.skip){UI.modal.skip=true;const el=document.querySelector(".campres");if(el)el.classList.add("skip");}},
   campact:d=>{const note=doCampAction(G,d.v);if(note==null)return;G.campNote=note;AU.sfx("level");UI.modal={type:"campres",k:d.v,note};save();render();},

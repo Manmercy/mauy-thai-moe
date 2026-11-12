@@ -1433,3 +1433,12 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .nclose{min-width:40px;min-height:36px}
 .lvbtn{min-height:34px}
 .xbtn{min-width:40px;min-height:40px}
+/* v1.70 outfits */
+.olook{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:start}
+.olook canvas{width:150px;height:auto;image-rendering:pixelated;background:radial-gradient(#3a2f5c,#1b1530 70%);box-shadow:inset 0 0 0 2px var(--line)}
+.olist{display:grid;gap:5px;max-height:330px;overflow-y:auto}
+.obtn{display:flex;gap:8px;align-items:center;text-align:left;padding:5px 8px;border:0;font:inherit;color:inherit;background:#2a2340;box-shadow:inset 0 0 0 2px #4a3f6b;cursor:pointer;min-height:40px}
+.obtn i{flex:none;width:18px;height:18px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.45)}.obtn i.base{background:repeating-linear-gradient(45deg,#c8283c 0 4px,#2b6fc8 4px 8px)}
+.obtn b{display:block;font-size:13px}.obtn small{display:block;font-size:11px;color:var(--mute,#9a91ad)}
+.obtn.on{box-shadow:inset 0 0 0 2px var(--gold);background:#3a2f18}.obtn:disabled{opacity:.55;cursor:default}
+@media (max-width:420px){.olook{grid-template-columns:1fr}.olook canvas{justify-self:center;width:140px}.olist{max-height:none}}
