@@ -2427,5 +2427,9 @@
 "นักท่องเที่ยวลงรถทัวร์มาสามคันรวด สั่งส้มตำไทยไม่เผ็ดกันทั้งคัน ป้าแขนจะหลุดแล้ว มาช่วยหน่อยเถอะ": "Three tour buses pulled up at once and every one of them ordered mild Thai som tam. My arms are about to fall off, please come help!",
 "รถทัวร์ลงร้านป้า!": "Tour buses at my stall!",
 "สุดสัปดาห์นี้มีงานวัด ลูกค้าต่อคิวยาวถึงหน้าโบสถ์ ป้าตำคนเดียวไม่ทัน ส่งนักมวยมือหนัก ๆ มาช่วยสักคนนะลูก ค่าจ้างตามฝีมือ แถมส้มตำกลับบ้าน": "There's a temple fair this weekend and the line reaches the chapel. I can't pound fast enough alone. Send me a fighter with heavy hands, dear. Pay depends on skill, and you take som tam home.",
-"ร้านคนแน่น มาช่วยหน่อย!": "Stall's packed, come help!"
+"ร้านคนแน่น มาช่วยหน่อย!": "Stall's packed, come help!",
+"เล่นเอง</button>": "Play it</button>",
+"<button class=\"btn\" data-act=\"campok\">ข้าม (ผลกลาง ๆ)</button><button class=\"btn primary\" data-act=\"campmg\">": "<button class=\"btn\" data-act=\"campok\">Skip (average result)</button><button class=\"btn primary\" data-act=\"campmg\">",
+"มินิเกม</h2><p class=\"meta center\">แต่ละเกมได้รางวัลสัปดาห์ละครั้ง · เล่นซ้ำเป็นโหมดซ้อมได้ไม่จำกัด</p>\n       <div class=\"mghub\">": "Minigames</h2><p class=\"meta center\">Each game gives a reward once a week · replay as practice anytime</p>\n       <div class=\"mghub\">",
+"ไปช่วยเอง</button>": "Help in person</button>"
 }

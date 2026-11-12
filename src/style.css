@@ -1425,3 +1425,5 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .lvans{display:grid;gap:6px}.lvans .btn{text-align:left;padding:8px 10px}.lvans small{opacity:.6;margin-right:4px}
 .actbtn.mg{box-shadow:inset 0 0 0 2px #e2443c}
 .mgtag{display:inline-block;align-self:flex-start;font:bold 10px "Pixelify Sans",sans-serif;letter-spacing:.5px;color:#fff;background:#e2443c;padding:1px 6px;margin-bottom:3px}
+.pxi.joypx{width:15px;height:10px;display:inline-block;vertical-align:-1px;margin-right:4px}
+.mgtag{width:fit-content;justify-self:start}

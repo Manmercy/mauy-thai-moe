@@ -1429,6 +1429,8 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .lvans{display:grid;gap:6px}.lvans .btn{text-align:left;padding:8px 10px}.lvans small{opacity:.6;margin-right:4px}
 .actbtn.mg{box-shadow:inset 0 0 0 2px #e2443c}
 .mgtag{display:inline-block;align-self:flex-start;font:bold 10px "Pixelify Sans",sans-serif;letter-spacing:.5px;color:#fff;background:#e2443c;padding:1px 6px;margin-bottom:3px}
+.pxi.joypx{width:15px;height:10px;display:inline-block;vertical-align:-1px;margin-right:4px}
+.mgtag{width:fit-content;justify-self:start}
 </style></head><body>
 <div id="app"></div>
 <script type="text/plain" id="js-th">
@@ -5046,7 +5048,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.69";
+const VERSION="1.69.1";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -5077,6 +5079,8 @@ const gymBg=()=>`gym${G?campLevel(G):1}.webp`;
 // v1.13 pixel icons — no emoji in the fight UI
 function pxIcon(rows,pal){const h=rows.length,w=rows[0].length;let r="";rows.forEach((row,y)=>[...row].forEach((c,x)=>{if(c!=="."&&pal[c])r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${pal[c]}"/>`;}));
   return `<svg class="pxi" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;}
+// v1.69.1: pixel gamepad for minigame tags (no emoji)
+const JOY_PX=pxIcon(["..kkkkkkkk..",".kggggggggk.","kggwggggrggk","kgwwwgggggrk","kggwggggrggk","kgggkkkkgggk",".kgk....kgk.","..k......k.."],{k:"#1b1530",g:"#8f86b0",w:"#ffffff",r:"#ffd34a"}).replace('class="pxi"','class="pxi joypx"');
 const PIX={
   sk_atk:pxIcon(["..........",".kkkkkkk..","kydydydyk.","kyyyyyyyk.","kyyyyyyykk","kyyyyyyyyk",".kyyyyyyk.",".kyyyyyk..","..kyyyk...","..kkkkk..."],{k:"#4a1020",y:"#ff6a4d",d:"#b8322a"}),
   sk_def:pxIcon([".kkkkkkkk.",".kbbbbbbk.",".kbwbbbbk.",".kbwbbbbk.",".kbbbbbbk.",".kbbbbbbk.","..kbbbbk..","..kbbbbk..","...kbbk...","....kk...."],{k:"#16264a",b:"#4a8fe8",w:"#bfe0ff"}),
@@ -5684,11 +5688,11 @@ function considerHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,
    <p class="meta">สัปดาห์ ${o.week} · ${TIER[o.tier].name} · ค่าตัว ${fmt(o.lose)} · ชนะได้เพิ่ม ${fmt(o.win-o.lose)}</p>
    <div class="mfoot"><button class="btn primary" data-act="closeModal">ปิด</button></div>`;}
 function actNear(a){let s=0;if(a.rep)s+=Math.max(0,a.rep-G.rep)*2;if(a.week)s+=Math.max(0,a.week-G.week);if(a.fac)s+=20;if(a.lv)s+=15;return s;}
-function campActsHTML(){const pk=UI.modal.pick;if(pk){const a=CAMP_ACTIONS[pk];return `<h2>ยืนยันกิจกรรม?</h2><div class="px confirm"><b>${a.name}</b><p class="meta">${a.desc}${a.cost?` · ค่าใช้จ่าย ${fmt(a.cost)}`:""}</p><p class="meta">ทำได้สัปดาห์ละ 1 อย่าง</p>${a.mg?`<p class="meta">เล่นมินิเกมเองได้ผลตามฝีมือ · หรือข้ามแล้วรับผลกลาง ๆ: ${a.skip}</p>`:""}</div><div class="mfoot"><button class="btn ghost" data-act="campback">ย้อนกลับ</button>${a.mg?`<button class="btn" data-act="campok">ข้าม (ผลกลาง ๆ)</button><button class="btn primary" data-act="campmg">🎮 เล่นเอง</button>`:`<button class="btn primary" data-act="campok">ยืนยัน</button>`}</div>`;}
+function campActsHTML(){const pk=UI.modal.pick;if(pk){const a=CAMP_ACTIONS[pk];return `<h2>ยืนยันกิจกรรม?</h2><div class="px confirm"><b>${a.name}</b><p class="meta">${a.desc}${a.cost?` · ค่าใช้จ่าย ${fmt(a.cost)}`:""}</p><p class="meta">ทำได้สัปดาห์ละ 1 อย่าง</p>${a.mg?`<p class="meta">เล่นมินิเกมเองได้ผลตามฝีมือ · หรือข้ามแล้วรับผลกลาง ๆ: ${a.skip}</p>`:""}</div><div class="mfoot"><button class="btn ghost" data-act="campback">ย้อนกลับ</button>${a.mg?`<button class="btn" data-act="campok">ข้าม (ผลกลาง ๆ)</button><button class="btn primary" data-act="campmg">${JOY_PX}เล่นเอง</button>`:`<button class="btn primary" data-act="campok">ยืนยัน</button>`}</div>`;}
   // v1.23: locked activities stay hidden except the next one to open, so the list stays short
   const all=Object.entries(CAMP_ACTIONS).filter(([k,a])=>!a.hidden),open=all.filter(([k,a])=>!campActLocked(G,a)),lockd=all.filter(([k,a])=>campActLocked(G,a));
   const nx=lockd.sort((x,y)=>actNear(x[1])-actNear(y[1]))[0];
-  return `<h2>กิจกรรมค่ายสัปดาห์นี้</h2><p class="meta">เลือกได้ 1 อย่างต่อสัปดาห์${lockd.length>1?` · ยังมีอีก ${lockd.length-1} กิจกรรมที่ซ่อนอยู่`:""}</p><div class="acts">${[...open,...(nx?[nx]:[])].map(([k,a])=>{const lock=campActLocked(G,a);return `<button class="actbtn ${lock?"lockd":""} ${a.mg?"mg":""}" data-act="campick" data-v="${k}" ${lock||G.campUsed||G.cash<a.cost?"disabled":""}>${a.mg?`<span class="mgtag">🎮 MINIGAME</span>`:""}<b>${a.name}</b><small>${lock?`ปลดล็อก: ${lock}`:a.desc+(a.cost?` · ${fmt(a.cost)}`:"")}</small></button>`;}).join("")}</div>`;}
+  return `<h2>กิจกรรมค่ายสัปดาห์นี้</h2><p class="meta">เลือกได้ 1 อย่างต่อสัปดาห์${lockd.length>1?` · ยังมีอีก ${lockd.length-1} กิจกรรมที่ซ่อนอยู่`:""}</p><div class="acts">${[...open,...(nx?[nx]:[])].map(([k,a])=>{const lock=campActLocked(G,a);return `<button class="actbtn ${lock?"lockd":""} ${a.mg?"mg":""}" data-act="campick" data-v="${k}" ${lock||G.campUsed||G.cash<a.cost?"disabled":""}>${a.mg?`<span class="mgtag">${JOY_PX}MINIGAME</span>`:""}<b>${a.name}</b><small>${lock?`ปลดล็อก: ${lock}`:a.desc+(a.cost?` · ${fmt(a.cost)}`:"")}</small></button>`;}).join("")}</div>`;}
 function studInfoHTML(){const n=students(G),cap=studentCap(G),d=studentDemand(G),fee=studentFee(G);
   return `<h2>นักเรียนคอร์สมวย</h2><div class="px confirm"><img class="face sm" src="${faceSrc("coach")}" alt="" style="float:left;margin:0 10px 4px 0">
    <p>นักท่องเที่ยวกับเด็กแถวค่ายที่มาเรียนมวยกับครูแดง ไม่ใช่นักมวยที่ขึ้นชก แต่เป็น<b>รายได้หลักของค่าย</b> จ่ายค่าเรียนทุกสัปดาห์</p></div>
@@ -6527,7 +6531,7 @@ function letterHTML(m){m.read=true;let act="";
   if(m.kind==="take")act=m.done?`<p class="meta center">รับแล้ว ${fmt(m.amt)}</p>`:`<button class="btn primary" data-act="mtake" data-v="${m.id}">รับเงิน ${fmt(m.amt)}</button>`;
   if(m.kind==="pay")act=m.done?`<p class="meta center">${m.paid?"จ่ายแล้ว":"ไม่จ่าย (ชื่อเสียง −0.3)"}</p>`:m.expired?"":`<button class="btn" data-act="mskip" data-v="${m.id}">ไม่จ่าย (ชื่อเสียง −0.3)</button><button class="btn primary" data-act="mpay" data-v="${m.id}" ${G.cash<m.amt?"disabled":""}>จ่าย ${fmt(m.amt)}</button>`;
   if(m.kind==="quiz")act=m.done?`<p class="meta center">${m.ok?`ตอบถูก! ได้ ${fmt(m.amt)}`:`ผิดจ้า คำตอบคือ "${esc(m.opts[m.ans])}"`}</p>`:m.expired?"":`<p class="qz"><b>${esc(m.q)}</b></p><div class="qopts">${m.opts.map((o,i)=>`<button class="btn" data-act="mquiz" data-v="${m.id}" data-k="${i}">${esc(o)}</button>`).join("")}</div>`;
-  if(m.kind==="job")act=m.done?`<p class="meta center">${m.declined?"ไม่ได้ไปช่วย":m.grade?`ไปช่วยแล้ว · เกรด ${m.grade}`:"ส่งคนไปช่วยแล้ว ได้ ฿550"}</p>`:m.expired?`<p class="meta center">หมดเวลาแล้ว</p>`:`<span class="mgtag">🎮 MINIGAME</span><button class="btn" data-act="mjdecl" data-v="${m.id}">ไม่ว่าง</button><button class="btn" data-act="mjskip" data-v="${m.id}">ส่งคนไปช่วย (฿550)</button><button class="btn primary" data-act="mjplay" data-v="${m.id}">🎮 ไปช่วยเอง</button>`;
+  if(m.kind==="job")act=m.done?`<p class="meta center">${m.declined?"ไม่ได้ไปช่วย":m.grade?`ไปช่วยแล้ว · เกรด ${m.grade}`:"ส่งคนไปช่วยแล้ว ได้ ฿550"}</p>`:m.expired?`<p class="meta center">หมดเวลาแล้ว</p>`:`<span class="mgtag">${JOY_PX}MINIGAME</span><button class="btn" data-act="mjdecl" data-v="${m.id}">ไม่ว่าง</button><button class="btn" data-act="mjskip" data-v="${m.id}">ส่งคนไปช่วย (฿550)</button><button class="btn primary" data-act="mjplay" data-v="${m.id}">${JOY_PX}ไปช่วยเอง</button>`;
   if(m.kind==="quest")act=m.done?`<p class="meta center">${m.declined?"ปฏิเสธแล้ว":"ส่งนักมวยไปแล้ว"}</p>`:m.expired?`<p class="meta center">หมดเวลาแล้ว</p>`:`<button class="btn" data-act="mdecl" data-v="${m.id}">ไม่ไป</button><button class="btn primary" data-act="macc" data-v="${m.id}">รับงาน · เลือกนักมวย</button>`;
   const opp=m.qk?QK[m.qk]:m.npc?G.F[m.npc]:null;
   return `<button class="btn sm ghost mback" data-act="mail">◂ ตู้จดหมาย</button><div class="letter px"><div class="lhead"><small>จาก</small><b>${esc(m.from)}</b><small>สัปดาห์ ${m.wk}</small></div><h3>${esc(m.title)}</h3><p>${esc(m.body)}</p>
@@ -6750,7 +6754,7 @@ const BAG={st:null,
   close(){cancelAnimationFrame(this.raf);if(typeof LIVE!=="undefined"&&LIVE.st){cancelAnimationFrame(LIVE.raf);LIVE.st=null;}const el=document.getElementById("minibag");if(el)el.remove();this.st=null;try{AU.startMusic("hub");}catch(e){}if((G.cardPend||[]).length&&!UI.modal)UI.modal={type:"cardnew"};render();},
   draw(){const S=this.st,el=document.getElementById("minibag");if(!S||!el)return;if(S.phase==="live")return LIVE.draw();const F=bagFighters(G),f=G.F[S.id];
     const M=MG_MODES[S.mode];
-    if(S.phase==="hub"){el.innerHTML=`<div class="mbox px"><h2>🎮 มินิเกม</h2><p class="meta center">แต่ละเกมได้รางวัลสัปดาห์ละครั้ง · เล่นซ้ำเป็นโหมดซ้อมได้ไม่จำกัด</p>
+    if(S.phase==="hub"){el.innerHTML=`<div class="mbox px"><h2>${JOY_PX}มินิเกม</h2><p class="meta center">แต่ละเกมได้รางวัลสัปดาห์ละครั้ง · เล่นซ้ำเป็นโหมดซ้อมได้ไม่จำกัด</p>
        <div class="mghub">${Object.entries(MG_MODES).map(([k,X])=>{const op=X.open(G),pl=mgPlayed(G,k);return `<button class="mgitem ${pl?"done":""}" data-mb="mode" data-v="${k}" ${op?"":"disabled"}><span class="mi">${X.icon}</span><span><b>${X.title}</b><small>${op?(pl?"รับรางวัลแล้วสัปดาห์นี้ ✓":X.note):"ยังไม่เปิด"}</small></span><span class="chev">▸</span></button>`;}).join("")}</div>
        <div class="mfoot roadbtns"><button class="btn" data-mb="close">กลับค่าย</button></div></div>`;return;}
     if(S.phase==="pick"){const best=((G.mini&&G.mini.best)||{})[S.mode]||{};
@@ -10828,7 +10832,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.69";
+const VERSION="1.69.1";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -10859,6 +10863,8 @@ const gymBg=()=>`gym${G?campLevel(G):1}.webp`;
 // v1.13 pixel icons — no emoji in the fight UI
 function pxIcon(rows,pal){const h=rows.length,w=rows[0].length;let r="";rows.forEach((row,y)=>[...row].forEach((c,x)=>{if(c!=="."&&pal[c])r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${pal[c]}"/>`;}));
   return `<svg class="pxi" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;}
+// v1.69.1: pixel gamepad for minigame tags (no emoji)
+const JOY_PX=pxIcon(["..kkkkkkkk..",".kggggggggk.","kggwggggrggk","kgwwwgggggrk","kggwggggrggk","kgggkkkkgggk",".kgk....kgk.","..k......k.."],{k:"#1b1530",g:"#8f86b0",w:"#ffffff",r:"#ffd34a"}).replace('class="pxi"','class="pxi joypx"');
 const PIX={
   sk_atk:pxIcon(["..........",".kkkkkkk..","kydydydyk.","kyyyyyyyk.","kyyyyyyykk","kyyyyyyyyk",".kyyyyyyk.",".kyyyyyk..","..kyyyk...","..kkkkk..."],{k:"#4a1020",y:"#ff6a4d",d:"#b8322a"}),
   sk_def:pxIcon([".kkkkkkkk.",".kbbbbbbk.",".kbwbbbbk.",".kbwbbbbk.",".kbbbbbbk.",".kbbbbbbk.","..kbbbbk..","..kbbbbk..","...kbbk...","....kk...."],{k:"#16264a",b:"#4a8fe8",w:"#bfe0ff"}),
@@ -11466,11 +11472,11 @@ function considerHTML(o){const me=G.F[o.a],op=G.F[o.b];const A=adviseCached(o.a,
    <p class="meta">Week ${o.week} · ${TIER[o.tier].name} · purse ${fmt(o.lose)} · win bonus ${fmt(o.win-o.lose)}</p>
    <div class="mfoot"><button class="btn primary" data-act="closeModal">Close</button></div>`;}
 function actNear(a){let s=0;if(a.rep)s+=Math.max(0,a.rep-G.rep)*2;if(a.week)s+=Math.max(0,a.week-G.week);if(a.fac)s+=20;if(a.lv)s+=15;return s;}
-function campActsHTML(){const pk=UI.modal.pick;if(pk){const a=CAMP_ACTIONS[pk];return `<h2>Confirm activity?</h2><div class="px confirm"><b>${a.name}</b><p class="meta">${a.desc}${a.cost?` · cost ${fmt(a.cost)}`:""}</p><p class="meta">One per week</p>${a.mg?`<p class="meta">Play the minigame yourself for a skill-based result · or skip for an average one: ${a.skip}</p>`:""}</div><div class="mfoot"><button class="btn ghost" data-act="campback">Back</button>${a.mg?`<button class="btn" data-act="campok">Skip (average result)</button><button class="btn primary" data-act="campmg">🎮 Play it</button>`:`<button class="btn primary" data-act="campok">Confirm</button>`}</div>`;}
+function campActsHTML(){const pk=UI.modal.pick;if(pk){const a=CAMP_ACTIONS[pk];return `<h2>Confirm activity?</h2><div class="px confirm"><b>${a.name}</b><p class="meta">${a.desc}${a.cost?` · cost ${fmt(a.cost)}`:""}</p><p class="meta">One per week</p>${a.mg?`<p class="meta">Play the minigame yourself for a skill-based result · or skip for an average one: ${a.skip}</p>`:""}</div><div class="mfoot"><button class="btn ghost" data-act="campback">Back</button>${a.mg?`<button class="btn" data-act="campok">Skip (average result)</button><button class="btn primary" data-act="campmg">${JOY_PX} Play it</button>`:`<button class="btn primary" data-act="campok">Confirm</button>`}</div>`;}
   // v1.23: locked activities stay hidden except the next one to open, so the list stays short
   const all=Object.entries(CAMP_ACTIONS).filter(([k,a])=>!a.hidden),open=all.filter(([k,a])=>!campActLocked(G,a)),lockd=all.filter(([k,a])=>campActLocked(G,a));
   const nx=lockd.sort((x,y)=>actNear(x[1])-actNear(y[1]))[0];
-  return `<h2>This week's camp activity</h2><p class="meta">Choose 1 per week ${lockd.length>1?` · ${lockd.length-1} more activities hidden`:""}</p><div class="acts">${[...open,...(nx?[nx]:[])].map(([k,a])=>{const lock=campActLocked(G,a);return `<button class="actbtn ${lock?"lockd":""} ${a.mg?"mg":""}" data-act="campick" data-v="${k}" ${lock||G.campUsed||G.cash<a.cost?"disabled":""}>${a.mg?`<span class="mgtag">🎮 MINIGAME</span>`:""}<b>${a.name}</b><small>${lock?`Unlocks: ${lock}`:a.desc+(a.cost?` · ${fmt(a.cost)}`:"")}</small></button>`;}).join("")}</div>`;}
+  return `<h2>This week's camp activity</h2><p class="meta">Choose 1 per week ${lockd.length>1?` · ${lockd.length-1} more activities hidden`:""}</p><div class="acts">${[...open,...(nx?[nx]:[])].map(([k,a])=>{const lock=campActLocked(G,a);return `<button class="actbtn ${lock?"lockd":""} ${a.mg?"mg":""}" data-act="campick" data-v="${k}" ${lock||G.campUsed||G.cash<a.cost?"disabled":""}>${a.mg?`<span class="mgtag">${JOY_PX}MINIGAME</span>`:""}<b>${a.name}</b><small>${lock?`Unlocks: ${lock}`:a.desc+(a.cost?` · ${fmt(a.cost)}`:"")}</small></button>`;}).join("")}</div>`;}
 function studInfoHTML(){const n=students(G),cap=studentCap(G),d=studentDemand(G),fee=studentFee(G);
   return `<h2>Muay Thai class students</h2><div class="px confirm"><img class="face sm" src="${faceSrc("coach")}" alt="" style="float:left;margin:0 10px 4px 0">
    <p>Tourists and local kids who take Muay Thai lessons with Coach Daeng. They don't fight, but they're <b>the camp's main income</b>, paying fees every week</p></div>
@@ -12309,7 +12315,7 @@ function letterHTML(m){m.read=true;let act="";
   if(m.kind==="take")act=m.done?`<p class="meta center">Received ${fmt(m.amt)}</p>`:`<button class="btn primary" data-act="mtake" data-v="${m.id}">Collect ${fmt(m.amt)}</button>`;
   if(m.kind==="pay")act=m.done?`<p class="meta center">${m.paid?"Paid":"Didn't pay (fame −0.3)"}</p>`:m.expired?"":`<button class="btn" data-act="mskip" data-v="${m.id}">Don't pay (fame −0.3)</button><button class="btn primary" data-act="mpay" data-v="${m.id}" ${G.cash<m.amt?"disabled":""}>Pay ${fmt(m.amt)}</button>`;
   if(m.kind==="quiz")act=m.done?`<p class="meta center">${m.ok?`Correct! You won ${fmt(m.amt)}`:`Wrong! The answer was "${esc(m.opts[m.ans])}"`}</p>`:m.expired?"":`<p class="qz"><b>${esc(m.q)}</b></p><div class="qopts">${m.opts.map((o,i)=>`<button class="btn" data-act="mquiz" data-v="${m.id}" data-k="${i}">${esc(o)}</button>`).join("")}</div>`;
-  if(m.kind==="job")act=m.done?`<p class="meta center">${m.declined?"Didn't go":m.grade?`Helped out · grade ${m.grade}`:"Sent someone to help: ฿550"}</p>`:m.expired?`<p class="meta center">Expired</p>`:`<span class="mgtag">🎮 MINIGAME</span><button class="btn" data-act="mjdecl" data-v="${m.id}">Too busy</button><button class="btn" data-act="mjskip" data-v="${m.id}">Send someone (฿550)</button><button class="btn primary" data-act="mjplay" data-v="${m.id}">🎮 Help in person</button>`;
+  if(m.kind==="job")act=m.done?`<p class="meta center">${m.declined?"Didn't go":m.grade?`Helped out · grade ${m.grade}`:"Sent someone to help: ฿550"}</p>`:m.expired?`<p class="meta center">Expired</p>`:`<span class="mgtag">${JOY_PX}MINIGAME</span><button class="btn" data-act="mjdecl" data-v="${m.id}">Too busy</button><button class="btn" data-act="mjskip" data-v="${m.id}">Send someone (฿550)</button><button class="btn primary" data-act="mjplay" data-v="${m.id}">${JOY_PX} Help in person</button>`;
   if(m.kind==="quest")act=m.done?`<p class="meta center">${m.declined?"Declined":"Fighter sent"}</p>`:m.expired?`<p class="meta center">Expired</p>`:`<button class="btn" data-act="mdecl" data-v="${m.id}">Not going</button><button class="btn primary" data-act="macc" data-v="${m.id}">Take the job · choose a fighter</button>`;
   const opp=m.qk?QK[m.qk]:m.npc?G.F[m.npc]:null;
   return `<button class="btn sm ghost mback" data-act="mail">◂ Mailbox</button><div class="letter px"><div class="lhead"><small>From</small><b>${esc(m.from)}</b><small>Week ${m.wk}</small></div><h3>${esc(m.title)}</h3><p>${esc(m.body)}</p>
@@ -12532,7 +12538,7 @@ const BAG={st:null,
   close(){cancelAnimationFrame(this.raf);if(typeof LIVE!=="undefined"&&LIVE.st){cancelAnimationFrame(LIVE.raf);LIVE.st=null;}const el=document.getElementById("minibag");if(el)el.remove();this.st=null;try{AU.startMusic("hub");}catch(e){}if((G.cardPend||[]).length&&!UI.modal)UI.modal={type:"cardnew"};render();},
   draw(){const S=this.st,el=document.getElementById("minibag");if(!S||!el)return;if(S.phase==="live")return LIVE.draw();const F=bagFighters(G),f=G.F[S.id];
     const M=MG_MODES[S.mode];
-    if(S.phase==="hub"){el.innerHTML=`<div class="mbox px"><h2>🎮 Minigames</h2><p class="meta center">Each game gives a reward once a week · replay as practice anytime</p>
+    if(S.phase==="hub"){el.innerHTML=`<div class="mbox px"><h2>${JOY_PX} Minigames</h2><p class="meta center">Each game gives a reward once a week · replay as practice anytime</p>
        <div class="mghub">${Object.entries(MG_MODES).map(([k,X])=>{const op=X.open(G),pl=mgPlayed(G,k);return `<button class="mgitem ${pl?"done":""}" data-mb="mode" data-v="${k}" ${op?"":"disabled"}><span class="mi">${X.icon}</span><span><b>${X.title}</b><small>${op?(pl?"Reward claimed this week ✓":X.note):"Not open yet"}</small></span><span class="chev">▸</span></button>`;}).join("")}</div>
        <div class="mfoot roadbtns"><button class="btn" data-mb="close">Back to camp</button></div></div>`;return;}
     if(S.phase==="pick"){const best=((G.mini&&G.mini.best)||{})[S.mode]||{};
