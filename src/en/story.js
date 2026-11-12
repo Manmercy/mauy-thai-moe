@@ -139,10 +139,36 @@ const EVENTS=[
    {t:"Trust her, keep training",fx:G=>{add(G,G.flags.tiredId,"morale",4);add(G,G.flags.tiredId,"trust",-2);},then:[{n:"coach",t:"…Fine, but if you get hurt, don't blame anyone"}]}]}]},
 
  {id:"qual_result",look:"fight",when:G=>G.week>=21,bg:"ring",steps:[
-  {n:"coach",t:G=>{const q=[...G.qual.A,...G.qual.B].filter(id=>G.F[id].camp==="player");
-    return q.length?`Subdistrict results! ${q.map(id=>G.F[id].name).join(" and ")} made the top 4 and advance to the district round`:"Subdistrict results… this year our camp didn't make the top 4"}},
-  {n:"kati",f:G=>G.qual.A.includes("kati")?"happy":"sad",t:G=>G.qual.A.includes("kati")?"District round! I'll take it all the way to the province!":
-    "It's not over. Temple-fair fights still bring in money, and I can still get better. We'll be back next year"}]},
+  {inject:G=>{const q=[...G.qual.A,...G.qual.B].filter(id=>G.F[id].camp==="player");const W=q.filter(id=>G.wild&&G.wild[id]&&G.wildDrop&&G.wildDrop[id]&&G.F[G.wildDrop[id]]);
+   if(!q.length)return [{n:"coach",t:"Subdistrict results… this year our camp didn't make the top 4"},{n:"kati",f:"sad",t:"It's not over. Temple-fair fights still bring in money, and I can still get better. We'll be back next year"}];
+   const S=[];const ok=q.filter(id=>!W.includes(id));
+   if(ok.length)S.push({n:"coach",t:`Subdistrict results! ${ok.map(id=>G.F[id].name).join(" and ")} made the top 4 and advance to the district round`});
+   for(const id of W){const f=G.F[id],d=G.F[G.wildDrop[id]];
+    const rk=(G.wildRank&&G.wildRank[id])||5;
+    S.push({n:"coach",t:rk<=5?`${ok.length||W.indexOf(id)>0?"As for ":"Subdistrict results… "}${f.name} finished fifth, just a hair behind fourth… so close.`:`${ok.length||W.indexOf(id)>0?"As for ":"Subdistrict results… "}${f.name} finished in place ${rk}… not in the top 4 this year`},
+     {n:"nar",t:`But on the morning of the results, ${d.name}, who placed fourth, crashed her motorbike on the way to the weigh-in. Sprained ankle. Not badly hurt, but she has to rest two months.`},
+     {n:"coach",t:rk<=5?`So the committee passed the spot down to fifth place… ${f.name} goes on to the district round. A fluke is a fluke, but we're through.`:`Everyone ranked in between is already booked for other shows, so the committee gave our camp a wildcard because our fights are fun to watch… ${f.name} goes on to the district round. A fluke is a fluke, but we're through.`},
+     {n:id,f:"flustered",t:`I'm happy, but not really happy… ${d.name} trained all year too. I'll bring her some oranges.`},
+     {n:id,f:"angry",t:`Next year I'll qualify on my own points. No more waiting for someone to crash their bike!`});}
+   if(q.includes("kati")&&!W.includes("kati"))S.push({n:"kati",f:"happy",t:"District round! I'll take it all the way to the province!"});
+   return S;}}]},
+
+ /* v1.66: from year 2 qualifying is real — the news, and a soft landing if we miss */
+ {id:"qual_year",annual:true,pri:3,look:"fight",bg:"ring",when:G=>(G.season||1)>=2&&G.week>=21,steps:[
+  {inject:G=>{const q=[...G.qual.A,...G.qual.B].filter(id=>G.F[id].camp==="player");const lead=["kati","mali"].filter(id=>inCamp(G,id));const miss=lead.filter(id=>!q.includes(id));const S=[];
+   if(q.length)S.push({n:"coach",t:`Subdistrict results for year ${yr(G)}! ${q.map(id=>G.F[id].name).join(" and ")} made the top 4 on their own points. Nobody had to crash a bike for us this time`});
+   if(q.includes("kati"))S.push({n:"kati",f:"happy",t:"I got in on my own! No waiting to see if someone drops out this year. I'm going all the way to the province!"});
+   if(!miss.length)return S;
+   const m=G.F[miss[0]];
+   S.push({n:"coach",t:`${q.length?"As for ":"Subdistrict results… "}${miss.map(id=>G.F[id].name).join(" and ")} missed the top 4 this year, by just a few points`},
+    {n:m.id,f:"sad",t:"…I'm sorry, Manager. I couldn't make it."},
+    {n:"coach",t:"Nobody needs to apologize. Grandpa Chai's camp missed the subdistrict cut three years running. In the fourth year he won the province."},
+    {n:"nar",t:"That night the camp is quieter than usual, until the smell of moo kratha drifts out from behind the kitchen."});
+   if(inCamp(G,"mali")&&m.id!=="mali")S.push({n:"mali",f:"happy",t:"I got it ready this afternoon. Win or lose, we still have to eat~"});
+   if(inCamp(G,"rin"))S.push({n:"rin",f:"pout",t:"I've already collected data on every rival this year. Next year we start three months before them. …Eat first, talk later."});
+   S.push({n:m.id,f:"happy",t:"…Mm. I'll be back next year. Not for revenge, but because I want to keep fighting alongside everyone here."},
+    {fx:G2=>{R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);});}},{n:"nar",t:"(Everyone morale +5 · the second half of the year still has temple-fair fights, festivals and minigames)"});
+   return S;}}]},
 
  {id:"ploy_river",look:"train",when:G=>G.week>=24&&G.F.ploy.met,bg:"river",steps:[
   {n:"nar",t:"One evening by the river, you see Ploy sitting alone, re-wrapping her hands"},

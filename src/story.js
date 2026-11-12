@@ -139,10 +139,36 @@ const EVENTS=[
    {t:"เชื่อใจเธอ ซ้อมต่อ",fx:G=>{add(G,G.flags.tiredId,"morale",4);add(G,G.flags.tiredId,"trust",-2);},then:[{n:"coach",t:"…ก็ได้ แต่ถ้าเจ็บขึ้นมา อย่าโทษใครนะ"}]}]}]},
 
  {id:"qual_result",look:"fight",when:G=>G.week>=21,bg:"ring",steps:[
-  {n:"coach",t:G=>{const q=[...G.qual.A,...G.qual.B].filter(id=>G.F[id].camp==="player");
-    return q.length?`ประกาศผลรอบตำบล! ${q.map(id=>G.F[id].name).join(" และ ")} ติดท็อป 4 ได้ไปต่อรอบอำเภอ`:"ประกาศผลรอบตำบล… ปีนี้ค่ายเราไม่ติดท็อป 4"}},
-  {n:"kati",f:G=>G.qual.A.includes("kati")?"happy":"sad",t:G=>G.qual.A.includes("kati")?"รอบอำเภอแล้ว! หนูจะเอาให้ถึงจังหวัดเลยค่ะ!":
-    "ยังไม่จบค่ะ ไฟต์งานวัดยังหาเงินเข้าค่ายได้ และหนูยังเก่งขึ้นได้อีก ปีหน้าเราจะกลับมา"}]},
+  {inject:G=>{const q=[...G.qual.A,...G.qual.B].filter(id=>G.F[id].camp==="player");const W=q.filter(id=>G.wild&&G.wild[id]&&G.wildDrop&&G.wildDrop[id]&&G.F[G.wildDrop[id]]);
+   if(!q.length)return [{n:"coach",t:"ประกาศผลรอบตำบล… ปีนี้ค่ายเราไม่ติดท็อป 4"},{n:"kati",f:"sad",t:"ยังไม่จบค่ะ ไฟต์งานวัดยังหาเงินเข้าค่ายได้ และหนูยังเก่งขึ้นได้อีก ปีหน้าเราจะกลับมา"}];
+   const S=[];const ok=q.filter(id=>!W.includes(id));
+   if(ok.length)S.push({n:"coach",t:`ประกาศผลรอบตำบล! ${ok.map(id=>G.F[id].name).join(" และ ")} ติดท็อป 4 ได้ไปต่อรอบอำเภอ`});
+   for(const id of W){const f=G.F[id],d=G.F[G.wildDrop[id]];
+    const rk=(G.wildRank&&G.wildRank[id])||5;
+    S.push({n:"coach",t:rk<=5?`${ok.length||W.indexOf(id)>0?"ส่วน":"ประกาศผลรอบตำบล… "}${f.name}จบอันดับห้า คะแนนห่างที่สี่นิดเดียว …เกือบแล้วเชียว`:`${ok.length||W.indexOf(id)>0?"ส่วน":"ประกาศผลรอบตำบล… "}${f.name}จบอันดับ ${rk} …ปีนี้ไม่ติดท็อป 4`},
+     {n:"nar",t:`แต่เช้าวันประกาศผล ${d.name}ที่ได้อันดับสี่ ขี่มอเตอร์ไซค์ล้มระหว่างทางไปชั่งน้ำหนัก ข้อเท้าแพลง ไม่เจ็บหนัก แต่ต้องพักสองเดือน`},
+     {n:"coach",t:rk<=5?`กรรมการเลยให้สิทธิ์ตกมาที่อันดับห้า …${f.name}ได้ไปต่อรอบอำเภอ ฟลุกก็ฟลุก แต่ได้ไปต่อ`:`คนที่อยู่ระหว่างนั้นติดชกงานอื่นกันหมด กรรมการเลยให้สิทธิ์ไวลด์การ์ดกับค่ายเรา เพราะเห็นว่าชกสนุก …${f.name}ได้ไปต่อรอบอำเภอ ฟลุกก็ฟลุก แต่ได้ไปต่อ`},
+     {n:id,f:"flustered",t:`ดีใจแต่ก็ไม่ค่อยดีใจค่ะ… ${d.name}ซ้อมมาทั้งปีเหมือนกัน เดี๋ยวหนูเอาส้มไปเยี่ยมนะคะ`},
+     {n:id,f:"angry",t:`ปีหน้าหนูจะเข้ารอบด้วยคะแนนตัวเอง ไม่ต้องรอให้ใครรถล้มอีกแล้ว!`});}
+   if(q.includes("kati")&&!W.includes("kati"))S.push({n:"kati",f:"happy",t:"รอบอำเภอแล้ว! หนูจะเอาให้ถึงจังหวัดเลยค่ะ!"});
+   return S;}}]},
+
+ /* v1.66: from year 2 qualifying is real — the news, and a soft landing if we miss */
+ {id:"qual_year",annual:true,pri:3,look:"fight",bg:"ring",when:G=>(G.season||1)>=2&&G.week>=21,steps:[
+  {inject:G=>{const q=[...G.qual.A,...G.qual.B].filter(id=>G.F[id].camp==="player");const lead=["kati","mali"].filter(id=>inCamp(G,id));const miss=lead.filter(id=>!q.includes(id));const S=[];
+   if(q.length)S.push({n:"coach",t:`ประกาศผลรอบตำบลปีที่ ${yr(G)}! ${q.map(id=>G.F[id].name).join(" และ ")} ติดท็อป 4 ด้วยคะแนนตัวเอง ไม่มีใครต้องรถล้มให้`});
+   if(q.includes("kati"))S.push({n:"kati",f:"happy",t:"เข้าเองแล้วค่ะ! ปีนี้ไม่ต้องลุ้นว่าใครจะสละสิทธิ์ หนูจะเอาให้ถึงจังหวัด!"});
+   if(!miss.length)return S;
+   const m=G.F[miss[0]];
+   S.push({n:"coach",t:`${q.length?"ส่วน":"ประกาศผลรอบตำบล… "}${miss.map(id=>G.F[id].name).join(" และ ")}ไม่ติดท็อป 4 ปีนี้ ขาดไปไม่กี่คะแนน`},
+    {n:m.id,f:"sad",t:"…ขอโทษนะคะ ผู้จัดการ หนูทำได้ไม่ถึง"},
+    {n:"coach",t:"ไม่มีใครต้องขอโทษ ค่ายนี้ปู่ชัยก็เคยตกรอบตำบลมาสามปีติด ปีที่สี่ได้แชมป์จังหวัด"},
+    {n:"nar",t:"คืนนั้นลานค่ายเงียบกว่าปกติ จนกลิ่นหมูกระทะลอยมาจากหลังครัว"});
+   if(inCamp(G,"mali")&&m.id!=="mali")S.push({n:"mali",f:"happy",t:"หนูเตรียมไว้ตั้งแต่บ่ายแล้วค่ะ แพ้หรือชนะก็ต้องกินข้าวอยู่ดี~"});
+   if(inCamp(G,"rin"))S.push({n:"rin",f:"pout",t:"ฉันรวบรวมข้อมูลคู่แข่งปีนี้ไว้หมดแล้ว ปีหน้าเราจะเริ่มก่อนเขาสามเดือน …กินก่อนแล้วค่อยคุยกัน"});
+   S.push({n:m.id,f:"happy",t:"…อืม ปีหน้าหนูจะกลับมา ไม่ใช่เพราะต้องแก้มือ แต่เพราะอยากชกกับทุกคนที่นี่ต่อค่ะ"},
+    {fx:G2=>{R_ALL(G2,f=>{f.morale=Math.min(100,f.morale+5);});}},{n:"nar",t:"(ทุกคนกำลังใจ +5 · ครึ่งปีหลังยังมีไฟต์งานวัด เทศกาล และมินิเกมให้ทำต่อ)"});
+   return S;}}]},
 
  {id:"ploy_river",look:"train",when:G=>G.week>=24&&G.F.ploy.met,bg:"river",steps:[
   {n:"nar",t:"เย็นวันหนึ่งริมแม่น้ำ คุณเห็นพลอยนั่งพันมือใหม่อยู่คนเดียว"},
