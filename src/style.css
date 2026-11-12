@@ -1427,3 +1427,9 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .mgtag{display:inline-block;align-self:flex-start;font:bold 10px "Pixelify Sans",sans-serif;letter-spacing:.5px;color:#fff;background:#e2443c;padding:1px 6px;margin-bottom:3px}
 .pxi.joypx{width:15px;height:10px;display:inline-block;vertical-align:-1px;margin-right:4px}
 .mgtag{width:fit-content;justify-self:start}
+/* v1.69.2 usability pass: readable hints, bigger small tap targets */
+.ccard small{font-size:11.5px;line-height:1.3}
+.mgtag{font-size:11px}
+.nclose{min-width:40px;min-height:36px}
+.lvbtn{min-height:34px}
+.xbtn{min-width:40px;min-height:40px}
