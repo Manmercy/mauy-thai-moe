@@ -388,14 +388,14 @@ const BAG={st:null,
     const pick=(G.mini&&G.mini.bagLast&&F.find(f=>f.id===G.mini.bagLast))||F.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];
     this.st={phase:"hub",mode:"bag",id:pick.id,dk:(G.mini&&G.mini.bagDk)||"normal",practice:false};this.mount();this.draw();},
   mount(){let el=document.getElementById("minibag");if(!el){el=document.createElement("div");el.id="minibag";el.className="mgame";document.body.appendChild(el);}
-    el.onclick=e=>{const b=e.target.closest("[data-mb]");if(!b)return;const a=b.dataset.mb,v=b.dataset.v;
-      if(a==="mode"){this.st.mode=v;this.st.phase="pick";this.st.practice=mgPlayed(G,v);this.draw();}else if(a==="hub"){this.st.phase="hub";this.draw();}else if(a==="pick"){this.st.id=v;this.draw();}else if(a==="dk"){this.st.dk=v;this.draw();}else if(a==="go")this.start();else if(a==="close")this.close();else if(a==="claim")this.claim();else if(a==="again"){this.st.phase="pick";this.st.practice=mgPlayed(G,this.st.mode);this.draw();}};
-    if(!this.keyH){this.keyH=e=>{if(!this.st||this.st.phase!=="play")return;const k=e.key.toLowerCase();if(e.repeat)return;
+    el.onclick=e=>{const lv=e.target.closest("[data-lv]");if(lv&&typeof LIVE!=="undefined"){LIVE.act(lv.dataset.lv,lv.dataset.v);return;}const b=e.target.closest("[data-mb]");if(!b)return;const a=b.dataset.mb,v=b.dataset.v;
+      if(a==="mode"&&MG_MODES[v]&&MG_MODES[v].custom){this.st.mode=v;LIVE.pick();}else if(a==="mode"){this.st.mode=v;this.st.phase="pick";this.st.practice=mgPlayed(G,v);this.draw();}else if(a==="hub"){this.st.phase="hub";this.draw();}else if(a==="pick"){this.st.id=v;this.draw();}else if(a==="dk"){this.st.dk=v;this.draw();}else if(a==="go")this.start();else if(a==="close")this.close();else if(a==="claim")this.claim();else if(a==="again"){this.st.phase="pick";this.st.practice=mgPlayed(G,this.st.mode);this.draw();}};
+    if(!this.keyH){this.keyH=e=>{if(typeof LIVE!=="undefined"&&LIVE.st&&LIVE.st.phase==="play"&&/^[123]$/.test(e.key)){const d=LIVE.st.cur;if(d){e.preventDefault();LIVE.answer(d.ord[+e.key-1]);}return;}if(!this.st||this.st.phase!=="play")return;const k=e.key.toLowerCase();if(e.repeat)return;
       if(k==="f"||k==="d"||k==="arrowleft"){e.preventDefault();this.hit("L");}else if(k==="j"||k==="k"||k==="arrowright"){e.preventDefault();this.hit("R");}else if(k==="escape")this.close();};
       document.addEventListener("keydown",this.keyH);
-      document.addEventListener("visibilitychange",()=>{if(document.hidden&&this.st&&this.st.phase==="play"){this.st.phase="abort";cancelAnimationFrame(this.raf);this.draw();}});}},
-  close(){cancelAnimationFrame(this.raf);const el=document.getElementById("minibag");if(el)el.remove();this.st=null;try{AU.startMusic("hub");}catch(e){}if((G.cardPend||[]).length&&!UI.modal)UI.modal={type:"cardnew"};render();},
-  draw(){const S=this.st,el=document.getElementById("minibag");if(!S||!el)return;const F=bagFighters(G),f=G.F[S.id];
+      document.addEventListener("visibilitychange",()=>{if(document.hidden&&typeof LIVE!=="undefined"&&LIVE.st&&LIVE.st.phase==="play"){LIVE.st.dur=0;}if(document.hidden&&this.st&&this.st.phase==="play"){this.st.phase="abort";cancelAnimationFrame(this.raf);this.draw();}});}},
+  close(){cancelAnimationFrame(this.raf);if(typeof LIVE!=="undefined"&&LIVE.st){cancelAnimationFrame(LIVE.raf);LIVE.st=null;}const el=document.getElementById("minibag");if(el)el.remove();this.st=null;try{AU.startMusic("hub");}catch(e){}if((G.cardPend||[]).length&&!UI.modal)UI.modal={type:"cardnew"};render();},
+  draw(){const S=this.st,el=document.getElementById("minibag");if(!S||!el)return;if(S.phase==="live")return LIVE.draw();const F=bagFighters(G),f=G.F[S.id];
     const M=MG_MODES[S.mode];
     if(S.phase==="hub"){el.innerHTML=`<div class="mbox px"><h2>🎮 มินิเกม</h2><p class="meta center">แต่ละเกมได้รางวัลสัปดาห์ละครั้ง · เล่นซ้ำเป็นโหมดซ้อมได้ไม่จำกัด</p>
        <div class="mghub">${Object.entries(MG_MODES).map(([k,X])=>{const op=X.open(G),pl=mgPlayed(G,k);return `<button class="mgitem ${pl?"done":""}" data-mb="mode" data-v="${k}" ${op?"":"disabled"}><span class="mi">${X.icon}</span><span><b>${X.title}</b><small>${op?(pl?"รับรางวัลแล้วสัปดาห์นี้ ✓":X.note):"ยังไม่เปิด"}</small></span><span class="chev">▸</span></button>`;}).join("")}</div>
@@ -507,3 +507,119 @@ Object.assign(CARDS,{
   {n:"rin",f:"surprised",l:"casual",t:"…จังหวะร้อยยี่สิบสี่ ทุกโน้ต ไม่มีช่องให้ฉันจดข้อผิดพลาดเลย"},
   {n:"rin",f:"pout",l:"casual",t:"ปกติฉันชอบตารางที่เต็ม แต่วันนี้ตารางว่างทั้งแผ่น แล้วฉันกลับชอบมากกว่า"},
   {n:"rin",f:"flustered",l:"casual",t:"ไม่ต้องยิ้มแบบนั้นค่ะผู้จัดการ …ฉันจะแปะหน้านี้ไว้บนผนังห้อง ไม่ได้แปลว่าภูมิใจนะ แค่… ภูมิใจนิดหน่อย"}]}});
+
+// ===== v1.67: MINIGAME — camp merch live stream (answer comments in time) =====
+const LIVE_ITEMS=[
+ {k:"shirt",name:"เสื้อค่ายศิริชัย",price:290,margin:120,open:G=>true},
+ {k:"wrap",name:"ผ้าพันมือลายค่าย",price:150,margin:60,open:G=>true},
+ {k:"oil",name:"น้ำมันมวยสูตรปู่ชัย",price:120,margin:55,open:G=>G.week>=12||(G.season||1)>=2},
+ {k:"key",name:"พวงกุญแจสัตว์เลี้ยงค่าย",price:89,margin:40,open:G=>(G.pets||[]).length>0},
+ {k:"shorts",name:"กางเกงมวยลายค่าย",price:450,margin:180,open:G=>(typeof campLevel==="function"&&campLevel(G)>=3)||(G.season||1)>=2}];
+const LIVE_HOST={kati:"ลูกค้าประจำใจดีกับกะทิ · ตอบถูกได้คนดูเพิ่ม",mali:"พูดหวาน ปิดการขายเก่ง · ยอดขาย +20%",rin:"ตอบคำถามไว · เวลาตอบ +1.5 วินาที",fah:"ดาวติ๊กต็อก · คนดูเยอะขึ้น 40%",ploy:"นิ่งใส่ดราม่า · คอมเมนต์ป่วนไม่ทำให้คนดูลด"};
+const LIVE_NAMES=["น้องแพรว","ลุงเขียว","แฟนคลับกะทิ#1","ป้าแต๋ว","นักเรียนค่าย","สาวออฟฟิศ","บัญชีปลอม123","ลุงหมวกทอง","แม่ค้าตลาด","เด็กช่างกล"];
+/* each comment: kind, text, answers [label, score] — score 1 = right, 0 = meh, -1 = wrong. "sale" adds orders when answered well */
+const LIVE_POOL=[
+ {k:"price",t:"ITEM ราคาเท่าไหร่คะ",a:[["บอกราคาชัด ๆ พร้อมส่งฟรี",1],["ทักแชทนะคะ",0],["แพงแต่คุ้มค่ะ",-1]],sale:1},
+ {k:"size",t:"มีไซซ์ไหนบ้าง ตัวใหญ่ใส่ได้ไหม",a:[["มี S–XXL วัดตัวให้ดูเลย",1],["ไซซ์เดียวใส่ได้ทุกคน",-1],["ไม่แน่ใจค่ะ",0]],sale:1},
+ {k:"ship",t:"ส่งต่างจังหวัดไหมคะ อยู่ภูเก็ต",a:[["ส่งทั่วไทย 2–3 วันถึง",1],["มารับเองที่ค่ายนะคะ",-1],["เดี๋ยวถามครูก่อน",0]],sale:1},
+ {k:"order",t:"CF 2 ชิ้นค่ะ!!",a:[["ขอบคุณค่ะ ทักแชทยืนยันนะ",1],["เดี๋ยวก่อนนะคะ",0],["ลืมจดไปแล้ว",-1]],sale:2},
+ {k:"order",t:"เอาสามชิ้น ส่งให้หลานด้วย",a:[["รับออเดอร์ แถมสติกเกอร์ให้",1],["สามชิ้นเยอะไปไหมคะ",-1],["ได้ค่ะ… มั้ง",0]],sale:3},
+ {k:"bargain",t:"ลดได้ไหม ซื้อสองชิ้น",a:[["แถมพวงกุญแจแทนนะคะ",1],["ลดครึ่งราคาเลย!",-1],["ไม่ลดค่ะ",0]],sale:2},
+ {k:"hype",t:"ใส่แล้วเตะแรงขึ้นไหม 555",a:[["เตะกระสอบโชว์ให้ดูเลย!",1],["ไม่หรอกค่ะ",0],["ขึ้นอยู่กับดวง",-1]]},
+ {k:"hype",t:"ขอดูท่าไหว้ครูหน่อย!",a:[["รำไหว้ครูให้ดูสั้น ๆ",1],["ไว้วันหลังนะ",0],["เขินค่ะ ไม่เอา",-1]]},
+ {k:"fan",t:"รักHOSTค่ะ!! มาจากไฟต์งานวัด",a:[["ขอบคุณค่ะ ส่งหัวใจให้เลย",1],["(เมินไปขายต่อ)",-1],["เขิน… ไม่ตอบ",0]]},
+ {k:"fan",t:"ไฟต์ที่แล้วสุดยอดมาก!",a:[["เล่าไฟต์ให้ฟังพร้อมชวนซื้อ",1],["ฟลุกค่ะ",0],["ใครคะ",-1]]},
+ {k:"troll",t:"ค่ายเล็ก ๆ จะขายอะไรได้",a:[["ขอบคุณที่แวะมาดูนะคะ 🙏",1],["เถียงกลับยาว ๆ",-1],["ปิดไลฟ์หนี",-1]],troll:1},
+ {k:"troll",t:"เสื้อสีนี้ใครจะใส่ 555",a:[["ใส่เดินโชว์ให้ดูเลยค่ะ",1],["นอยด์ เงียบไปนาน",-1],["ก็คุณไงคะ",0]],troll:1},
+ {k:"drama",t:"ได้ข่าวว่าโดนค่ายใหญ่ดึงตัว??",a:[["หัวเราะ: ไม่ไปไหน ที่นี่บ้าน",1],["เงียบใส่",0],["ด่าค่ายนั้นกลับ",-1]],troll:1},
+ {k:"drama",t:"ทำไมเมื่อวานแพ้คะ ผิดหวัง",a:[["ขอบคุณที่เชียร์ จะกลับมาใหม่",1],["กรรมการโกงค่ะ",-1],["ไม่อยากพูด",0]],troll:1},
+ {k:"pet",t:"ขอดูน้องหมาค่ายหน่อย!",a:[["อุ้มมาโชว์หน้ากล้อง",1],["ไม่ได้ค่ะ",-1],["เดี๋ยวนะ",0]],need:G=>(G.pets||[]).some(p=>p.k==="dog")},
+ {k:"pet",t:"แมวส้มอยู่ไหน!!",a:[["ไปตามมาโชว์",1],["มันหลับอยู่ค่ะ",0],["แมวอะไร",-1]],need:G=>(G.pets||[]).some(p=>p.k==="cat")},
+ {k:"coach",t:"ครูแดงออกมาโชว์หน่อย",a:[["ลากครูมาโบกมือ",1],["ครูไม่ว่างค่ะ",0],["ครูขี้เขิน",0]]},
+ {k:"q",t:"ITEM ซักเครื่องได้ไหม",a:[["ได้ค่ะ น้ำเย็น กลับด้าน",1],["ไม่รู้เหมือนกัน",-1],["ซักมือดีกว่า",0]],sale:1}];
+const LIVE={st:null,
+  played(G){return mgPlayed(G,"live");},
+  items(G){return LIVE_ITEMS.filter(i=>i.open(G));},
+  pick(){const S=BAG.st;const F=bagFighters(G).filter(f=>f.canon);const host=(G.mini&&G.mini.liveHost&&F.find(f=>f.id===G.mini.liveHost))||F[0];
+    this.st={phase:"pick",host:host?host.id:"kati",item:(G.mini&&G.mini.liveItem)||"shirt",practice:this.played(G)};if(!this.items(G).some(i=>i.k===this.st.item))this.st.item="shirt";S.phase="live";this.draw();},
+  act(a,v){const S=this.st;if(!S)return;
+    if(a==="host"){S.host=v;this.draw();}else if(a==="item"){S.item=v;this.draw();}else if(a==="go")this.start();
+    else if(a==="ans")this.answer(+v);else if(a==="again"){S.phase="pick";S.practice=this.played(G);this.draw();}
+    else if(a==="hub"){cancelAnimationFrame(this.raf);clearTimeout(this.to);this.st=null;BAG.st.phase="hub";BAG.draw();}},
+  el(){return document.getElementById("minibag");},
+  draw(){const S=this.st,el=this.el();if(!S||!el)return;const F=bagFighters(G).filter(f=>f.canon);
+    if(S.phase==="pick"){const best=((G.mini&&G.mini.best)||{}).live||0;
+      el.innerHTML=`<div class="mbox px"><h2>📱 ไลฟ์ขายของค่าย</h2>
+       <p class="meta">คอมเมนต์จะเด้งขึ้นทีละอัน เลือกคำตอบที่ดีที่สุดให้ทันเวลา (ปุ่ม 1/2/3 ก็ได้) · ตอบดีคนดูเพิ่ม ยอดขายขึ้น · ตอบพลาดคนดูหนี</p>
+       <b class="meta">ใครไลฟ์</b><div class="mbpick">${F.map(x=>`<button class="mbf ${x.id===S.host?"on":""}" data-lv="host" data-v="${x.id}"><img src="${faceSrc(x.id,"happy")}" alt=""><small>${esc(x.name)}</small></button>`).join("")}</div>
+       <p class="meta center">${esc(LIVE_HOST[S.host]||"")}</p>
+       <b class="meta">ขายอะไร</b><div class="lvitems">${this.items(G).map(i=>`<button class="btn sm ${i.k===S.item?"primary":""}" data-lv="item" data-v="${i.k}">${i.name} ฿${i.price}</button>`).join("")}</div>
+       <p class="meta center">${S.practice?"สัปดาห์นี้ไลฟ์ไปแล้ว · รอบนี้เป็นโหมดซ้อม ไม่มีรายได้":"ไลฟ์ได้สัปดาห์ละครั้ง · ได้กำไรจากยอดขาย · ชื่อเสียง · เศษดาว"}${best?` · ยอดขายสูงสุด ${best} ชิ้น`:""}</p>
+       <div class="mfoot roadbtns"><button class="btn" data-lv="hub">◂ กลับ</button><button class="btn primary" data-lv="go">เริ่มไลฟ์! ▸</button></div></div>`;return;}
+    if(S.phase==="play"){const h=G.F[S.host];
+      el.innerHTML=`<div class="mplay lv"><div class="lvphone"><img class="lvface" src="${faceSrc(S.host,"happy")}" alt="">
+        <div class="lvtop"><span class="lvlive">● LIVE</span><span>👁 <b id="lvv">0</b></span><span>🛒 <b id="lvs">0</b></span><span id="lvt">45</span></div>
+        <div class="lvname">${esc(h.name)} · ${esc(this.item().name)}</div><div class="lvhearts" id="lvh"></div>
+        <div class="lvfeed" id="lvfeed"></div></div>
+        <div class="lvq" id="lvq"></div></div>`;this.showQ();return;}
+    if(S.phase==="result"){const R=S.res;
+      el.innerHTML=`<div class="mbox px"><h2>จบไลฟ์</h2><div class="mgrade g${R.grade}">${R.grade}</div>
+       <p class="center">ขายได้ <b>${S.sold}</b> ชิ้น · คนดูสูงสุด ${S.peak} คน · ตอบดี ${S.good}/${S.asked}${R.best?" · <b class=\"goldt\">สถิติใหม่!</b>":""}</p>
+       ${S.practice?`<p class="center meta">โหมดซ้อม · ไม่มีรายได้</p>`:`<p class="center">${R.rw}</p>`}
+       <div class="mfoot roadbtns"><button class="btn" data-lv="hub">มินิเกมอื่น</button><button class="btn" data-lv="again">ไลฟ์อีกรอบ</button><button class="btn primary" data-mb="close">กลับค่าย</button></div></div>`;}},
+  item(){return LIVE_ITEMS.find(i=>i.k===this.st.item)||LIVE_ITEMS[0];},
+  start(){const S=this.st;AU.resume&&AU.resume();G.mini=G.mini||{};G.mini.liveHost=S.host;G.mini.liveItem=S.item;
+    const pool=LIVE_POOL.filter(c=>!c.need||c.need(G));const R=(i)=>srand(G,3100+i*17+(G.mini.liveN||0)*7);
+    S.deck=[];for(let i=0;i<40;i++){const c=pool[Math.floor(R(i)*pool.length)];const ord=[0,1,2].sort((a,b)=>R(i*3+a+50)-R(i*3+b+50));S.deck.push({c,ord,who:LIVE_NAMES[Math.floor(R(i+200)*LIVE_NAMES.length)]});}
+    S.i=0;S.view=Math.round(25+(G.rep||5)*3)*(S.host==="fah"?1.4:1);S.peak=S.view;S.sold=0;S.good=0;S.asked=0;S.feed=[];S.cur=null;S.phase="play";S.t0=performance.now();S.dur=45000;
+    this.draw();const loop=()=>{if(!this.st||this.st.phase!=="play")return;this.tick();this.raf=requestAnimationFrame(loop);};this.raf=requestAnimationFrame(loop);},
+  qTime(){return (this.st.host==="rin"?6000:4500);},
+  showQ(){const S=this.st;const q=document.getElementById("lvq");if(!q)return;if(!S.cur){q.innerHTML=`<p class="meta center">รอคอมเมนต์ถัดไป…</p>`;return;}
+    const d=S.cur,c=d.c,txt=c.t.replace("ITEM",this.item().name).replace("HOST",G.F[S.host].name);
+    q.innerHTML=`<div class="lvc"><b>${esc(d.who)}</b><span>${esc(txt)}</span><div class="lvbar"><i id="lvbar"></i></div></div>
+      <div class="lvans">${d.ord.map((ai,j)=>`<button class="btn" data-lv="ans" data-v="${ai}"><small>${j+1}</small> ${esc(c.a[ai][0])}</button>`).join("")}</div>`;},
+  pushFeed(t,cls){const S=this.st;S.feed.push({t,cls});if(S.feed.length>5)S.feed.shift();const f=document.getElementById("lvfeed");if(f)f.innerHTML=S.feed.map(x=>`<div class="${x.cls||""}">${x.t}</div>`).join("");},
+  heart(){const h=document.getElementById("lvh");if(!h)return;const s=document.createElement("i");s.textContent=["❤","💖","🔥","👏"][Math.floor(Math.random()*4)];s.style.left=(60+Math.random()*30)+"%";h.appendChild(s);setTimeout(()=>s.remove(),1200);},
+  answer(ai){const S=this.st;if(!S||S.phase!=="play"||!S.cur)return;const d=S.cur,c=d.c,sc=c.a[ai][1];S.asked++;
+    const txt=c.a[ai][0];this.pushFeed(`<b>${esc(G.F[S.host].name)}:</b> ${esc(txt)}`,"me");
+    if(sc>0){S.good++;const gain=Math.round((8+Math.random()*7)*(S.host==="kati"?1.3:1)*(S.host==="fah"?1.2:1));S.view+=gain;
+      if(c.sale){const n=Math.max(1,Math.round(c.sale*(S.host==="mali"?1.2:1)+S.view/120));S.sold+=n;this.pushFeed(`🛒 +${n} ชิ้น`,"sale");}
+      for(let i=0;i<3;i++)setTimeout(()=>this.heart(),i*120);AU.sfx&&AU.sfx("ui");}
+    else if(sc<0){if(!(c.troll&&S.host==="ploy"))S.view=Math.max(5,Math.round(S.view*.85));this.pushFeed("💨 คนดูออกไปบางส่วน","bad");}
+    else{S.view=Math.max(5,Math.round(S.view*.97));}
+    S.cur=null;S.next=performance.now()+700;this.showQ();},
+  tick(){const S=this.st,now=performance.now(),el=now-S.t0;
+    if(el>=S.dur&&!S.cur){this.finish();return;}
+    if(!S.cur&&(!S.next||now>=S.next)&&el<S.dur-1500){const d=S.deck[S.i++%S.deck.length];S.cur=d;S.qT=now;this.pushFeed(`<b>${esc(d.who)}:</b> ${esc(d.c.t.replace("ITEM",this.item().name).replace("HOST",G.F[S.host].name))}`);this.showQ();}
+    if(S.cur){const left=1-(now-S.qT)/this.qTime();const b=document.getElementById("lvbar");if(b)b.style.width=Math.max(0,left*100)+"%";
+      if(left<=0){S.asked++;S.view=Math.max(5,Math.round(S.view*.93));this.pushFeed("⌛ ตอบไม่ทัน","bad");S.cur=null;S.next=now+500;this.showQ();}}
+    /* passive trickle of orders from a big audience */
+    if(!S.pt||now-S.pt>3000){S.pt=now;if(Math.random()<Math.min(.8,S.view/150)){S.sold++;this.pushFeed("🛒 +1 ชิ้น","sale");}}
+    S.peak=Math.max(S.peak,S.view);
+    const v=document.getElementById("lvv"),s=document.getElementById("lvs"),t=document.getElementById("lvt");if(v)v.textContent=Math.round(S.view);if(s)s.textContent=S.sold;if(t)t.textContent=Math.max(0,Math.ceil((S.dur-el)/1000));},
+  finish(){const S=this.st;cancelAnimationFrame(this.raf);S.phase="result";const acc=S.good/Math.max(1,S.asked);
+    const grade=S.sold>=30&&acc>=.85?"S":S.sold>=20&&acc>=.7?"A":S.sold>=10?"B":"C";
+    G.mini=G.mini||{};G.mini.best=G.mini.best||{};if(typeof G.mini.best.easy==="number")G.mini.best={bag:G.mini.best};G.mini.liveN=(G.mini.liveN||0)+1;
+    const isBest=S.sold>(G.mini.best.live||0);if(isBest)G.mini.best.live=S.sold;
+    S.res={grade,best:isBest,rw:""};if(!S.practice)S.res.rw=this.reward(grade);save();this.draw();AU.sfx&&AU.sfx(grade==="S"||grade==="A"?"level":"ui");},
+  reward(grade){const S=this.st,it=this.item(),f=G.F[S.host],out=[];G.mini.liveWk=G.week;G.mini.liveS=G.season||1;
+    const pay=Math.round(S.sold*it.margin*.7/10)*10;G.cash+=pay;out.push(`กำไร <b class="goldt">฿${pay.toLocaleString()}</b>`);
+    const rp={S:.4,A:.25,B:.1,C:0}[grade];if(rp){G.rep=Math.round(((G.rep||0)+rp)*100)/100;out.push(`ชื่อเสียง +${rp}`);}
+    const du={S:5,A:3,B:2,C:1}[grade];G.dust=(G.dust||0)+du;out.push(`<b class="goldt">✦ +${du}</b>`);
+    if(grade==="S"||grade==="A"){add(G,f.id,"bond",2);out.push(`${esc(f.name)}สนิทขึ้น`);}
+    f.morale=Math.min(100,(f.morale||0)+3);out.push("กำลังใจ +3");
+    G.flags.liveN=(G.flags.liveN||0)+1;if(grade==="S")G.flags.liveS=(G.flags.liveS||0)+1;
+    if(typeof cardCheck==="function"){const got=cardCheck(G);if(got.length){G.cardPend=(G.cardPend||[]).concat(got);out.push(`🃏 การ์ดใหม่ ×${got.length}`);}}
+    return `<span class="rwl">${out.map(x=>`<span class="rwi">${x}</span>`).join("")}</span>`;}};
+MG_MODES.live={icon:"📱",title:"ไลฟ์ขายของค่าย",note:"ตอบคอมเมนต์ให้ทัน · ได้กำไรจากยอดขาย ชื่อเสียง",open:G=>G.week>=8||(G.season||1)>=2,custom:true};
+Object.assign(CARDS,{
+ m_live:{c:"kati",r:"R",t:"ไลฟ์แรกของค่าย",hint:"ไลฟ์ขายของค่ายครั้งแรก",bg:"camp",need:G=>(G.flags.liveN||0)>=1,steps:[
+  {n:"nar",t:"มือถือตั้งบนกองกระสอบทราย กะทิกับเสื้อค่ายตัวเดียวที่รีดเรียบที่สุด กล้องหน้าเปิดอยู่ คนดู 3 คน"},
+  {n:"kati",f:"flustered",l:"casual",t:"สะ… สวัสดีค่ะ ค่ายศิริชัยค่ะ วันนี้มีเสื้อมาขาย… คนดูสามคน หนึ่งในนั้นคือครูแดง"},
+  {n:"coach",t:"(คอมเมนต์จากบัญชี 'แดงศิริชัย') CF 1 ตัว"},
+  {n:"kati",f:"happy",l:"casual",t:"ครูคะ! ครูยืนอยู่ข้างหลังหนูเนี่ย! …แต่ขอบคุณค่ะ ออเดอร์แรกของค่ายเลยนะคะ"}]},
+ m_livehot:{c:"fah",r:"SR",t:"ไลฟ์แตก",hint:"ได้เกรด S ในไลฟ์ขายของ",bg:"camp",need:G=>(G.flags.liveS||0)>=1,steps:[
+  {n:"nar",t:"ตัวเลขคนดูพุ่งเกินพัน ออเดอร์เด้งจนมือถือสั่นไม่หยุด ทั้งค่ายช่วยกันจดใส่สมุดของริน"},
+  {n:"fah",f:"happy",l:"casual",t:"เห็นไหม! บอกแล้วว่าไลฟ์ต้องมีฟ้า! …อ้าว วันนี้ฟ้าไม่ได้ไลฟ์เหรอ ช่างเถอะ ฟ้าเชียร์อยู่หลังกล้องก็นับ!"},
+  {n:"rin",f:"pout",l:"casual",t:"ออเดอร์ทั้งหมดบันทึกครบ ไม่มีซ้ำ ไม่มีตก …เสื้อในโกดังเหลือสองตัว ใครจะบอกลูกค้าคนที่สามสิบเอ็ด"},
+  {n:"coach",t:"สมัยปู่ชัย เสื้อค่ายขายได้ปีละสิบตัว …วันนี้ขายได้ในห้านาที โลกมันเปลี่ยนไปจริง ๆ"}]}});

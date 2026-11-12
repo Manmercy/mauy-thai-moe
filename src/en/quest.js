@@ -388,14 +388,14 @@ const BAG={st:null,
     const pick=(G.mini&&G.mini.bagLast&&F.find(f=>f.id===G.mini.bagLast))||F.slice().sort((a,b)=>(b.bond||0)-(a.bond||0))[0];
     this.st={phase:"hub",mode:"bag",id:pick.id,dk:(G.mini&&G.mini.bagDk)||"normal",practice:false};this.mount();this.draw();},
   mount(){let el=document.getElementById("minibag");if(!el){el=document.createElement("div");el.id="minibag";el.className="mgame";document.body.appendChild(el);}
-    el.onclick=e=>{const b=e.target.closest("[data-mb]");if(!b)return;const a=b.dataset.mb,v=b.dataset.v;
-      if(a==="mode"){this.st.mode=v;this.st.phase="pick";this.st.practice=mgPlayed(G,v);this.draw();}else if(a==="hub"){this.st.phase="hub";this.draw();}else if(a==="pick"){this.st.id=v;this.draw();}else if(a==="dk"){this.st.dk=v;this.draw();}else if(a==="go")this.start();else if(a==="close")this.close();else if(a==="claim")this.claim();else if(a==="again"){this.st.phase="pick";this.st.practice=mgPlayed(G,this.st.mode);this.draw();}};
-    if(!this.keyH){this.keyH=e=>{if(!this.st||this.st.phase!=="play")return;const k=e.key.toLowerCase();if(e.repeat)return;
+    el.onclick=e=>{const lv=e.target.closest("[data-lv]");if(lv&&typeof LIVE!=="undefined"){LIVE.act(lv.dataset.lv,lv.dataset.v);return;}const b=e.target.closest("[data-mb]");if(!b)return;const a=b.dataset.mb,v=b.dataset.v;
+      if(a==="mode"&&MG_MODES[v]&&MG_MODES[v].custom){this.st.mode=v;LIVE.pick();}else if(a==="mode"){this.st.mode=v;this.st.phase="pick";this.st.practice=mgPlayed(G,v);this.draw();}else if(a==="hub"){this.st.phase="hub";this.draw();}else if(a==="pick"){this.st.id=v;this.draw();}else if(a==="dk"){this.st.dk=v;this.draw();}else if(a==="go")this.start();else if(a==="close")this.close();else if(a==="claim")this.claim();else if(a==="again"){this.st.phase="pick";this.st.practice=mgPlayed(G,this.st.mode);this.draw();}};
+    if(!this.keyH){this.keyH=e=>{if(typeof LIVE!=="undefined"&&LIVE.st&&LIVE.st.phase==="play"&&/^[123]$/.test(e.key)){const d=LIVE.st.cur;if(d){e.preventDefault();LIVE.answer(d.ord[+e.key-1]);}return;}if(!this.st||this.st.phase!=="play")return;const k=e.key.toLowerCase();if(e.repeat)return;
       if(k==="f"||k==="d"||k==="arrowleft"){e.preventDefault();this.hit("L");}else if(k==="j"||k==="k"||k==="arrowright"){e.preventDefault();this.hit("R");}else if(k==="escape")this.close();};
       document.addEventListener("keydown",this.keyH);
-      document.addEventListener("visibilitychange",()=>{if(document.hidden&&this.st&&this.st.phase==="play"){this.st.phase="abort";cancelAnimationFrame(this.raf);this.draw();}});}},
-  close(){cancelAnimationFrame(this.raf);const el=document.getElementById("minibag");if(el)el.remove();this.st=null;try{AU.startMusic("hub");}catch(e){}if((G.cardPend||[]).length&&!UI.modal)UI.modal={type:"cardnew"};render();},
-  draw(){const S=this.st,el=document.getElementById("minibag");if(!S||!el)return;const F=bagFighters(G),f=G.F[S.id];
+      document.addEventListener("visibilitychange",()=>{if(document.hidden&&typeof LIVE!=="undefined"&&LIVE.st&&LIVE.st.phase==="play"){LIVE.st.dur=0;}if(document.hidden&&this.st&&this.st.phase==="play"){this.st.phase="abort";cancelAnimationFrame(this.raf);this.draw();}});}},
+  close(){cancelAnimationFrame(this.raf);if(typeof LIVE!=="undefined"&&LIVE.st){cancelAnimationFrame(LIVE.raf);LIVE.st=null;}const el=document.getElementById("minibag");if(el)el.remove();this.st=null;try{AU.startMusic("hub");}catch(e){}if((G.cardPend||[]).length&&!UI.modal)UI.modal={type:"cardnew"};render();},
+  draw(){const S=this.st,el=document.getElementById("minibag");if(!S||!el)return;if(S.phase==="live")return LIVE.draw();const F=bagFighters(G),f=G.F[S.id];
     const M=MG_MODES[S.mode];
     if(S.phase==="hub"){el.innerHTML=`<div class="mbox px"><h2>🎮 Minigames</h2><p class="meta center">Each game gives a reward once a week · replay as practice anytime</p>
        <div class="mghub">${Object.entries(MG_MODES).map(([k,X])=>{const op=X.open(G),pl=mgPlayed(G,k);return `<button class="mgitem ${pl?"done":""}" data-mb="mode" data-v="${k}" ${op?"":"disabled"}><span class="mi">${X.icon}</span><span><b>${X.title}</b><small>${op?(pl?"Reward claimed this week ✓":X.note):"Not open yet"}</small></span><span class="chev">▸</span></button>`;}).join("")}</div>
@@ -507,3 +507,119 @@ Object.assign(CARDS,{
   {n:"rin",f:"surprised",l:"casual",t:"…124 BPM, every note, and not a single gap for me to log a mistake."},
   {n:"rin",f:"pout",l:"casual",t:"I usually like a full table. Today the whole sheet is empty, and I like it even more."},
   {n:"rin",f:"flustered",l:"casual",t:"Don't smile like that, Manager… I'm pinning this page on my wall. Not because I'm proud. Just… a little proud."}]}});
+
+// ===== v1.67: MINIGAME — camp merch live stream (answer comments in time) =====
+const LIVE_ITEMS=[
+ {k:"shirt",name:"Sirichai Camp shirt",price:290,margin:120,open:G=>true},
+ {k:"wrap",name:"Camp hand wraps",price:150,margin:60,open:G=>true},
+ {k:"oil",name:"Grandpa Chai's boxing liniment",price:120,margin:55,open:G=>G.week>=12||(G.season||1)>=2},
+ {k:"key",name:"Camp pet keychain",price:89,margin:40,open:G=>(G.pets||[]).length>0},
+ {k:"shorts",name:"Camp-pattern Muay Thai shorts",price:450,margin:180,open:G=>(typeof campLevel==="function"&&campLevel(G)>=3)||(G.season||1)>=2}];
+const LIVE_HOST={kati:"Regulars love Kati · good replies draw more viewers",mali:"Sweet talker, closes sales · +20% sales",rin:"Answers fast · +1.5 s to reply",fah:"TikTok star · 40% more viewers",ploy:"Unfazed by drama · trolls don't scare viewers off"};
+const LIVE_NAMES=["Praew","Uncle Khiao","Kati Fanclub #1","Auntie Taew","camp_student","office_girl","fake_account123","Uncle Golden Helmet","market_auntie","vocational_kid"];
+/* each comment: kind, text, answers [label, score] — score 1 = right, 0 = meh, -1 = wrong. "sale" adds orders when answered well */
+const LIVE_POOL=[
+ {k:"price",t:"How much is the ITEM?",a:[["Clear price, free shipping",1],["DM us",0],["Pricey but worth it",-1]],sale:1},
+ {k:"size",t:"What sizes? Fits bigger folks?",a:[["S–XXL, measure it on camera",1],["One size fits all",-1],["Not sure",0]],sale:1},
+ {k:"ship",t:"Do you ship upcountry? I'm in Phuket",a:[["Ships nationwide in 2–3 days",1],["Pick it up at the camp",-1],["Let me ask Coach first",0]],sale:1},
+ {k:"order",t:"CF 2 please!!",a:[["Thank you! DM to confirm",1],["Hold on a sec",0],["Forgot to write it down",-1]],sale:2},
+ {k:"order",t:"Three please, one's for my nephew",a:[["Take the order, add free stickers",1],["Isn't three a lot?",-1],["Sure… I think",0]],sale:3},
+ {k:"bargain",t:"Discount if I buy two?",a:[["Throw in a keychain instead",1],["Half price, go!",-1],["No discounts",0]],sale:2},
+ {k:"hype",t:"Will I kick harder wearing this lol",a:[["Kick the bag to show them!",1],["Not really",0],["Depends on your luck",-1]]},
+ {k:"hype",t:"Show us the wai khru!",a:[["Do a short wai khru",1],["Another day",0],["Too shy, no thanks",-1]]},
+ {k:"fan",t:"Love HOST!! Came from the temple-fair fight",a:[["Thank you! Sending hearts",1],["(ignore and keep selling)",-1],["Too shy… no reply",0]]},
+ {k:"fan",t:"Your last fight was amazing!",a:[["Retell the fight and pitch the shirt",1],["It was a fluke",0],["Who?",-1]]},
+ {k:"troll",t:"What can a tiny camp even sell",a:[["Thanks for stopping by 🙏",1],["Argue back at length",-1],["End the live and run",-1]],troll:1},
+ {k:"troll",t:"Who'd even wear this color lol",a:[["Walk around wearing it",1],["Gets upset and goes quiet",-1],["You would!",0]],troll:1},
+ {k:"drama",t:"Heard a big camp is poaching you??",a:[["Laugh: not going anywhere, this is home",1],["Ignore it",0],["Trash that camp back",-1]],troll:1},
+ {k:"drama",t:"Why did you lose yesterday? So disappointed",a:[["Thanks for cheering, we'll be back",1],["The judges cheated",-1],["I'd rather not talk about it",0]],troll:1},
+ {k:"pet",t:"Show us the camp dog!",a:[["Carry it to the camera",1],["Sorry, can't",-1],["Hold on",0]],need:G=>(G.pets||[]).some(p=>p.k==="dog")},
+ {k:"pet",t:"Where's the orange cat!!",a:[["Go fetch it to show",1],["It's asleep",0],["What cat?",-1]],need:G=>(G.pets||[]).some(p=>p.k==="cat")},
+ {k:"coach",t:"Bring Coach Daeng on camera!",a:[["Drag Coach in to wave",1],["Coach is busy",0],["Coach is shy",0]]},
+ {k:"q",t:"Can the ITEM go in the washing machine?",a:[["Yes, cold water, inside out",1],["No idea",-1],["Hand-wash is better",0]],sale:1}];
+const LIVE={st:null,
+  played(G){return mgPlayed(G,"live");},
+  items(G){return LIVE_ITEMS.filter(i=>i.open(G));},
+  pick(){const S=BAG.st;const F=bagFighters(G).filter(f=>f.canon);const host=(G.mini&&G.mini.liveHost&&F.find(f=>f.id===G.mini.liveHost))||F[0];
+    this.st={phase:"pick",host:host?host.id:"kati",item:(G.mini&&G.mini.liveItem)||"shirt",practice:this.played(G)};if(!this.items(G).some(i=>i.k===this.st.item))this.st.item="shirt";S.phase="live";this.draw();},
+  act(a,v){const S=this.st;if(!S)return;
+    if(a==="host"){S.host=v;this.draw();}else if(a==="item"){S.item=v;this.draw();}else if(a==="go")this.start();
+    else if(a==="ans")this.answer(+v);else if(a==="again"){S.phase="pick";S.practice=this.played(G);this.draw();}
+    else if(a==="hub"){cancelAnimationFrame(this.raf);clearTimeout(this.to);this.st=null;BAG.st.phase="hub";BAG.draw();}},
+  el(){return document.getElementById("minibag");},
+  draw(){const S=this.st,el=this.el();if(!S||!el)return;const F=bagFighters(G).filter(f=>f.canon);
+    if(S.phase==="pick"){const best=((G.mini&&G.mini.best)||{}).live||0;
+      el.innerHTML=`<div class="mbox px"><h2>📱 Camp Merch Live</h2>
+       <p class="meta">Comments pop up one at a time. Pick the best reply before time runs out (keys 1/2/3 work too) · good replies bring viewers and sales · bad ones drive viewers away</p>
+       <b class="meta">Who's hosting</b><div class="mbpick">${F.map(x=>`<button class="mbf ${x.id===S.host?"on":""}" data-lv="host" data-v="${x.id}"><img src="${faceSrc(x.id,"happy")}" alt=""><small>${esc(x.name)}</small></button>`).join("")}</div>
+       <p class="meta center">${esc(LIVE_HOST[S.host]||"")}</p>
+       <b class="meta">What to sell</b><div class="lvitems">${this.items(G).map(i=>`<button class="btn sm ${i.k===S.item?"primary":""}" data-lv="item" data-v="${i.k}">${i.name} ฿${i.price}</button>`).join("")}</div>
+       <p class="meta center">${S.practice?"Already streamed this week · this run is practice, no income":"One live a week · earn profit from sales · fame · stardust"}${best?` · best sales ${best} sold`:""}</p>
+       <div class="mfoot roadbtns"><button class="btn" data-lv="hub">◂ Back</button><button class="btn primary" data-lv="go">Go live! ▸</button></div></div>`;return;}
+    if(S.phase==="play"){const h=G.F[S.host];
+      el.innerHTML=`<div class="mplay lv"><div class="lvphone"><img class="lvface" src="${faceSrc(S.host,"happy")}" alt="">
+        <div class="lvtop"><span class="lvlive">● LIVE</span><span>👁 <b id="lvv">0</b></span><span>🛒 <b id="lvs">0</b></span><span id="lvt">45</span></div>
+        <div class="lvname">${esc(h.name)} · ${esc(this.item().name)}</div><div class="lvhearts" id="lvh"></div>
+        <div class="lvfeed" id="lvfeed"></div></div>
+        <div class="lvq" id="lvq"></div></div>`;this.showQ();return;}
+    if(S.phase==="result"){const R=S.res;
+      el.innerHTML=`<div class="mbox px"><h2>Live Ended</h2><div class="mgrade g${R.grade}">${R.grade}</div>
+       <p class="center">Sold <b>${S.sold}</b> · peak viewers ${S.peak} · good answers ${S.good}/${S.asked}${R.best?" · <b class=\"goldt\">New record!</b>":""}</p>
+       ${S.practice?`<p class="center meta">Practice mode · no income</p>`:`<p class="center">${R.rw}</p>`}
+       <div class="mfoot roadbtns"><button class="btn" data-lv="hub">Other games</button><button class="btn" data-lv="again">Go live again</button><button class="btn primary" data-mb="close">Back to camp</button></div></div>`;}},
+  item(){return LIVE_ITEMS.find(i=>i.k===this.st.item)||LIVE_ITEMS[0];},
+  start(){const S=this.st;AU.resume&&AU.resume();G.mini=G.mini||{};G.mini.liveHost=S.host;G.mini.liveItem=S.item;
+    const pool=LIVE_POOL.filter(c=>!c.need||c.need(G));const R=(i)=>srand(G,3100+i*17+(G.mini.liveN||0)*7);
+    S.deck=[];for(let i=0;i<40;i++){const c=pool[Math.floor(R(i)*pool.length)];const ord=[0,1,2].sort((a,b)=>R(i*3+a+50)-R(i*3+b+50));S.deck.push({c,ord,who:LIVE_NAMES[Math.floor(R(i+200)*LIVE_NAMES.length)]});}
+    S.i=0;S.view=Math.round(25+(G.rep||5)*3)*(S.host==="fah"?1.4:1);S.peak=S.view;S.sold=0;S.good=0;S.asked=0;S.feed=[];S.cur=null;S.phase="play";S.t0=performance.now();S.dur=45000;
+    this.draw();const loop=()=>{if(!this.st||this.st.phase!=="play")return;this.tick();this.raf=requestAnimationFrame(loop);};this.raf=requestAnimationFrame(loop);},
+  qTime(){return (this.st.host==="rin"?6000:4500);},
+  showQ(){const S=this.st;const q=document.getElementById("lvq");if(!q)return;if(!S.cur){q.innerHTML=`<p class="meta center">Waiting for the next comment…</p>`;return;}
+    const d=S.cur,c=d.c,txt=c.t.replace("ITEM",this.item().name).replace("HOST",G.F[S.host].name);
+    q.innerHTML=`<div class="lvc"><b>${esc(d.who)}</b><span>${esc(txt)}</span><div class="lvbar"><i id="lvbar"></i></div></div>
+      <div class="lvans">${d.ord.map((ai,j)=>`<button class="btn" data-lv="ans" data-v="${ai}"><small>${j+1}</small> ${esc(c.a[ai][0])}</button>`).join("")}</div>`;},
+  pushFeed(t,cls){const S=this.st;S.feed.push({t,cls});if(S.feed.length>5)S.feed.shift();const f=document.getElementById("lvfeed");if(f)f.innerHTML=S.feed.map(x=>`<div class="${x.cls||""}">${x.t}</div>`).join("");},
+  heart(){const h=document.getElementById("lvh");if(!h)return;const s=document.createElement("i");s.textContent=["❤","💖","🔥","👏"][Math.floor(Math.random()*4)];s.style.left=(60+Math.random()*30)+"%";h.appendChild(s);setTimeout(()=>s.remove(),1200);},
+  answer(ai){const S=this.st;if(!S||S.phase!=="play"||!S.cur)return;const d=S.cur,c=d.c,sc=c.a[ai][1];S.asked++;
+    const txt=c.a[ai][0];this.pushFeed(`<b>${esc(G.F[S.host].name)}:</b> ${esc(txt)}`,"me");
+    if(sc>0){S.good++;const gain=Math.round((8+Math.random()*7)*(S.host==="kati"?1.3:1)*(S.host==="fah"?1.2:1));S.view+=gain;
+      if(c.sale){const n=Math.max(1,Math.round(c.sale*(S.host==="mali"?1.2:1)+S.view/120));S.sold+=n;this.pushFeed(`🛒 +${n} sold`,"sale");}
+      for(let i=0;i<3;i++)setTimeout(()=>this.heart(),i*120);AU.sfx&&AU.sfx("ui");}
+    else if(sc<0){if(!(c.troll&&S.host==="ploy"))S.view=Math.max(5,Math.round(S.view*.85));this.pushFeed("💨 Some viewers left","bad");}
+    else{S.view=Math.max(5,Math.round(S.view*.97));}
+    S.cur=null;S.next=performance.now()+700;this.showQ();},
+  tick(){const S=this.st,now=performance.now(),el=now-S.t0;
+    if(el>=S.dur&&!S.cur){this.finish();return;}
+    if(!S.cur&&(!S.next||now>=S.next)&&el<S.dur-1500){const d=S.deck[S.i++%S.deck.length];S.cur=d;S.qT=now;this.pushFeed(`<b>${esc(d.who)}:</b> ${esc(d.c.t.replace("ITEM",this.item().name).replace("HOST",G.F[S.host].name))}`);this.showQ();}
+    if(S.cur){const left=1-(now-S.qT)/this.qTime();const b=document.getElementById("lvbar");if(b)b.style.width=Math.max(0,left*100)+"%";
+      if(left<=0){S.asked++;S.view=Math.max(5,Math.round(S.view*.93));this.pushFeed("⌛ Too slow","bad");S.cur=null;S.next=now+500;this.showQ();}}
+    /* passive trickle of orders from a big audience */
+    if(!S.pt||now-S.pt>3000){S.pt=now;if(Math.random()<Math.min(.8,S.view/150)){S.sold++;this.pushFeed("🛒 +1 sold","sale");}}
+    S.peak=Math.max(S.peak,S.view);
+    const v=document.getElementById("lvv"),s=document.getElementById("lvs"),t=document.getElementById("lvt");if(v)v.textContent=Math.round(S.view);if(s)s.textContent=S.sold;if(t)t.textContent=Math.max(0,Math.ceil((S.dur-el)/1000));},
+  finish(){const S=this.st;cancelAnimationFrame(this.raf);S.phase="result";const acc=S.good/Math.max(1,S.asked);
+    const grade=S.sold>=30&&acc>=.85?"S":S.sold>=20&&acc>=.7?"A":S.sold>=10?"B":"C";
+    G.mini=G.mini||{};G.mini.best=G.mini.best||{};if(typeof G.mini.best.easy==="number")G.mini.best={bag:G.mini.best};G.mini.liveN=(G.mini.liveN||0)+1;
+    const isBest=S.sold>(G.mini.best.live||0);if(isBest)G.mini.best.live=S.sold;
+    S.res={grade,best:isBest,rw:""};if(!S.practice)S.res.rw=this.reward(grade);save();this.draw();AU.sfx&&AU.sfx(grade==="S"||grade==="A"?"level":"ui");},
+  reward(grade){const S=this.st,it=this.item(),f=G.F[S.host],out=[];G.mini.liveWk=G.week;G.mini.liveS=G.season||1;
+    const pay=Math.round(S.sold*it.margin*.7/10)*10;G.cash+=pay;out.push(`Profit <b class="goldt">฿${pay.toLocaleString()}</b>`);
+    const rp={S:.4,A:.25,B:.1,C:0}[grade];if(rp){G.rep=Math.round(((G.rep||0)+rp)*100)/100;out.push(`Fame +${rp}`);}
+    const du={S:5,A:3,B:2,C:1}[grade];G.dust=(G.dust||0)+du;out.push(`<b class="goldt">✦ +${du}</b>`);
+    if(grade==="S"||grade==="A"){add(G,f.id,"bond",2);out.push(`${esc(f.name)} grew closer`);}
+    f.morale=Math.min(100,(f.morale||0)+3);out.push("Morale +3");
+    G.flags.liveN=(G.flags.liveN||0)+1;if(grade==="S")G.flags.liveS=(G.flags.liveS||0)+1;
+    if(typeof cardCheck==="function"){const got=cardCheck(G);if(got.length){G.cardPend=(G.cardPend||[]).concat(got);out.push(`🃏 New card ×${got.length}`);}}
+    return `<span class="rwl">${out.map(x=>`<span class="rwi">${x}</span>`).join("")}</span>`;}};
+MG_MODES.live={icon:"📱",title:"Camp Merch Live",note:"Answer comments in time · earn profit from sales, fame",open:G=>G.week>=8||(G.season||1)>=2,custom:true};
+Object.assign(CARDS,{
+ m_live:{c:"kati",r:"R",t:"The Camp's First Live",hint:"Stream the camp's merch for the first time",bg:"camp",need:G=>(G.flags.liveN||0)>=1,steps:[
+  {n:"nar",t:"A phone propped on a stack of sandbags. Kati in the one camp shirt she ironed flattest. Front camera on. Three viewers."},
+  {n:"kati",f:"flustered",l:"casual",t:"H-hello, this is Sirichai Camp. Today we have shirts for sale… Three viewers. One of them is Coach Daeng."},
+  {n:"coach",t:"(Comment from the account 'Daeng Sirichai') CF 1 shirt"},
+  {n:"kati",f:"happy",l:"casual",t:"Coach! You're standing right behind me! …But thank you. That's the camp's very first order."}]},
+ m_livehot:{c:"fah",r:"SR",t:"The Live Blew Up",hint:"Get an S on the merch live stream",bg:"camp",need:G=>(G.flags.liveS||0)>=1,steps:[
+  {n:"nar",t:"The viewer count shoots past a thousand. Orders pour in until the phone won't stop buzzing. The whole camp helps write them into Rin's notebook."},
+  {n:"fah",f:"happy",l:"casual",t:"See! I told you a live needs Fah! …Wait, Fah wasn't the one streaming today? Whatever, cheering behind the camera counts!"},
+  {n:"rin",f:"pout",l:"casual",t:"Every order logged. No duplicates, none missed. …There are two shirts left in storage. Who's telling customer number thirty-one?"},
+  {n:"coach",t:"In Grandpa Chai's day the camp sold ten shirts a year… today we sold them in five minutes. The world really has changed."}]}});
