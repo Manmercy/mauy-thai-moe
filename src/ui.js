@@ -116,18 +116,18 @@ function render(){
   if(!G)h=UI.creator?creatorHTML():titleHTML();
   else if(UI.ending)h=endingHTML();
   else h=`<div class="shell">${hubHTML()}</div>`;
-  if(G&&UI.petName!=null&&!UI.scene&&!UI.modal){UI.modal={type:"petname",i:UI.petName};UI.petName=null;}
+  if(G&&UI.petName!=null&&!UI.scene&&!UI.fight){if(UI.modal&&UI.modal.type!=="petname")UI.modalQ=UI.modal;UI.modal={type:"petname",i:UI.petName};UI.petName=null;} /* v1.80: naming comes first, whatever else is waiting */
   if(UI.modal)h+=modalHTML();
   if(G&&UI.montage)h+=montageHTML();
   if(G&&UI.fight)h+=fightHTML();
   if(UI.scene)h+=sceneHTML();
   if(UI.toast)h+=`<div class="toast" role="status">${esc(UI.toast.msg)}</div>`;
-  const keep={};document.querySelectorAll(".pxscroll[data-sk]").forEach(e=>keep[e.dataset.sk]=e.scrollTop);
+  const keep={};document.querySelectorAll(".pxscroll[data-sk]").forEach(e=>keep[e.dataset.sk]=e.scrollTop);const fsEl=document.querySelector(".fight"),fsTop=fsEl?fsEl.scrollTop:0;
   $app.innerHTML=h;
-  document.querySelectorAll(".pxscroll[data-sk]").forEach(e=>{const k=e.dataset.sk;if(keep[k]!=null&&!UI.resetScroll)e.scrollTop=keep[k];});UI.resetScroll=false;{const cb=document.querySelector(".cbody");if(cb)cb.scrollTop=cb.scrollHeight;}
+  document.querySelectorAll(".pxscroll[data-sk]").forEach(e=>{const k=e.dataset.sk;if(keep[k]!=null&&!UI.resetScroll)e.scrollTop=keep[k];});{const f2=document.querySelector(".fight");if(f2&&fsTop)f2.scrollTop=fsTop;} /* v1.80: the fight screen re-renders every beat; keep its scroll put */UI.resetScroll=false;{const cb=document.querySelector(".cbody");if(cb)cb.scrollTop=cb.scrollHeight;}
   const fc=document.getElementById("fstage");if(fc)FS.attach(fc);
   const lg=document.querySelector(".flog");if(lg)lg.scrollTop=lg.scrollHeight;
-  mountCanvases();if(typeof mountQSprites==="function")mountQSprites();pxBars();spotPaint();
+  mountCanvases();if(typeof mountQSprites==="function")mountQSprites();mountPxFaces();pxBars();spotPaint();
   if(typeof newsSync==="function")newsSync();
 }
 // v1.12.1 spotlight intro: dim the screen and teach one part of it at a time
@@ -153,7 +153,10 @@ function spotPaint(){document.querySelectorAll(".spot-ov").forEach(e=>e.remove()
   document.body.appendChild(ov);}
 
 // v1.11: retro pixel scrollbars — the page stays put, panels scroll inside themselves
-function pxBars(){document.querySelectorAll(".pxbar").forEach(b=>b.remove());
+/* v1.80: album cards draw their portraits at 30×40 and scale up crisp, so the album reads as pixel cards */
+const PXF={};function mountPxFaces(){document.querySelectorAll("canvas[data-pxf]").forEach(cv=>{const src=cv.dataset.pxf;const draw=im=>{const x=cv.getContext("2d");x.imageSmoothingEnabled=true;const w=im.naturalWidth,h=im.naturalHeight,r=30/40;let sw=w,sh=w/r;if(sh>h){sh=h;sw=h*r;}x.clearRect(0,0,30,40);x.drawImage(im,(w-sw)/2,0,sw,sh,0,0,30,40);};
+  if(PXF[src]&&PXF[src].complete)draw(PXF[src]);else{const im=PXF[src]||(PXF[src]=new Image());im.addEventListener("load",()=>draw(im),{once:true});if(!im.src)im.src=src;}});}
+function pxBars(){document.querySelectorAll(".pxbar").forEach(b=>b.remove());if(UI.fight||UI.scene)return; /* v1.80: no hub scrollbar flickering over the fight */
   document.querySelectorAll(".pxscroll").forEach(el=>{if(el.scrollHeight<=el.clientHeight+4)return;const bar=document.createElement("div");bar.className="pxbar";bar.innerHTML="<i></i>";document.body.appendChild(bar);
     let hide=0;const upd=show=>{if(!el.isConnected){bar.remove();return;}const r=el.getBoundingClientRect();const top=Math.max(r.top,0),bot=Math.min(r.bottom,innerHeight);
       bar.style.top=(top+6)+"px";bar.style.height=Math.max(0,bot-top-12)+"px";bar.style.left=(r.right-12)+"px";
@@ -317,7 +320,7 @@ function rinNoteHTML(){const n=G.rinNote;if(!n||!G.F.rin||G.F.rin.camp!=="player
   return `<button class="px rinnote" data-act="rinread"><img src="${faceSrc("rin")}" alt=""><span><b>รินส่งรายงานมา</b><small>สรุป 3 สัปดาห์ · แตะเพื่ออ่าน</small></span><i class="tdot2"></i></button>`;}
 // v1.51: pets on the home card — tap once a week to play
 function petsRowHTML(){const P=G.pets||[];if(!P.length)return "";return `<div class="petrow">${P.map((p,i)=>{const done=p.wk===G.week;
-  return `<button class="petchip ${done?"done":""}" data-act="petplay" data-v="${i}" ${done?"disabled":""} title="${esc(PETS[p.k].eff)}"><img class="peti" src="${petIcon(p.k)}" alt=""><span><b>${esc(p.name)}</b><small>${done?"เล่นแล้ว ✓":"เล่นด้วย"}</small></span></button>`;}).join("")}</div>`;}
+  return `<span class="petg"><button class="petchip ${done?"done":""}" data-act="petplay" data-v="${i}" ${done?"disabled":""} title="${esc(PETS[p.k].eff)}"><img class="peti" src="${petIcon(p.k)}" alt=""><span><b>${esc(p.name)}</b><small>${done?"เล่นแล้ว ✓":"เล่นด้วย"}</small></span></button><button class="btn sm petren" data-act="petren" data-v="${i}" aria-label="ตั้งชื่อ${esc(p.name)}ใหม่">ตั้งชื่อ</button></span>`;}).join("")}</div>`;}
 function homeHTML(){const R=roster(G);
   let guide="";
   if(coachOn()&&G.guideHidden!==G.week&&G.week<=2&&!(G.season>1)){
@@ -686,13 +689,13 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
   if(m.type==="campacts"){body=campActsHTML();foot=!m.pick;}
   if(m.type==="studinfo"){body=studInfoHTML();}
   if(m.type==="gift")body=giftHTML(m.id);
-  if(m.type==="petname"){const p=(G.pets||[])[m.i];if(!p){UI.modal=null;return "";}body=`<h2>ตั้งชื่อ${esc(PETS[p.k].name)}</h2><div class="petnm"><img class="peti" src="${petIcon(p.k)}" alt=""><input id="petname" maxlength="12" value="${esc(p.name)}" autocomplete="off"></div><p class="meta">ชื่อนี้จะโผล่ในฉากต่าง ๆ ของค่าย</p><button class="btn primary" data-act="petnamesave" data-v="${m.i}">ตั้งชื่อ</button>`;}
+  if(m.type==="petname"){const p=(G.pets||[])[m.i];if(!p){UI.modal=null;return "";}body=`<h2>ตั้งชื่อ${esc(PETS[p.k].name)}</h2><div class="petnm"><img class="peti" src="${petIcon(p.k)}" alt=""><input id="petname" maxlength="12" value="${esc(p.name)}" autocomplete="off"></div><p class="meta">ชื่อนี้จะโผล่ในฉากต่าง ๆ ของค่าย</p><button class="btn primary" id="petnamebtn" data-act="petnamesave" data-v="${m.i}">ตั้งชื่อ</button>`;}
   if(m.type==="album"){const byC={};for(const id in CARDS)(byC[CARDS[id].c]=byC[CARDS[id].c]||[]).push(id);const own=G.cards||{};
     body=`<h2>อัลบั้มการ์ด</h2><p class="meta">เก็บได้ ${Object.keys(own).length}/${Object.keys(CARDS).length} ใบ · แตะการ์ดเพื่อดูเรื่องราว · ใบที่ยังไม่ได้แสดงเป็นเงาพร้อมคำใบ้</p>
      <div class="gacha"><span><b class="goldt">✦ ${G.dust||0}</b> เศษดาว<small>ได้จากชนะไฟต์ การ์ดใหม่ และการ์ดซ้ำ · การันตี SSR อีก ${GACHA_PITY-(G.pity||0)} ครั้ง</small></span><button class="btn sm gold" data-act="gacha" ${(G.dust||0)<GACHA_COST?"disabled":""}>สุ่มการ์ด ${GACHA_COST}✦</button></div>
      ${CANON_IDS.filter(c=>byC[c]).map(c=>`<h4 class="albh">${esc(G.F[c].name)}</h4><div class="albg">${byC[c].map(id=>{const C=CARDS[id],o=own[id],R=CARD_R[C.r];
-       return o?`<button class="ccard" style="--rc:${R.c}" data-act="cardplay" data-v="${id}">${!o.seen?'<i class="ndot"></i>':""}<img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b><small>${C.r}${(o.lv||1)>1?` · Lv.${o.lv}`:""}</small></button>`
-         :`<div class="ccard lock" style="--rc:${R.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(R.s)}</span><b>???</b><small>${C.g?"ได้จากตู้กาชา":esc(C.hint)}</small></div>`;}).join("")}</div>`).join("")}`;}
+       return o?`<button class="ccard pxc" style="--rc:${R.c}" data-act="cardplay" data-v="${id}" title="${esc(C.t)}">${!o.seen?'<i class="ndot"></i>':""}<canvas width="30" height="40" data-pxf="${faceSrc(C.c,"happy","casual")}"></canvas><i class="rr">${C.r}${(o.lv||1)>1?`<u>${o.lv}</u>`:""}</i><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b></button>`
+         :`<button class="ccard pxc lock" style="--rc:${R.c}" data-act="cardhint" data-v="${id}" aria-label="การ์ดที่ยังไม่ได้"><canvas width="30" height="40" data-pxf="${faceSrc(C.c,"happy","casual")}"></canvas><i class="rr">${C.r}</i><span class="tstar">${"★".repeat(R.s)}</span><b>???</b></button>`;}).join("")}</div>`).join("")}<p class="meta center">แตะการ์ดเงาเพื่อดูวิธีได้</p>`;}
   if(m.type==="cardnew"){const P=G.cardPend||[];const id=P[0];const C=CARDS[id];if(!C){G.cardPend=[];UI.modal=null;return "";}const RR=CARD_R[C.r];body=`<h2>ได้การ์ดใหม่!</h2><div class="gres" style="--rc:${RR.c}"><div class="ccard big" style="--rc:${RR.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
     <p class="center meta">${C.hint?esc(C.hint)+" · ":""}ได้เศษดาว <b class="goldt">✦ 5</b>${P.length>1?` · ยังมีการ์ดใหม่อีก ${P.length-1} ใบ`:""}</p></div>
     <div class="mfoot roadbtns"><button class="btn primary" data-act="cardplay" data-v="${id}" data-from="new">ดูเรื่องราวเลย</button><button class="btn" data-act="cardlater">เก็บไว้ดูทีหลัง</button></div>`;foot=false;}
@@ -1164,7 +1167,9 @@ const ACT={
   copyseed:()=>{const v=G.seedText||String(G.seed);const ok=()=>toast("คัดลอก seed แล้ว: "+v);try{navigator.clipboard.writeText(v).then(ok,()=>toast("seed: "+v));}catch(e){toast("seed: "+v);}},
   petplay:d=>{const i=+d.v,p=(G.pets||[])[i];if(!p||!petPlay(G,i))return;AU.sfx&&AU.sfx("ui");const PL={cat:"นอนหงายให้เกาพุง",dog:"วิ่งไล่ลูกบอลรอบเวที",rooster:"ขันโชว์จนทุกคนหัวเราะ",turtle:"ยื่นหัวออกมาให้ลูบช้า ๆ"};
     toast(`${p.name} ${PL[p.k]} · ${PETS[p.k].eff}`);save();render();},
-  petnamesave:d=>{const p=(G.pets||[])[+d.v];const v=((document.getElementById("petname")||{}).value||"").trim();if(p&&v)p.name=v.slice(0,12);UI.modal=null;save();render();},
+  petnamesave:d=>{const p=(G.pets||[])[+d.v];const v=((document.getElementById("petname")||{}).value||"").trim();if(p&&v){p.name=v.slice(0,12);toast(`ตั้งชื่อว่า "${p.name}" แล้ว`);}UI.modal=UI.modalQ||null;UI.modalQ=null;save();render();},
+  cardhint:d=>{const C=CARDS[d.v];if(C)toast(C.g?"การ์ดใบนี้ได้จากตู้กาชา":`วิธีได้: ${C.hint||"ติดตามเนื้อเรื่องไปเรื่อย ๆ"}`);},
+  petren:d=>{UI.modal={type:"petname",i:+d.v};render();setTimeout(()=>{const el=document.getElementById("petname");if(el){el.focus();el.select();}},60);},
   gacha:()=>{const r=gachaPull(G);if(!r)return;AU.sfx&&AU.sfx(CARDS[r.id].r==="SSR"||CARDS[r.id].r==="SR"?"level":"ui");save();UI.modal={type:"gacha",res:r};render();},
   album:()=>{UI.modal={type:"album"};render();},
   cardplay:d=>{const C=CARDS[d.v],o=(G.cards||{})[d.v];if(!C||!o)return;o.seen=true;G.cardPend=(G.cardPend||[]).filter(x=>x!==d.v);save();UI.modal=null;const nw=d.from==="new";playScene(C.steps,()=>{UI.modal=nw?((G.cardPend||[]).length?{type:"cardnew"}:null):{type:"album"};render();},{bg:C.bg,look:"casual"});},
@@ -1310,5 +1315,6 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)AU.resume(
 document.addEventListener("change",e=>{const el=e.target;if(el.dataset&&el.dataset.act==="importsave"&&el.files&&el.files[0]){if(!G)UI.slot=1;importSave(el.files[0]);return;}if(el.dataset&&el.dataset.act==="bplan"){const b=G.bookings.find(x=>x.id===el.dataset.id);if(b){b.plan=el.value;save();AU.sfx("ui");render();}}});
 document.addEventListener("keydown",e=>{
   if(!G&&UI.title==="tap"&&(e.key===" "||e.key==="Enter")){e.preventDefault();ACT.tapstart();return;}
-  if(UI.scene&&!(UI.scene.cur&&UI.scene.cur.choice)&&(e.key===" "||e.key==="Enter")){e.preventDefault();sceneNext();return;}});
+  if(UI.scene&&!(UI.scene.cur&&UI.scene.cur.choice)&&(e.key===" "||e.key==="Enter")){e.preventDefault();sceneNext();return;}
+  if(e.key==="Enter"&&e.target&&e.target.id){const b={petname:"petnamebtn",redeemcode:null,gatecode:null}[e.target.id];const el=b?document.getElementById(b):e.target.id==="redeemcode"?document.querySelector("[data-act=redeem]"):e.target.id==="gatecode"?document.querySelector("[data-act=gatego]"):null;if(el){e.preventDefault();el.click();}}});
 preloadCore();["happy","surprised","sad"].forEach(m=>warm(stand("kati","fight",m)));warm(`${ASSET}coach.webp`);render();setTimeout(warmAll,1500);

@@ -2526,5 +2526,14 @@
  "ไม่พบโค้ดนี้ ลองเช็กตัวสะกดอีกครั้ง": "Code not found. Check the spelling and try again",
  "ทองแดง": "Bronze",
  "เงิน": "Silver",
- "ทอง": "Gold"
+ "ทอง": "Gold",
+ "ติดตามเนื้อเรื่องไปเรื่อย ๆ": "keep following the story",
+ "วิธีได้: ": "How to get it: ",
+ "การ์ดใบนี้ได้จากตู้กาชา": "This card comes from the gacha",
+ "\" แล้ว": "\"",
+ "<p class=\"meta center\">แตะการ์ดเงาเพื่อดูวิธีได้</p>": "<p class=\"meta center\">Tap a shadow card to see how to get it</p>",
+ "\" aria-label=\"การ์ดที่ยังไม่ได้\"><canvas width=\"30\" height=\"40\" data-pxf=\"": "\" aria-label=\"Card not yet collected\"><canvas width=\"30\" height=\"40\" data-pxf=\"",
+ "\" autocomplete=\"off\"></div><p class=\"meta\">ชื่อนี้จะโผล่ในฉากต่าง ๆ ของค่าย</p><button class=\"btn primary\" id=\"petnamebtn\" data-act=\"petnamesave\" data-v=\"": "\" autocomplete=\"off\"></div><p class=\"meta\">This name shows up in camp scenes</p><button class=\"btn primary\" id=\"petnamebtn\" data-act=\"petnamesave\" data-v=\"",
+ "ใหม่\">ตั้งชื่อ</button></span>": "\">Rename</button></span>",
+ "\" aria-label=\"ตั้งชื่อ": "\" aria-label=\"Rename "
 }

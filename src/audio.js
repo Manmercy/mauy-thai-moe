@@ -38,18 +38,18 @@ const AU={ctx:null,master:null,music:null,sfxBus:null,crowdG:null,timer:null,ste
     if(kind==="level"){[523,659,784,1046].forEach((f,i)=>this.tone(t+i*.09,{f,type:"square",dur:.12,peak:.15}));}
   },
   cheer(level){if(!this.init())return;const g=this.crowdG.gain,t=this.ctx.currentTime;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);
-    g.linearRampToValueAtTime(this.muted?0:.12+level*.25,t+.15);g.linearRampToValueAtTime(this.muted?0:(this.playing?.06:0),t+1.6);},
+    g.linearRampToValueAtTime(this.muted?0:.12+level*.25,t+.15);g.linearRampToValueAtTime(this.muted||!(UI&&UI.fight)?0:.06,t+1.6);}, /* v1.80: the roar always settles back, and to silence once the fight is over */
   // --- Sarama-style loop: pi java + klong khaek + ching ---
   MEL:[69,0,71,69,67,0,64,67,69,0,0,67,64,62,64,0,67,69,71,74,71,69,67,0,64,67,69,67,64,62,0,0],
   mode:"fight",
-  startMusic(mode="fight"){if(!this.init())return;this.resume();if(!SETTINGS.music)return;
+  startMusic(mode="fight"){if(!this.init())return;this.resume();{const g=this.crowdG.gain,t=this.ctx.currentTime;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(this.muted||mode!=="fight"?0:.03,t,.3);}if(!SETTINGS.music)return;
     const prev=this.mode;this.mode=mode;this.tempo=mode==="hub"?84:mode==="title"?148:mode==="date"?70:mode==="waikhru"?62:Math.max(this.tempo,120);
     if(this.music)this.music.gain.setTargetAtTime(mode==="hub"?.2:mode==="title"?.3:mode==="date"?.22:.32,this.ctx.currentTime,.4);
     this.crowdG.gain.setTargetAtTime(this.muted||mode!=="fight"?0:.03,this.ctx.currentTime,.5);
     if(this.playing)return;this.playing=true;this.step=0;this.next=this.ctx.currentTime+.1;
     this.timer=setInterval(()=>this.sched(),25);},
   watch(){if(!this.ctx||!this.playing)return;if(this.ctx.state!=="running")this.resume();if(this.next<this.ctx.currentTime-.2)this.next=this.ctx.currentTime+.05;},
-  stopMusic(){this.playing=false;clearInterval(this.timer);if(this.crowdG)this.crowdG.gain.setTargetAtTime(0,this.ctx.currentTime,.3);},
+  stopMusic(){this.playing=false;clearInterval(this.timer);if(this.crowdG){const g=this.crowdG.gain,t=this.ctx.currentTime;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(0,t,.3);}},
   setTempo(b){this.tempo=b;},
   sched(){const c=this.ctx;const spb=60/this.tempo/2;while(this.next<c.currentTime+.12){this.playStep(this.step,this.next,spb);this.next+=spb;this.step=(this.step+1)%32;}},
   HUB:[76,0,79,0,81,79,76,0,74,0,76,0,0,0,72,74,76,0,79,81,84,0,81,79,76,0,74,72,74,0,0,0],

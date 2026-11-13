@@ -1458,3 +1458,15 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .glr.now{opacity:1;border:2px solid var(--gold,#ffd34a);background:#2e2450}
 .gcur{display:flex;gap:10px;align-items:center;padding:8px;background:#241c3d;border:2px solid #4a3f6b}.gcur .face{width:52px;height:52px}.gcur span{flex:1;display:grid;gap:4px}
 .gres2{text-align:center;display:grid;gap:6px;justify-items:center}.gsc{font:700 48px var(--f-pixel,monospace);color:var(--gold,#ffd34a);line-height:1}.glist{text-align:left;margin:4px 0 0 1.2em}
+/* v1.80: fight screen — no native scrollbar flashing, room above the home indicator */
+.fight{scrollbar-width:none;padding-bottom:env(safe-area-inset-bottom,0px)}.fight::-webkit-scrollbar{display:none}
+.petnm input{font-size:16px}.petren{min-height:40px}
+.petg{display:flex;gap:2px;align-items:stretch}.petg .petren{padding:0 8px;font-size:12px;min-height:0;align-self:stretch}
+/* v1.80: compact pixel album — five cards a row */
+.albg{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.ccard.pxc{padding:3px 3px 4px;gap:1px;background:#15102a;border:3px solid var(--rc);box-shadow:inset 0 0 0 2px #0f0c17,3px 3px 0 #0f0c17}
+.ccard.pxc canvas{display:block;width:100%;height:auto;aspect-ratio:3/4;image-rendering:pixelated;background:#2a2340}
+.ccard.pxc .rr{position:absolute;top:5px;left:5px;padding:0 3px;background:var(--rc);color:#120d22;font:700 10px/14px var(--f-pixel,monospace);font-style:normal}.ccard.pxc .rr u{text-decoration:none;margin-left:2px;color:#fff}
+.ccard.pxc .tstar{font-size:9px;letter-spacing:0;line-height:1}.ccard.pxc b{font-size:10px;line-height:1.2;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ccard.pxc.lock{cursor:pointer;opacity:.9}.ccard.pxc.lock canvas{filter:brightness(0) invert(.22)}
+@media (min-width:700px){.albg{grid-template-columns:repeat(6,minmax(0,1fr))}}
