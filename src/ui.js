@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.71";
+const VERSION="1.72";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -881,6 +881,14 @@ function seasonResult(){const p=id=>G.F[id]&&G.F[id].camp==="player";const out=[
     for(const id of ids){if(!p(id))continue;const f=G.F[id];
       out.push({f,d,t:G.champ[d]===id?"แชมป์จังหวัด":G.finalists[d].includes(id)?"รองแชมป์จังหวัด":((G.semis||{})[d]||[]).includes(id)?"รอบรองชิงจังหวัด":"รอบอำเภอ",c:G.champ[d]===id?"gold":G.finalists[d].includes(id)?"green":""});}}
   return out;}
+/* v1.72: the public demo stops after year 1 until the player enters the code from the game's Discord. One code opens every slot on this device; saves already past year 1 stay open */
+const GATE={code:"U0lSSUNIQUky",url:"https://discord.gg/pgBG3cd9HD",key:"mtm-unlock"};
+function gateOpen(){try{if(localStorage.getItem(GATE.key)==="1")return true;}catch(e){}return !!(G&&(G.unlocked||(G.season||1)>=2));}
+function gateHTML(){return `<section class="px card gate"><span class="pill gold">เดโมจบปีที่ 1</span><h3>ขอบคุณที่เล่นมาถึงตรงนี้!</h3>
+  <p>อยากเล่นต่อปีที่ 2 เข้า Discord ของเกม แล้วรับโค้ดในห้อง #โค้ดเล่นต่อ เซฟของคุณเก็บไว้ครบ ใส่โค้ดเมื่อไหร่ก็เล่นต่อได้ทันที</p>
+  <a class="btn gatelink" href="${GATE.url}" target="_blank" rel="noopener">เข้า Discord ของเกม ▸</a>
+  <div class="gatein"><input id="gatecode" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ใส่โค้ดตรงนี้" aria-label="โค้ดเล่นต่อ"><button class="btn primary" data-act="gatego">ปลดล็อก</button></div>
+  ${UI.gateErr?'<p class="meta redt">โค้ดไม่ถูก ลองเช็กตัวสะกดอีกครั้ง</p>':""}</section>`;}
 function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
   return `<main class="endpage"><section class="px card end-hero"><img class="endlogo" src="${ASSET}logo.webp" alt="Muay Thai Moe">
     <span class="pill gold">${G.ended==="bankrupt"?"ค่ายปิดตัว":(G.season||1)>=2?`จบปีที่ ${G.season}`:"จบบทที่ 1 · ปีที่ 1"}</span><h1>${(G.season||1)>=2&&G.ended!=="bankrupt"?esc(E.title):`ฉากจบ: ${E.title}`}</h1>
@@ -891,7 +899,7 @@ function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
    <section class="px card"><h3>ความสัมพันธ์</h3>${CANON_IDS.map(id=>G.F[id]).filter(f=>f.met).map(f=>`<div class="kv-row"><span>${esc(f.name)}${G.romance===f.id?" ♥ คนรัก":G.promise&&G.promise[f.id]!=null?" ♡ สัญญาไว้":""}</span>${hearts(f.bond)}</div>`).join("")}</section></div>
    <section class="px card teaser"><span class="pill red">บทต่อไป · เร็ว ๆ นี้</span><h3>เส้นทางสู่เวทีระดับภาค</h3>
     <ul><li>ค่ายพยัคฆ์ทองดึงเทรนเนอร์จากกรุงเทพฯ และฟ้าจะไม่ใช่คนเดิมอีกต่อไป</li><li>นักมวยหน้าใหม่จากมวยท่าเสาและมวยโคราชกำลังมองหาค่าย</li><li>หนี้ของปู่ชัยยังมีความลับที่กะทิไม่ได้เล่าทั้งหมด</li></ul></section>
-   <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · ปีที่ ${G.season||1}</p><div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">เล่นต่อ ปีที่ ${(G.season||1)+1} ▸</button><p class="meta center">ค่าย นักมวย และความสัมพันธ์ไปต่อทั้งหมด · คู่แข่งก็ซ้อมหนักขึ้นเหมือนกัน</p>`:""}<button class="btn primary" data-act="replay">เล่นใหม่อีกรอบ</button><button class="btn" data-act="restart">กลับหน้าแรก</button></div></main>`;}
+   <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · ปีที่ ${G.season||1}</p>${!DEMO&&G.ended==="season"&&!gateOpen()?gateHTML():""}<div class="center endbtns">${!DEMO&&G.ended==="season"&&gateOpen()?`<button class="btn primary" data-act="newseason">เล่นต่อ ปีที่ ${(G.season||1)+1} ▸</button><p class="meta center">ค่าย นักมวย และความสัมพันธ์ไปต่อทั้งหมด · คู่แข่งก็ซ้อมหนักขึ้นเหมือนกัน</p>`:""}<button class="btn primary" data-act="replay">เล่นใหม่อีกรอบ</button><button class="btn" data-act="restart">กลับหน้าแรก</button></div></main>`;}
 
 // ---------- FIGHT ----------
 /* v1.71: the opening temple-fair bout — Kati against the weakest local in her division, off the ranking */
@@ -1284,7 +1292,9 @@ const ACT={
   withdraw:()=>{const U=UI.fight;G.bookings=G.bookings.filter(x=>x!==U.b);G.rep=Math.max(0,G.rep-1);add(G,U.b.a,"trust",3);
     G.log.push(`${G.F[U.b.a].name} ถอนตัวเพราะบาดเจ็บ`);const done=U.done;UI.fight=null;render();done();},
   fdone:()=>{const done=UI.fight.done;AU.startMusic("hub");UI.fight=null;render();done();},
-  newseason:()=>{const res=seasonResult().map(r=>({id:r.f.id,name:r.f.name,d:r.d,t:r.t,c:r.c}));newSeason(G);const T=G.titles[G.titles.length-1];if(T)T.res=res;UI.ending=null;UI.tab="home";UI.advCache={};save();AU.startMusic("hub");
+  gatego:()=>{const v=((document.getElementById("gatecode")||{}).value||"").toUpperCase().replace(/\s+/g,"");let ok=false;try{ok=btoa(v)===GATE.code;}catch(e){}
+    if(ok){G.unlocked=true;try{localStorage.setItem(GATE.key,"1");}catch(e){}UI.gateErr=false;save();AU.sfx("level");toast("ปลดล็อกแล้ว! เล่นต่อปีที่ 2 ได้เลย");}else{UI.gateErr=true;AU.sfx("miss");}render();},
+  newseason:()=>{if(!gateOpen())return;const res=seasonResult().map(r=>({id:r.f.id,name:r.f.name,d:r.d,t:r.t,c:r.c}));newSeason(G);const T=G.titles[G.titles.length-1];if(T)T.res=res;UI.ending=null;UI.tab="home";UI.advCache={};save();AU.startMusic("hub");
     playScene([{n:"coach",bg:"gym",t:`ฤดูกาลใหม่มาแล้ว ${G.player.name} อันดับเริ่มนับใหม่ทุกคน แต่ค่ายเราไม่ได้เริ่มจากศูนย์อีกแล้ว`},
       {n:"kati",f:"happy",l:"train",with:"coach",t:"ปีนี้หนูจะไม่ยอมให้ใครแซงแน่ค่ะ! ไปกันเลย!"}],()=>render(),{bg:"gym",look:"train"});},
   replay:()=>{const i=UI.slot;ACT.restart();ACT.beginNew(i);},

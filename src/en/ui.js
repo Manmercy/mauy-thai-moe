@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.71";
+const VERSION="1.72";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -881,6 +881,14 @@ function seasonResult(){const p=id=>G.F[id]&&G.F[id].camp==="player";const out=[
     for(const id of ids){if(!p(id))continue;const f=G.F[id];
       out.push({f,d,t:G.champ[d]===id?"Provincial champion":G.finalists[d].includes(id)?"Provincial runner-up":((G.semis||{})[d]||[]).includes(id)?"Provincial semifinal":"District round",c:G.champ[d]===id?"gold":G.finalists[d].includes(id)?"green":""});}}
   return out;}
+/* v1.72: the public demo stops after year 1 until the player enters the code from the game's Discord. One code opens every slot on this device; saves already past year 1 stay open */
+const GATE={code:"U0lSSUNIQUky",url:"https://discord.gg/pgBG3cd9HD",key:"mtm-unlock"};
+function gateOpen(){try{if(localStorage.getItem(GATE.key)==="1")return true;}catch(e){}return !!(G&&(G.unlocked||(G.season||1)>=2));}
+function gateHTML(){return `<section class="px card gate"><span class="pill gold">Demo complete · Year 1</span><h3>Thank you for playing this far!</h3>
+  <p>To keep playing Year 2, join the game Discord and get the code in #continue-code. Your save is kept, so enter the code any time and carry on.</p>
+  <a class="btn gatelink" href="${GATE.url}" target="_blank" rel="noopener">Join the game Discord ▸</a>
+  <div class="gatein"><input id="gatecode" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter code here" aria-label="Continue code"><button class="btn primary" data-act="gatego">Unlock</button></div>
+  ${UI.gateErr?"<p class=\"meta redt\">That code isn't right. Check the spelling and try again</p>":""}</section>`;}
 function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
   return `<main class="endpage"><section class="px card end-hero"><img class="endlogo" src="${ASSET}logo.webp" alt="Muay Thai Moe">
     <span class="pill gold">${G.ended==="bankrupt"?"Camp closed":(G.season||1)>=2?`End of Year ${G.season}`:"End of Chapter 1 · Year 1"}</span><h1>${(G.season||1)>=2&&G.ended!=="bankrupt"?esc(E.title):`Ending: ${E.title}`}</h1>
@@ -891,7 +899,7 @@ function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
    <section class="px card"><h3>Relationships</h3>${CANON_IDS.map(id=>G.F[id]).filter(f=>f.met).map(f=>`<div class="kv-row"><span>${esc(f.name)}${G.romance===f.id?" ♥ Sweetheart":G.promise&&G.promise[f.id]!=null?" ♡ Promised":""}</span>${hearts(f.bond)}</div>`).join("")}</section></div>
    <section class="px card teaser"><span class="pill red">Next chapter · coming soon</span><h3>The road to the regional stage</h3>
     <ul><li>Golden Tiger poaches a Bangkok trainer, and Fah won't be the same anymore</li><li>New fighters from the Tha Sao and Korat styles are looking for a camp</li><li>Grandpa Chai's debt still hides a secret Kati hasn't told</li></ul></section>
-   <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · Year ${G.season||1}</p><div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">Continue to Year ${(G.season||1)+1} ▸</button><p class="meta center">The camp, fighters and relationships all carry over · the rivals trained harder too</p>`:""}<button class="btn primary" data-act="replay">Play again</button><button class="btn" data-act="restart">Back to title</button></div></main>`;}
+   <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · Year ${G.season||1}</p>${!DEMO&&G.ended==="season"&&!gateOpen()?gateHTML():""}<div class="center endbtns">${!DEMO&&G.ended==="season"&&gateOpen()?`<button class="btn primary" data-act="newseason">Continue to Year ${(G.season||1)+1} ▸</button><p class="meta center">The camp, fighters and relationships all carry over · the rivals trained harder too</p>`:""}<button class="btn primary" data-act="replay">Play again</button><button class="btn" data-act="restart">Back to title</button></div></main>`;}
 
 // ---------- FIGHT ----------
 /* v1.71: the opening temple-fair bout — Kati against the weakest local in her division, off the ranking */
@@ -1284,7 +1292,9 @@ const ACT={
   withdraw:()=>{const U=UI.fight;G.bookings=G.bookings.filter(x=>x!==U.b);G.rep=Math.max(0,G.rep-1);add(G,U.b.a,"trust",3);
     G.log.push(`${G.F[U.b.a].name} withdraws due to injury`);const done=U.done;UI.fight=null;render();done();},
   fdone:()=>{const done=UI.fight.done;AU.startMusic("hub");UI.fight=null;render();done();},
-  newseason:()=>{const res=seasonResult().map(r=>({id:r.f.id,name:r.f.name,d:r.d,t:r.t,c:r.c}));newSeason(G);const T=G.titles[G.titles.length-1];if(T)T.res=res;UI.ending=null;UI.tab="home";UI.advCache={};save();AU.startMusic("hub");
+  gatego:()=>{const v=((document.getElementById("gatecode")||{}).value||"").toUpperCase().replace(/\s+/g,"");let ok=false;try{ok=btoa(v)===GATE.code;}catch(e){}
+    if(ok){G.unlocked=true;try{localStorage.setItem(GATE.key,"1");}catch(e){}UI.gateErr=false;save();AU.sfx("level");toast("Unlocked! Year 2 is ready to play");}else{UI.gateErr=true;AU.sfx("miss");}render();},
+  newseason:()=>{if(!gateOpen())return;const res=seasonResult().map(r=>({id:r.f.id,name:r.f.name,d:r.d,t:r.t,c:r.c}));newSeason(G);const T=G.titles[G.titles.length-1];if(T)T.res=res;UI.ending=null;UI.tab="home";UI.advCache={};save();AU.startMusic("hub");
     playScene([{n:"coach",bg:"gym",t:`A new season is here, ${G.player.name}. Rankings reset for everyone, but our camp isn't starting from zero anymore`},
       {n:"kati",f:"happy",l:"train",with:"coach",t:"This year I won't let anyone pass me! Let's go!"}],()=>render(),{bg:"gym",look:"train"});},
   replay:()=>{const i=UI.slot;ACT.restart();ACT.beginNew(i);},
