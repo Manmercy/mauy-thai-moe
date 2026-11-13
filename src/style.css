@@ -1470,3 +1470,5 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .ccard.pxc .tstar{font-size:9px;letter-spacing:0;line-height:1}.ccard.pxc b{font-size:10px;line-height:1.2;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ccard.pxc.lock{cursor:pointer;opacity:.9}.ccard.pxc.lock canvas{filter:brightness(0) invert(.22)}
 @media (min-width:700px){.albg{grid-template-columns:repeat(6,minmax(0,1fr))}}
+
+.title .version .tdisc{color:#8fe0ac;text-decoration:underline;pointer-events:auto}

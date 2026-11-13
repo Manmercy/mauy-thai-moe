@@ -22,3 +22,6 @@ python3 -m http.server 8000
 ```bash
 ./build.sh   # รวม src/ เป็น index.html
 ```
+
+## License
+© 2026 Saharath Kaewwimon (Man). All rights reserved — see [LICENSE](LICENSE). Playing, streaming and sharing screenshots are welcome; copying or re-hosting the game or its art is not.

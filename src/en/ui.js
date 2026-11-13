@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80";
+const VERSION="1.80.1";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -179,7 +179,7 @@ function titleHTML(){const sv=loadSave();
      <button class="btn primary" data-act="newgame">New game</button>
      <button class="btn gold" data-act="openload" ${sv?"":"disabled"}>Load game<small>${sv?`${[1,2,3].filter(i=>loadSlot(i)).length}/3 slots used`:"No saves yet"}</small></button>
      <button class="btn" data-act="settings">Settings</button></nav>`}</div></div>
-   ${langSwitch("tlang")}<div class="version">v${VERSION}</div></div>`;}
+   ${langSwitch("tlang")}<div class="version">© 2026 Muay Thai Moe${UI.title==="tap"?"":` · <a class="tdisc" href="${GATE.url}" target="_blank" rel="noopener">Discord</a>`} · v${VERSION}</div></div>`;}
 // v1.48: shareable world seeds — digits are used as-is, words are hashed
 function seedFrom(v){v=String(v||"").trim();if(!v)return undefined;if(/^\d{1,10}$/.test(v))return Number(v)>>>0;let h=2166136261;for(const ch of v.toLowerCase()){h^=ch.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 function crSeed(){const e=document.getElementById("pseed");if(e&&UI.creator)UI.creator.seed=e.value.trim();}

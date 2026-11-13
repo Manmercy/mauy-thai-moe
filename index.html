@@ -1474,6 +1474,8 @@ html.vnopen,html.vnopen body{overflow:hidden;overscroll-behavior:none;height:100
 .ccard.pxc .tstar{font-size:9px;letter-spacing:0;line-height:1}.ccard.pxc b{font-size:10px;line-height:1.2;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ccard.pxc.lock{cursor:pointer;opacity:.9}.ccard.pxc.lock canvas{filter:brightness(0) invert(.22)}
 @media (min-width:700px){.albg{grid-template-columns:repeat(6,minmax(0,1fr))}}
+
+.title .version .tdisc{color:#8fe0ac;text-decoration:underline;pointer-events:auto}
 </style></head><body>
 <div id="app"></div>
 <script type="text/plain" id="js-th">
@@ -5119,7 +5121,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80";
+const VERSION="1.80.1";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -5299,7 +5301,7 @@ function titleHTML(){const sv=loadSave();
      <button class="btn primary" data-act="newgame">เริ่มเกมใหม่</button>
      <button class="btn gold" data-act="openload" ${sv?"":"disabled"}>โหลดเกม<small>${sv?`${[1,2,3].filter(i=>loadSlot(i)).length} ช่องที่มีเซฟ`:"ยังไม่มีเซฟ"}</small></button>
      <button class="btn" data-act="settings">ตั้งค่า</button></nav>`}</div></div>
-   ${langSwitch("tlang")}<div class="version">v${VERSION}</div></div>`;}
+   ${langSwitch("tlang")}<div class="version">© 2026 Muay Thai Moe${UI.title==="tap"?"":` · <a class="tdisc" href="${GATE.url}" target="_blank" rel="noopener">Discord</a>`} · v${VERSION}</div></div>`;}
 // v1.48: shareable world seeds — digits are used as-is, words are hashed
 function seedFrom(v){v=String(v||"").trim();if(!v)return undefined;if(/^\d{1,10}$/.test(v))return Number(v)>>>0;let h=2166136261;for(const ch of v.toLowerCase()){h^=ch.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 function crSeed(){const e=document.getElementById("pseed");if(e&&UI.creator)UI.creator.seed=e.value.trim();}
@@ -11039,7 +11041,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80";
+const VERSION="1.80.1";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -11219,7 +11221,7 @@ function titleHTML(){const sv=loadSave();
      <button class="btn primary" data-act="newgame">New game</button>
      <button class="btn gold" data-act="openload" ${sv?"":"disabled"}>Load game<small>${sv?`${[1,2,3].filter(i=>loadSlot(i)).length}/3 slots used`:"No saves yet"}</small></button>
      <button class="btn" data-act="settings">Settings</button></nav>`}</div></div>
-   ${langSwitch("tlang")}<div class="version">v${VERSION}</div></div>`;}
+   ${langSwitch("tlang")}<div class="version">© 2026 Muay Thai Moe${UI.title==="tap"?"":` · <a class="tdisc" href="${GATE.url}" target="_blank" rel="noopener">Discord</a>`} · v${VERSION}</div></div>`;}
 // v1.48: shareable world seeds — digits are used as-is, words are hashed
 function seedFrom(v){v=String(v||"").trim();if(!v)return undefined;if(/^\d{1,10}$/.test(v))return Number(v)>>>0;let h=2166136261;for(const ch of v.toLowerCase()){h^=ch.codePointAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 function crSeed(){const e=document.getElementById("pseed");if(e&&UI.creator)UI.creator.seed=e.value.trim();}
