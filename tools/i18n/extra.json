@@ -2535,5 +2535,9 @@
  "\" aria-label=\"การ์ดที่ยังไม่ได้\"><canvas width=\"30\" height=\"40\" data-pxf=\"": "\" aria-label=\"Card not yet collected\"><canvas width=\"30\" height=\"40\" data-pxf=\"",
  "\" autocomplete=\"off\"></div><p class=\"meta\">ชื่อนี้จะโผล่ในฉากต่าง ๆ ของค่าย</p><button class=\"btn primary\" id=\"petnamebtn\" data-act=\"petnamesave\" data-v=\"": "\" autocomplete=\"off\"></div><p class=\"meta\">This name shows up in camp scenes</p><button class=\"btn primary\" id=\"petnamebtn\" data-act=\"petnamesave\" data-v=\"",
  "ใหม่\">ตั้งชื่อ</button></span>": "\">Rename</button></span>",
- "\" aria-label=\"ตั้งชื่อ": "\" aria-label=\"Rename "
+ "\" aria-label=\"ตั้งชื่อ": "\" aria-label=\"Rename ",
+ "<span class=\"gx\">▾ ซ่อน</span></button>": "<span class=\"gx\">▾ Hide</span></button>",
+ "<button class=\"goal ov\" data-act=\"goaltog\" aria-label=\"ซ่อนเป้าหมาย\">": "<button class=\"goal ov\" data-act=\"goaltog\" aria-label=\"Hide goal\">",
+ "<button class=\"goal ov mini\" data-act=\"goaltog\" aria-label=\"แสดงเป้าหมาย\">เป้าหมาย ▴</button>": "<button class=\"goal ov mini\" data-act=\"goaltog\" aria-label=\"Show goal\">Goal ▴</button>",
+ "<section class=\"px camp-wrap\"><div class=\"cvbox\"><canvas class=\"campcv\" width=\"640\" height=\"360\" data-camp=\"1\" aria-label=\"ภาพรวมค่ายมวยศิริชัย\"></canvas>\n    ": "<section class=\"px camp-wrap\"><div class=\"cvbox\"><canvas class=\"campcv\" width=\"640\" height=\"360\" data-camp=\"1\" aria-label=\"Sirichai Gym overview\"></canvas>\n    "
 }
