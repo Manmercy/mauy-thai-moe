@@ -189,6 +189,7 @@ function letterHTML(m){m.read=true;let act="";
   if(m.kind==="pay")act=m.done?`<p class="meta center">${m.paid?"จ่ายแล้ว":"ไม่จ่าย (ชื่อเสียง −0.3)"}</p>`:m.expired?"":`<button class="btn" data-act="mskip" data-v="${m.id}">ไม่จ่าย (ชื่อเสียง −0.3)</button><button class="btn primary" data-act="mpay" data-v="${m.id}" ${G.cash<m.amt?"disabled":""}>จ่าย ${fmt(m.amt)}</button>`;
   if(m.kind==="quiz")act=m.done?`<p class="meta center">${m.ok?`ตอบถูก! ได้ ${fmt(m.amt)}`:`ผิดจ้า คำตอบคือ "${esc(m.opts[m.ans])}"`}</p>`:m.expired?"":`<p class="qz"><b>${esc(m.q)}</b></p><div class="qopts">${m.opts.map((o,i)=>`<button class="btn" data-act="mquiz" data-v="${m.id}" data-k="${i}">${esc(o)}</button>`).join("")}</div>`;
   if(m.kind==="job")act=m.done?`<p class="meta center">${m.declined?"ไม่ได้ไปช่วย":m.grade?`ไปช่วยแล้ว · เกรด ${m.grade}`:"ส่งคนไปช่วยแล้ว ได้ ฿550"}</p>`:m.expired?`<p class="meta center">หมดเวลาแล้ว</p>`:`<span class="mgtag">${JOY_PX}MINIGAME</span><button class="btn" data-act="mjdecl" data-v="${m.id}">ไม่ว่าง</button><button class="btn" data-act="mjskip" data-v="${m.id}">ส่งคนไปช่วย (฿550)</button><button class="btn primary" data-act="mjplay" data-v="${m.id}">${JOY_PX}ไปช่วยเอง</button>`;
+  if(m.kind==="event")act=evMailAct(m);
   if(m.kind==="quest")act=m.done?`<p class="meta center">${m.declined?"ปฏิเสธแล้ว":"ส่งนักมวยไปแล้ว"}</p>`:m.expired?`<p class="meta center">หมดเวลาแล้ว</p>`:`<button class="btn" data-act="mdecl" data-v="${m.id}">ไม่ไป</button><button class="btn primary" data-act="macc" data-v="${m.id}">รับงาน · เลือกนักมวย</button>`;
   const opp=m.qk?QK[m.qk]:m.npc?G.F[m.npc]:null;
   return `<button class="btn sm ghost mback" data-act="mail">◂ ตู้จดหมาย</button><div class="letter px"><div class="lhead"><small>จาก</small><b>${esc(m.from)}</b><small>สัปดาห์ ${m.wk}</small></div><h3>${esc(m.title)}</h3><p>${esc(m.body)}</p>
@@ -637,3 +638,83 @@ Object.assign(CARDS,{
   {n:"fah",f:"happy",l:"casual",t:"เห็นไหม! บอกแล้วว่าไลฟ์ต้องมีฟ้า! …อ้าว วันนี้ฟ้าไม่ได้ไลฟ์เหรอ ช่างเถอะ ฟ้าเชียร์อยู่หลังกล้องก็นับ!"},
   {n:"rin",f:"pout",l:"casual",t:"ออเดอร์ทั้งหมดบันทึกครบ ไม่มีซ้ำ ไม่มีตก …เสื้อในโกดังเหลือสองตัว ใครจะบอกลูกค้าคนที่สามสิบเอ็ด"},
   {n:"coach",t:"สมัยปู่ชัย เสื้อค่ายขายได้ปีละสิบตัว …วันนี้ขายได้ในห้านาที โลกมันเปลี่ยนไปจริง ๆ"}]}});
+
+/* ===== v1.80: redeem codes + the Loy Krathong event (a floating-market gauntlet against the helmet gang) ===== */
+const REDEEM={"U0lSSUNIQUky":{k:"gate"},"TE9ZS1JBVEhPTkc2OQ==":{k:"loy",from:"2026-11-20",to:"2026-12-07"}};
+function evTest(){try{return /evtest/.test(location.hash)||localStorage.getItem("mtm-evtest")==="1";}catch(e){return false;}}
+function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+const LOY_LADDER=["gang1","gang1","gang2","gang2","gang3","gang3","gang4","gang4","gang5"];
+const LOY_TIERS=[["gold","ทอง",1500],["silver","เงิน",1000],["bronze","ทองแดง",450]];
+const loyOf=G=>(G.ev||{}).loy||null;
+function loyTier(sc,boss){for(const [k,n,min] of LOY_TIERS)if(sc>=min&&(k!=="gold"||boss))return {k,n};return null;}
+function evGang(G,k,f){const kind=LOY_LADDER[k],K=QK[kind],t=ovr(f.a)+K.lvl+k*.12,rng=mulberry32((G.seed^0x10e)+k*131);const a={};
+  for(const [x] of ATTRS)a[x]=clamp(t+(K.tilt[x]||0)+(rng()*1.2-.6),3,19.5);const d=t-ovr(a);for(const [x] of ATTRS)a[x]=clamp(a[x]+d,3,19.5);
+  const id="q_evloy_"+k;const o=baseFighter(id,{name:K.name,full:K.name,div:"X",camp:"quest",color:K.color,potential:t+2,a});
+  o.sprite=K.sprite;o.kind=kind;o.grp="gang";o.lvl=clamp(Math.round(t-6),1,10);o.fatigue=0;o.morale=75;G.F[id]=o;return id;}
+function redeemCode(raw){const v=(raw||"").toUpperCase().replace(/\s+/g,"");if(!v)return;let key="";try{key=btoa(v);}catch(e){}const R=REDEEM[key];
+  if(!R){AU.sfx("miss");toast("ไม่พบโค้ดนี้ ลองเช็กตัวสะกดอีกครั้ง");return;}
+  if(R.k==="gate"){G.unlocked=true;try{localStorage.setItem(GATE.key,"1");}catch(e){}save();AU.sfx("level");toast("ปลดล็อกปีที่ 2 แล้ว!");return;}
+  if(R.k==="loy"){const t=todayStr();if(!evTest()){if(t<R.from){toast("โค้ดนี้จะเปิดใช้วันที่ 20 พ.ย. ติดตามประกาศที่เพจและ Discord นะ");return;}if(t>R.to){toast("อีเวนต์ลอยกระทงปีนี้จบไปแล้ว ไว้เจอกันปีหน้า!");return;}}
+    if(loyOf(G)){toast("เซฟนี้ใช้โค้ดนี้ไปแล้ว ดูจดหมายเชิญในกล่องจดหมายได้เลย");return;}
+    G.ev=G.ev||{};G.ev.loy={got:G.week,season:G.season||1,best:0,tiers:{},runs:0};
+    addMail(G,{kind:"event",ev:"loy",from:"ป้าแต๋ว ร้านส้มตำหน้าวัด",title:"คืนนี้งานลอยกระทงตลาดน้ำ!",body:"ผู้จัดการจ๋า คืนนี้ป้าไปเปิดแผงขายกระทงที่งานตลาดน้ำ พาเด็ก ๆ ในค่ายมาเที่ยวกันนะ มีของกินเพียบ ป้าเลี้ยงส้มตำเอง! แต่ได้ยินว่าแก๊งหมวกกันน็อกจะมาป่วนงานด้วย… ถ้ามากันได้ป้าอุ่นใจขึ้นเยอะเลย"});
+    save();AU.sfx("level");toast("ได้รับจดหมายเชิญอีเวนต์ลอยกระทง! ดูที่กล่องจดหมาย");}}
+function evMailAct(m){const L=loyOf(G);if(!L)return "";const tr=loyTier(L.best,L.boss);
+  return `${L.runs?`<p class="meta center">คะแนนดีที่สุด <b class="goldt num">${L.best}</b>${tr?` · รางวัลระดับ<b>${tr.n}</b>`:""}</p>`:""}<button class="btn primary" data-act="evloy">${L.runs?"ท้าศึกริมน้ำอีกรอบ":"ไปงานลอยกระทง"}</button>`;}
+const LOY_INTRO=[
+  {n:"nar",bg:"river",t:"คืนวันเพ็ญ ตลาดน้ำหน้าวัดคึกคักกว่าทุกปี เรือขายกระทงจอดเรียงริมตลิ่ง แสงเทียนสะท้อนน้ำวิบวับ"},
+  {n:"npc",who:"ป้าแต๋ว",t:"มาแล้วเหรอผู้จัดการ! ป้าขายกระทงได้ห้าสิบใบแล้วนะ… แต่ดูนั่นสิ พวกหมวกกันน็อกมาอีกแล้ว"},
+  {n:"npc",who:"เสี่ยหมวกทองคำ",t:"ตลาดน้ำนี้ต้องจ่ายค่าที่ให้พวกเรา! ไม่จ่ายก็เก็บแผงกลับบ้านไปซะ ป้าส้มตำ!"},
+  {n:"coach",t:"ใจเย็นก่อน อย่าเพิ่งมีเรื่อง… เดี๋ยวนะ พวกมันท้าให้ขึ้นเวทีชั่วคราวข้างท่าเรือแทนเหรอ"},
+  {n:"npc",who:"เสี่ยหมวกทองคำ",t:"ส่งมาสามคน ลูกน้องฉันเก้าคน สู้ไม่ยั้ง ไม่มีพัก ถ้าค่ายแกชนะ แก๊งเราไม่มาตลาดนี้อีก!"},
+  {n:"kati",f:"happy",t:"รับคำท้าค่ะ! ผู้จัดการเลือกคนเลยค่ะ ใครขึ้นก่อนหลังก็ได้"}];
+function evStartLoy(){const L=loyOf(G);if(!L)return;UI.modal=null;
+  const open=()=>{L.run=null;L.pick=[];UI.modal={type:"gaunt"};render();};
+  if(!L.intro){L.intro=1;save();playScene(LOY_INTRO,open,{bg:"river",look:"casual"});}else open();}
+function gauntPool(){const R=roster(G).filter(f=>!f.injury);return R.length?R:roster(G);}
+function gauntHTML(){const L=loyOf(G);if(!L){UI.modal=null;return "";}const R=L.run;
+  const head=`<h2>ศึกริมน้ำคืนลอยกระทง</h2><p class="meta">สามคน คนละสามไฟต์ติด พลังไม่ฟื้นเต็มระหว่างไฟต์ แพ้เมื่อไหร่คนถัดไปขึ้นแทน · ไฟต์สุดท้ายคือเสี่ยหมวกทองคำ</p>`;
+  const ladder=(cur)=>`<div class="gl">${LOY_LADDER.map((k,i)=>{const lg=R&&R.log[i];const st=lg?(lg.res==="W"?"ok":lg.res==="D"?"dr":"ng"):R&&i===cur?"now":"";
+    return `<div class="glr ${st}"><canvas width="40" height="40" data-qsprite="${QK[k].sprite}"></canvas><span><b>${i+1}. ${esc(QK[k].name)}</b><small>${lg?lg.txt:R&&(R.done||i<cur)?"ข้าม (คนก่อนหน้าแพ้)":i===8?"บอส · 3 ยก":"2 ยก"}</small></span><i>${lg?(lg.res==="W"?"+"+lg.pts:lg.res==="D"?"+"+lg.pts:"✕"):""}</i></div>`;}).join("")}</div>`;
+  if(!R){const pool=gauntPool(),P=L.pick||[];const need=Math.min(3,pool.length);
+    return head+`<p><b>เลือกลำดับนักมวย</b> <small class="meta">(${P.length}/${need}) แตะเรียงคนขึ้นก่อน–หลัง</small></p><div class="gpick">${pool.map(f=>{const i=P.indexOf(f.id);
+      return `<button class="gpk ${i>=0?"on":""}" data-act="gpick" data-v="${f.id}">${faceImg(f)}<span><b>${esc(f.name)}</b><small>Lv.${f.lvl} · ล้า ${Math.round(f.fatigue)}</small></span>${i>=0?`<i>${i+1}</i>`:""}</button>`;}).join("")}</div>
+      ${pool.length<3?`<p class="meta">ค่ายมีนักมวยไม่ถึงสามคน คนที่มีจะได้ขึ้นซ้ำ (พลังเต็มทุกรอบที่ขึ้นใหม่)</p>`:""}
+      <div class="center endbtns"><button class="btn primary" data-act="gstart" ${P.length<need?"disabled":""}>เริ่มศึก</button><button class="btn" data-act="closeModal">ไว้ก่อน</button></div>${ladder(-1)}`;}
+  if(R.done){const tr=loyTier(R.score,R.boss);return head+`<div class="gres2"><p class="meta">คะแนนรวม</p><p class="gsc num">${R.score}</p>${tr?`<span class="pill gold">รางวัลระดับ${tr.n}</span>`:`<span class="pill">ยังไม่ถึงระดับรางวัล (ทองแดง ${LOY_TIERS[2][2]})</span>`}
+    ${(R.got||[]).length?`<ul class="glist">${R.got.map(x=>`<li>${x}</li>`).join("")}</ul>`:""}<p class="meta">ดีที่สุด ${L.best} · ทอง ${LOY_TIERS[0][2]}+ และต้องล้มเสี่ยหมวกทองคำ</p></div>
+    <div class="center endbtns"><button class="btn primary" data-act="gretry">ท้าอีกรอบ</button><button class="btn" data-act="closeModal">กลับค่าย</button></div>${ladder(-1)}`;}
+  const f=G.F[R.order[R.slot]];
+  return head+`<div class="gnow"><p class="meta">คะแนน <b class="goldt num">${R.score}</b> · คนที่ ${R.slot+1}/3 · ไฟต์ที่ ${R.k+1}/9</p>
+    <div class="gcur">${faceImg(f)}<span><b>${esc(f.name)}</b><small>พลัง ${Math.round(R.hp)} · แรง ${Math.round(R.sta)}</small><div class="meter"><i style="--v:${clamp(R.hp,0,100)}%;--bc:${R.hp>50?"var(--green)":R.hp>25?"var(--warn)":"var(--red)"}"></i></div></span></div></div>
+    <div class="center endbtns"><button class="btn primary" data-act="gfight">ขึ้นชกไฟต์ที่ ${R.k+1}</button><button class="btn" data-act="gquit">ยอมจบศึก (เก็บคะแนนที่ได้)</button></div>${ladder(R.k)}`;}
+function gauntNextSlot(R){R.slot++;R.j=0;R.k=R.slot*3;R.hp=100;R.sta=100;if(R.slot>=3||R.k>=9)gauntFinish(R);}
+function gauntFinish(R){const L=loyOf(G);R.done=true;L.runs=(L.runs||0)+1;L.best=Math.max(L.best||0,R.score);if(R.boss)L.boss=1;R.got=[];
+  const tr=loyTier(R.score,R.boss);const order=["bronze","silver","gold"];
+  if(tr)for(const k of order.slice(0,order.indexOf(tr.k)+1))if(!L.tiers[k]){L.tiers[k]=1;R.got.push(...loyReward(k));}
+  for(let i=0;i<9;i++)delete G.F["q_evloy_"+i];save();}
+function loyReward(k){const out=[];
+  if(k==="bronze"){G.cash+=3000;out.push("เงินรางวัลจากป้าแต๋ว ฿3,000");if(typeof PETS!=="undefined"&&PETS.otter&&typeof adoptPet==="function"&&!hasPet(G,"otter")){adoptPet(G,"otter");out.push("ลูกนากตัวน้อยตามกลับค่ายมาด้วย!");}}
+  if(k==="silver"){G.cash+=5000;out.push("เงินรางวัล ฿5,000");if(typeof loyCardDrop==="function"){const c=loyCardDrop(G);if(c)out.push(c);}}
+  if(k==="gold"){G.rep+=1.5;out.push("ชื่อเสียง +1.5");if(typeof loyGold==="function"){const c=loyGold(G);if(c)out.push(c);}}
+  return out;}
+function gauntAfter(){const L=loyOf(G),R=L&&L.run,F=LASTF;if(!R||!F){UI.modal={type:"gaunt"};render();return;}
+  const r=F.result,res=r.win==="D"?"D":r.win==="A"?"W":"L",rds=R.k===8?3:2;let pts=0,txt="";
+  if(res==="W"){pts=100+(/KO|น็อก/.test(r.type||"")?60:0)+Math.max(0,rds-F.round)*30+Math.round(Math.max(0,F.A.hp)*.6);txt=/KO|น็อก/.test(r.type||"")?`ชนะน็อก ยก ${F.round}`:"ชนะคะแนน";if(R.k===8)R.boss=1;}
+  else if(res==="D"){pts=30;txt="เสมอ";}else txt=/KO|น็อก/.test(r.type||"")?`แพ้น็อก ยก ${F.round}`:"แพ้คะแนน";
+  R.log[R.k]={res,pts,txt};R.score+=pts;
+  if(res==="L")gauntNextSlot(R);
+  else{R.hp=Math.min(100,Math.max(0,F.A.hp)+15);R.sta=Math.min(100,Math.max(0,F.A.sta)+20);R.j++;R.k++;if(R.j>=3)gauntNextSlot(R);else if(R.k>=9)gauntFinish(R);}
+  save();UI.modal={type:"gaunt"};render();}
+Object.assign(ACT,{
+  redeem:()=>{const el=document.getElementById("redeemcode");redeemCode(el&&el.value);if(el)el.value="";render();},
+  evloy:()=>evStartLoy(),
+  gpick:d=>{const L=loyOf(G);if(!L)return;L.pick=L.pick||[];const i=L.pick.indexOf(d.v);if(i>=0)L.pick.splice(i,1);else if(L.pick.length<Math.min(3,gauntPool().length))L.pick.push(d.v);render();},
+  gstart:()=>{const L=loyOf(G);if(!L)return;const P=L.pick||[];if(!P.length)return;const order=[0,1,2].map(i=>P[i%P.length]);
+    L.run={order,slot:0,j:0,k:0,hp:100,sta:100,score:0,log:[],boss:0};save();render();},
+  gfight:()=>{const L=loyOf(G),R=L&&L.run;if(!R||R.done)return;const f=G.F[R.order[R.slot]];const qid=evGang(G,R.k,f);
+    const bk={id:"bev"+R.k,a:f.id,b:qid,week:G.week,tier:"evloy",rounds:R.k===8?3:2,ev:1,carry:{hp:R.hp,sta:R.sta},bg:"bg_river.webp"};
+    UI.modal=null;openFight2(bk,gauntAfter);},
+  gquit:()=>{const L=loyOf(G),R=L&&L.run;if(!R||R.done)return;gauntFinish(R);render();},
+  gretry:()=>{const L=loyOf(G);if(!L)return;L.run=null;L.pick=[];render();},
+});
