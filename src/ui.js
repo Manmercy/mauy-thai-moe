@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.70";
+const VERSION="1.71";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -25,7 +25,7 @@ const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",fair:"bg_fair.webp",local:
 // v1.34: portraits for the market and helmet-gang side characters (matched by speaker name, or st.img)
 const NPC_IMG=[[/แม่ค้า|ป้าศรี|Auntie Sri|vendor/,"vendor_green"],[/ป้าแต๋ว|เจ๊หมวย|ป้าขาย|Auntie Taew|Jae Muay/,"vendor_red"],[/เสี่ยหมวกทองคำ|Big Boss Golden Helmet/,"gang_boss"],[/หมวก|แจ็กเก็ต|Helmet|Jacket/,"gang_group"],[/ยาย|Grandma/,"grandma"]];
 const npcImg=st=>st.img||(st.who&&(NPC_IMG.find(([r])=>r.test(st.who))||[])[1])||null;
-const TIER_BG={semi:"bg_hall.webp",local:"bg_local.webp",district:"bg_district.webp",final:"bg_final.webp",exhibition:"bg_fair.webp",special:"bg_district.webp",quest:"bg_food.webp",beast:"bg_fair.webp",dm:"bg_hall.webp"};
+const TIER_BG={pro:"bg_fair.webp",semi:"bg_hall.webp",local:"bg_local.webp",district:"bg_district.webp",final:"bg_final.webp",exhibition:"bg_fair.webp",special:"bg_district.webp",quest:"bg_food.webp",beast:"bg_fair.webp",dm:"bg_hall.webp"};
 const gymBg=()=>`gym${G?campLevel(G):1}.webp`;
 // v1.13 pixel icons — no emoji in the fight UI
 function pxIcon(rows,pal){const h=rows.length,w=rows[0].length;let r="";rows.forEach((row,y)=>[...row].forEach((c,x)=>{if(c!=="."&&pal[c])r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${pal[c]}"/>`;}));
@@ -894,6 +894,10 @@ function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
    <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · ปีที่ ${G.season||1}</p><div class="center endbtns">${!DEMO&&G.ended==="season"?`<button class="btn primary" data-act="newseason">เล่นต่อ ปีที่ ${(G.season||1)+1} ▸</button><p class="meta center">ค่าย นักมวย และความสัมพันธ์ไปต่อทั้งหมด · คู่แข่งก็ซ้อมหนักขึ้นเหมือนกัน</p>`:""}<button class="btn primary" data-act="replay">เล่นใหม่อีกรอบ</button><button class="btn" data-act="restart">กลับหน้าแรก</button></div></main>`;}
 
 // ---------- FIGHT ----------
+/* v1.71: the opening temple-fair bout — Kati against the weakest local in her division, off the ranking */
+function prologueFight(done){const k=G.F.kati;if(!k){done();return;}const pool=Object.values(G.F).filter(o=>o.div===k.div&&o.camp!=="player"&&o.camp!=="free"&&!o.canon&&!o.injury);if(!pool.length){done();return;}
+  const o=pool.map(x=>[x,ovr(x.a)-ovr(k.a)+((x.lvl||1)-(k.lvl||1))*.15]).sort((a,b)=>a[1]-b[1])[0][0]; /* the weakest local: Kati wins about 8 in 10 */
+  openFight({id:"bpro",a:k.id,b:o.id,week:G.week,tier:"pro",rounds:3,win:1500,lose:1000,pro:1},done);}
 function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.week)}`;
   if(op.canon&&!G.seen[k]&&!(b.tier==="final"&&(G.seen.ploy_prefinal||G.seen.fah_prefinal))){const sc=tauntScene(G,b.a,b.b);if(sc){G.seen[k]=true;playScene(sc,()=>openFight2(b,done),{bg:TIER_BG[b.tier]?TIER_BG[b.tier].replace(/^bg_|\.webp$/g,""):"local",look:"fight"});return;}}
   openFight2(b,done);}
@@ -1161,7 +1165,7 @@ const ACT={
   ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator.tab=d.v;render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"ต้น":"ดาว");
     crSeed();const {name,diff,seed,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look,seed:seedFrom(seed)});if(seed&&!/^\d{1,10}$/.test(seed))G.seedText=seed;genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();
-    playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"night",look:"train"});},
+    playScene(EVENTS[0].steps,()=>prologueFight(()=>playScene(PROLOGUE_B,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"fair",look:"fight"})),{bg:"night",look:"train"});},
   continue:()=>{let si=0;for(let i=1;i<=SLOTS;i++)if(loadSlot(i)){si=i;break;}if(!si)return;backupSlot(si);const s=safeFix(loadSlot(si));if(!s){toast("เซฟนี้เปิดกับเวอร์ชันนี้ไม่ได้ ข้อมูลยังอยู่ครบ ไม่ถูกลบ");return;}G=s;UI.slot=si;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
   bakrestore:()=>{const b=bakInfo(UI.slot);if(!b)return;UI.modal={type:"confirm",title:"กู้เซฟก่อนอัปเดต?",text:`จะย้อนกลับไปสัปดาห์ ${b.week} (v${b.ver}) ความคืบหน้าหลังจากนั้นในช่องนี้จะหายไป`,yes:"bakyes"};render();},

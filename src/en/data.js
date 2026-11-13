@@ -237,7 +237,7 @@ const START_HOT={
  last:["Final round!! Whoever wants it has to empty the tank!","Final round! The pi chawa is racing, the whole arena is up!","The deciding round!! Three minutes to remember for a lifetime!"],
  close:["Neck and neck on the cards! This round decides everything!","Nobody's pulled away! The judges can't blink!"]};
 const KO_HOT=["It's over! It's over!! {a} by knockout! History in front of our eyes!!","{d} can't get up!! {a}!! {a}!! The whole arena chants one name!!"];
-const TIER_HEAT={exhibition:0,local:0,special:1,district:1,semi:2,final:3,quest:1,beast:1};
+const TIER_HEAT={pro:0,exhibition:0,local:0,special:1,district:1,semi:2,final:3,quest:1,beast:1};
 function fightHeat(F){const base=TIER_HEAT[F.tier]??0;const sc=F.cards.reduce((x,c)=>x+c[0]-c[1],0);
   return Math.max(0,Math.min(4,base-(F.round<=1&&base>=2?1:0)+(F.round>=F.rounds&&F.rounds>1?1:0)+(Math.abs(sc)<=1&&F.round>=3?1:0)+((F.A.kd+F.B.kd)>0?1:0)+(F.week>=40&&base>0?0:0)));}
 function startLine(F,rng){const R=a=>a[Math.floor(rng()*a.length)];const h=fightHeat(F);const sc=F.cards.reduce((x,c)=>x+c[0]-c[1],0);

@@ -385,7 +385,7 @@ function quickFight(fa,fb,seed,rounds,tacA){const F=newFight(fa,fb,{seed,rounds}
 
 // ---------- WORLD ----------
 const TIER={local:{name:"Subdistrict",win:4000,lose:2000,rep:1.5},district:{name:"District",win:9000,lose:4500,rep:3},
-  semi:{name:"Provincial semi",win:18000,lose:8000,rep:4},final:{name:"Provincial final",win:50000,lose:20000,rep:8},exhibition:{name:"Temple fair fight",win:2500,lose:1500,rep:.5},special:{name:"Special cross-division bout",win:8000,lose:4000,rep:2},
+  semi:{name:"Provincial semi",win:18000,lose:8000,rep:4},final:{name:"Provincial final",win:50000,lose:20000,rep:8},exhibition:{name:"Temple fair fight",win:2500,lose:1500,rep:.5},pro:{name:"Opening-night temple fair bout",win:1500,lose:1000,rep:.5,off:1},special:{name:"Special cross-division bout",win:8000,lose:4000,rep:2},
   quest:{name:"Off-the-books fight",win:0,lose:0,rep:.4,off:1},dm:{name:"Death Match",win:0,lose:0,rep:.5,off:1},beast:{name:"Wild bout",win:7000,lose:2500,rep:1,off:1}};
 function stageOf(w){return w<=20?"local":w<=40?"district":w<=50?"final":"off";}
 const STAGE_NAME={local:"Subdistrict round",district:"District round",final:"Provincial final",off:"Year end"};
@@ -617,7 +617,7 @@ function applyResult(G,F,booking){
     me.fatigue=clamp(me.fatigue+(off?14:22),0,100);
     const s=side==="A"?A:B;
     if(s.hp<40&&!off&&mulberry32(F.seed+(side==="A"?1:2))()<.45)me.injury=Math.max(me.injury,2+(s.hp<15?2:0));
-    if(res==="L"&&/KO|TKO/.test(r.type))me.injury=Math.max(me.injury,booking.dm?1:3); // v1.37.1: a Death Match KO costs one week, not three
+    if(res==="L"&&/KO|TKO/.test(r.type)&&!booking.pro)me.injury=Math.max(me.injury,booking.dm?1:3); // v1.37.1: a Death Match KO costs one week, not three
     const pmods=passiveMods(me);if(G.romance===me.id)pmods.moraleLoss+=.3;if(me.camp==="player"&&me.trust>=60)pmods.moraleLoss+=.25;me.morale=clamp(me.morale+(res==="W"?10:res==="L"?-10*(1-Math.min(.9,pmods.moraleLoss)):2),0,100);
     // v1.21: beating someone stronger is worth more (ranking point, fame, EXP) — a reason to take the hard offers
     const upset=res==="W"&&ovr(op.a)-ovr(me.a)>.4;

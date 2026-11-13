@@ -15,31 +15,34 @@ const BOND_MUL=.3,BOND_LATE=["mali","rin"];
 const absWeek=G=>((G.season||1)-1)*52+G.week;
 const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)f.lastTouch=absWeek(G);if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*BOND_MUL*(BOND_LATE.includes(id)&&(f.bond||0)<50?1.6:1)*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
 
+// v1.71: the prologue now puts the player in Kati's corner at the temple fair within the first minutes
+const PROLOGUE_B=[
+  {inject:G=>{const c=(G.cal||[]).slice(-1)[0],w=!!(c&&c.res==="W"),pay=c?c.pay:0;G.seen.first_win=true;G.seen.first_loss=true;
+    if(w){add(G,"kati","bond",5);add(G,"kati","trust",3);}else add(G,"kati","trust",3);
+    return w?[{n:"nar",bg:"fair",t:"The final bell rings. The temple fair crowd jumps to its feet, and the commentator's crackling loudspeaker shouts Sirichai's name across the fair."},
+      {n:"kati",f:"happy",t:"I won! Our first fight together, and I won!"},
+      {n:"coach",t:`The camp's first win in two years. Grandpa Chai must be smiling up there. Tonight's purse: ${pay.toLocaleString()} baht, already in the camp's pocket.`}]
+     :[{n:"nar",bg:"fair",t:"The final bell rings. Kati walks slowly down from the ring, and the crowd still applauds her fighting spirit."},
+      {n:"kati",f:"sad",t:"…I'm sorry. It was our very first fight together."},
+      {n:"coach",t:`Losing a temple fair bout is fine. What matters is remembering where it went wrong. We still got the purse: ${pay.toLocaleString()} baht. From now on you plan the training, boss, and I'll keep an eye on it.`}];}},
+  {n:"coach",bg:"camp",t:"When I was young I fought on the provincial stage and lost only the title bout, on a busted knee. If we want the camp's name back, our fighters have to climb from the sub-district ring to the district, then win the provincial title this year."},
+  {n:"kati",f:"happy",t:"I'll give it everything. I'm in your hands, Manager!"},
+  {n:"nar",t:"Year one goals: save the camp from debt, and take a fighter to the provincial final in week 49"}];
 const EVENTS=[
  {id:"prologue",look:"fight",bg:"night",steps:[
-  {n:"nar",t:"As a kid, every summer you were sent to stay with Grandpa Chai and Grandma at a small Muay Thai camp up north. You woke to the thud of kicks and fell asleep to the smell of boxing liniment"},
-  {n:"nar",t:"You grew up, moved to Bangkok for school, and stayed. Now you're a marketing manager at a private company, with a good salary and a condo near the BTS"},
-  {n:"nar",t:"But every day is the same: morning meetings, sales numbers, evening traffic. Only rarely do you remember the sound of sandbags in the morning"},
-  {n:"nar",t:"That rainy season, a letter reached your hands. The handwriting was shaky but still neat"},
-  {n:"nar",t:"\"To my dear grandchild. If this letter reaches you, it means Grandpa has gone to rest. Sirichai Muay Thai Camp, which I spent my whole life building, I leave in your hands.\""},
-  {n:"nar",t:"\"The camp has just one fighter left, Kati. She has a fighter's heart. Please look after her. — Grandpa Chai\""},
-  {n:"nar",bg:"camp",t:G=>`After Grandpa's funeral, ${ME(G)} arrives at Sirichai Camp. The tin roof is rusted, the heavy bags torn, the sign so faded it's barely legible`},
-  {n:"nar",t:"But inside, footsteps still slap the floor and fists still thud into pads. Someone is still training"},
+  {n:"nar",t:"Every summer as a kid, you were sent to stay with Grandpa Chai at his little Muay Thai camp up north. You grew up, moved to Bangkok and became a marketing manager. Life is good, but every day is the same."},
+  {n:"nar",t:"That rainy season, a letter in shaky handwriting arrives. \"If this reaches you, Grandpa has passed on. I leave Sirichai camp to you. Our last fighter is Kati. Please look after her. — Grandpa Chai\""},
+  {n:"nar",bg:"camp",t:G=>`After Grandpa's funeral, ${ME(G)} arrives at Sirichai Muay Thai camp. The tin roof is rusted and the heavy bags are torn, but inside you can still hear fists hitting pads. Someone is still training.`},
   {n:"kati",f:"surprised",t:"…Who's there! Oh, sorry, I thought the bank people came to collect again"},
-  {n:"kati",f:"happy",t:"Or… are you Grandpa Chai's real grandchild? The one who spent every summer here as a kid?"},
-  {n:"kati",f:"flustered",t:"It's me, Kati! Grandpa took me in when I was eight, so I call him Grandpa too. That summer you taught me to ride a bike and we both crashed into the ditch, remember?"},
+  {n:"kati",f:"flustered",t:"Wait… you're Grandpa Chai's grandchild! It's me, Kati! Grandpa took me in when I was eight. That summer you taught me to ride a bike and we both fell in the ditch, remember?"},
   {choice:[
    {t:G=>`Yes. Grandpa left this camp to me ${PR(G)}`,fx:G=>add(G,"kati","bond",4),then:[{n:"kati",f:"happy",t:"Grandpa talked about you so often! He said someday you'd come back"}]},
    {t:G=>`${PR(G)} I came to see whether this camp can keep going`,fx:G=>add(G,"kati","trust",4),then:[{n:"kati",f:"flustered",t:"Of course it can! If just one more person believes in it, I'll prove it myself"}]}]},
-  {n:"kati",t:"I'm Kati, the last fighter of Sirichai Camp. Coach Daeng is still here teaching, but everyone else moved to Golden Tiger Camp"},
-  {n:"nar",t:"A gray-haired older man walks out from the back, a towel over his shoulder, arms still as firm as someone who never stopped training"},
-  {n:"coach",t:G=>`Name's Daeng. The kids call me Coach Daeng. I was one of Grandpa Chai's first students, been at this camp thirty years`},
-  {n:"coach",t:"In my youth I fought on the provincial stage, lost only the title fight because my knee gave out. Been teaching ever since. I'm in your hands now, boss"},
-  {n:"coach",t:"Let's talk money straight. The camp owes ฿120,000, paid off at ฿5,000 a month"},
-  {n:"coach",t:"Our main income right now is 'students': tourists and local kids taking Muay Thai classes, paying weekly. Only a few are left. The more famous the camp, the more people come"},
-  {n:"coach",t:"If we want the camp's name back, we have to send fighters up from the subdistrict ring, to the district, and win the provincial title this year"},
-  {n:"kati",f:"happy",t:"I'll give it everything. I'm in your hands, Manager!"},
-  {n:"nar",t:"Year one goals: save the camp from debt, and take a fighter to the provincial final in week 49"}]},
+  {n:"nar",t:"A grey-haired older man walks out from behind the camp, a towel over his shoulder, his arms still solid with muscle."},
+  {n:"coach",t:"Name's Daeng. The kids call me Coach Daeng, Grandpa Chai's first student. Kati's all we have left; the rest moved to Golden Tiger. And the camp owes 120,000 baht, paid off at 5,000 a month."},
+  {n:"coach",t:"Right now our main income is lesson fees from course students. The more famous the camp, the more people come to train. The other way is fight purses."},
+  {n:"coach",bg:"fair",t:"There's a bout at the temple fair tonight. Kati already signed on, and the purse goes toward the debt. Come work her corner, boss. You pick the plan, you call the shots. I'll be right beside you."},
+  {n:"kati",f:"happy",t:"My first fight with you, Manager! I won't let you down!"}]},
 
  {id:"kati_why",look:"train",when:G=>G.week>=2,bg:"night",steps:[
   {n:"nar",t:"Nine at night. One light is still on in camp; Kati is kicking a heavy bag patched with duct tape"},

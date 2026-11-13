@@ -237,7 +237,7 @@ const START_HOT={
  last:["ยกสุดท้ายแล้วครับ!! ใครอยากชนะต้องเทหมดหน้าตัก!","ยกสุดท้าย! ปี่ชวาเร่งถี่ยิบ กองเชียร์ลุกทั้งสนาม!","ยกตัดสิน!! สามนาทีที่จะจำไปทั้งชีวิต!"],
  close:["คะแนนสูสีมาก! ยกนี้ตัดสินทุกอย่าง!","ยังไม่มีใครทิ้งห่าง! กรรมการต้องดูกันตาไม่กะพริบ!"]};
 const KO_HOT=["จบแล้วครับ! จบแล้ว!! {a} ชนะน็อก! ประวัติศาสตร์เกิดขึ้นต่อหน้าเรา!!","{d} ลุกไม่ขึ้น!! {a}!! {a}!! ทั้งสนามตะโกนชื่อเดียวกัน!!"];
-const TIER_HEAT={exhibition:0,local:0,special:1,district:1,semi:2,final:3,quest:1,beast:1};
+const TIER_HEAT={pro:0,exhibition:0,local:0,special:1,district:1,semi:2,final:3,quest:1,beast:1};
 function fightHeat(F){const base=TIER_HEAT[F.tier]??0;const sc=F.cards.reduce((x,c)=>x+c[0]-c[1],0);
   return Math.max(0,Math.min(4,base-(F.round<=1&&base>=2?1:0)+(F.round>=F.rounds&&F.rounds>1?1:0)+(Math.abs(sc)<=1&&F.round>=3?1:0)+((F.A.kd+F.B.kd)>0?1:0)+(F.week>=40&&base>0?0:0)));}
 function startLine(F,rng){const R=a=>a[Math.floor(rng()*a.length)];const h=fightHeat(F);const sc=F.cards.reduce((x,c)=>x+c[0]-c[1],0);
