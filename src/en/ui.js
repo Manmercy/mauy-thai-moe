@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.2";
+const VERSION="1.80.3";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -337,7 +337,7 @@ function homeHTML(){const R=roster(G);
   const lv=campLevel(G);
   return `${rinNoteHTML()}<div class="homegrid">${(()=>{const r=[["mali",G.flags.maliRecruit],["rin",G.flags.rinRecruit]].filter(([id,ok])=>ok&&G.F[id].camp==="free");
      return r.length?`<button class="px newfighter" data-act="tab" data-v="camp" data-sub="staff"><span class="newb">NEW!</span>${r.map(([id])=>`<img src="${faceSrc(id,"happy")}" alt="">`).join("")}<span><b>${r.map(([id])=>esc(G.F[id].name)).join(" and ")} wants to join</b><small>Tap to see the contract</small></span><span class="chev">▸</span></button>`:"";})()}<section class="px camp-wrap"><div class="cvbox"><canvas class="campcv" width="640" height="360" data-camp="1" aria-label="Sirichai Gym overview"></canvas>
-    ${goalHidden()?`<button class="goal ov mini" data-act="goaltog" aria-label="Show goal">Goal ▴</button>`:`<button class="goal ov" data-act="goaltog" aria-label="Hide goal">${goalText()}<span class="gx">▾ Hide</span></button>`}</div>
+    ${goalHidden()?`<button class="goal ov mini" data-act="goaltog" aria-label="Show goal">Goal ▾</button>`:`<button class="goal ov" data-act="goaltog" aria-label="Hide goal">${goalText()}<span class="gx">▴ Hide</span></button>`}</div>
     ${G.campUsed?`<button class="campact done" data-act="campacts"><span class="ci">✓</span><span><small>This week's camp activity</small><b>${esc(CAMP_ACTIONS[G.campUsed].name)}</b></span></button>`
       :`<button class="campact" data-act="campacts"><span class="ci"></span><span><small>This week's camp activity · not chosen</small><b>Choose a camp activity</b></span><span class="chev">▸</span></button>`}
     ${petsRowHTML()}
