@@ -2993,21 +2993,18 @@ const PROLOGUE_B=[
   {n:"nar",t:"เป้าหมายปีแรก: พาค่ายรอดจากหนี้ และพานักมวยไปชิงแชมป์จังหวัดในสัปดาห์ที่ 49"}];
 const EVENTS=[
  {id:"prologue",look:"train",bg:"bus",steps:[
-  {n:"nar",t:"ฝนเพิ่งหยุด รถบัสที่ออกจากกรุงเทพฯ ตั้งแต่เช้ามืดเลี้ยวเข้าตำบลเล็ก ๆ ทางเหนือ ถนนเปียกจนสะท้อนแสงร้านค้าริมทาง"},
-  {n:"nar",t:"คุณไม่ได้กลับมาที่นี่หลายปี แต่ยังจำทางโค้งก่อนถึงค่ายได้ ตอนเด็ก ๆ ปู่ชัยจะยืนรอที่ป้ายรถ พร้อมผ้าขนหนูพาดบ่าเสมอ"},
-  {n:"nar",t:"บนเบาะข้างตัวมีซองจดหมายที่ส่งมาพร้อมข่าวการจากไปของปู่ คุณลางานและขึ้นรถคันนี้ เพื่อกลับมารับช่วงค่ายที่ท่านฝากไว้"},
-  {n:"nar",t:"“ถึงหลานรัก ถ้าจดหมายนี้ถึงมือหลาน ปู่คงไม่ได้ยืนรอที่ป้ายรถแล้ว”"},
-  {n:"nar",t:"“ค่ายศิริชัยที่ปู่สร้างมาทั้งชีวิต ปู่ฝากไว้กับหลาน ไม่ใช่เพราะหลานต้องเก่งกว่าปู่ แต่เพราะหลานเคยเรียกที่นี่ว่าบ้าน”"},
-  {n:"nar",t:"“ที่ค่ายยังมีกะทิอยู่ เด็กคนนี้ไม่ยอมแพ้ง่าย ๆ ถ้าหลานกลับมา ลองฟังเสียงกระสอบทรายก่อนตัดสินใจว่าจะทำยังไงต่อ ช่วยดูแลกันด้วยนะ — ปู่ชัย”"},
-  {n:"nar",t:"รถจอดสนิท คุณพับจดหมายเก็บไว้ กลิ่นดินหลังฝนพาให้นึกถึงหน้าร้อนที่เคยตื่นพร้อมเสียงเตะกระสอบ และหลับไปพร้อมกลิ่นน้ำมันมวย"},
-  {n:"nar",bg:"gym",t:"ประตูค่ายศิริชัยยังแง้มอยู่ ป้ายหน้าค่ายสีซีด กระสอบทรายปะเทปกาว แต่ข้างในมีเสียงหมัดกระทบเป้าดังเป็นจังหวะ"},
+  {n:"nar",t:"ฝนเพิ่งหยุด หลังนั่งรถบัสจากกรุงเทพฯ มาทั้งวัน คุณก็มาถึงตำบลเล็ก ๆ ที่เคยอยู่ตอนเด็ก และหยิบจดหมายของปู่ชัยขึ้นมาอ่านอีกครั้ง"},
+  {n:"nar",t:"จดหมายฉบับนั้นส่งมาถึงคุณก่อนออกเดินทาง ลายมือสั่นเครือแต่ยังเป็นระเบียบ"},
+  {n:"nar",t:"“ถึงหลานรัก ถ้าจดหมายนี้ถึงมือหลาน แปลว่าปู่ไปสบายแล้ว ค่ายมวยศิริชัยที่ปู่สร้างมาทั้งชีวิต ปู่ขอฝากไว้กับหลาน”"},
+  {n:"nar",t:"“ค่ายเหลือนักมวยคนเดียวชื่อกะทิ เด็กคนนี้มีหัวใจนักสู้ ช่วยดูแลเธอด้วยนะ — ปู่ชัย”"},
+  {n:"nar",bg:"gym",t:"คุณพับจดหมายเก็บ เดินผ่านป้ายค่ายศิริชัยที่สีซีดจนแทบอ่านไม่ออก ข้างในยังมีเสียงหมัดกระทบเป้า ใครบางคนยังซ้อมอยู่"},
   {n:"kati",f:"surprised",t:"…ใครน่ะ! อ๊ะ ขอโทษค่ะ ได้ยินประตูแล้วตกใจ"},
   {n:"kati",f:"flustered",t:"เดี๋ยวนะ… คุณคือหลานของปู่ชัย? หนูกะทิไงคะ ปู่รับหนูมาเลี้ยงตอนแปดขวบ หน้าร้อนปีนั้นคุณสอนหนูขี่จักรยานจนล้มลงคูน้ำทั้งคู่ จำได้ไหมคะ"},
   {choice:[
    {t:"ใช่ ปู่ฝากค่ายนี้ไว้ให้ดูแล",fx:G=>add(G,"kati","bond",4),then:[{n:"kati",f:"happy",t:"คุณปู่พูดถึงคุณบ่อยมากเลยค่ะ! ท่านบอกว่าสักวันคุณจะกลับมา"}]},
    {t:"อยากรู้ว่าค่ายนี้ยังไปต่อไหวไหม",fx:G=>add(G,"kati","trust",4),then:[{n:"kati",f:"flustered",t:"ไปไหวสิคะ! ขอแค่มีคนเชื่อในค่ายนี้อีกสักคน หนูจะพิสูจน์ให้ดูเอง"}]}]},
   {n:"kati",f:"sad",t:"ตอนนี้หนูเป็นนักมวยคนเดียวของค่าย ครูแดงยังอยู่ แต่คนอื่นย้ายไปพยัคฆ์ทองกันหมดแล้ว"},
-  {n:"nar",t:"ชายสูงวัยผมสีดอกเลาเดินออกมาจากหลังค่าย มีผ้าขนหนูพาดบ่า ท่าทางนั้นชวนให้นึกถึงปู่ที่เคยยืนรอคุณตรงป้ายรถ"},
+  {n:"nar",t:"ชายสูงวัยผมสีดอกเลาเดินออกมาจากหลังค่าย ผ้าขนหนูพาดบ่า แขนยังมีกล้ามแน่นเหมือนคนที่ไม่เคยหยุดซ้อม"},
   {n:"coach",t:"ชื่อแดง เด็ก ๆ เรียกครูแดง เป็นลูกศิษย์รุ่นแรกของปู่ชัย อยู่ค่ายนี้มาสามสิบปีแล้ว"},
   {n:"coach",t:"พูดกันตรง ๆ ตอนนี้ค่ายติดหนี้อยู่ 120,000 บาท ต้องผ่อนเดือนละ 5,000"},
   {n:"nar",t:"ครูแดงปล่อยให้ตัวเลขนั้นจมลงในความเงียบ กะทิกำผ้าพันมือแน่นขึ้น แต่ไม่หลบตา"},
@@ -5145,7 +5142,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.6";
+const VERSION="1.80.7";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -5896,13 +5893,6 @@ function warmChar(id,look){if(id==="coach"){warm(`${ASSET}coach.webp`);return;}i
   (look==="casual"?["happy","flustered","pout"]:["happy","sad","surprised","angry"]).forEach(m=>warm(stand(id,look,m)));}
 function warmSteps(steps,look){const walk=list=>(list||[]).forEach(st=>{if(!st)return;const n=typeof st.n==="function"?null:st.n;if(n)warmChar(n,st.l==="casual"?"casual":look==="casual"&&!st.l?"casual":"fight");
   if(st.with)warmChar(st.with,look==="casual"?"casual":"fight");if(st.bg&&BGIMG[st.bg])warm(ASSET+BGIMG[st.bg]);if(st.choice)st.choice.forEach(c=>walk(c.then));});walk(steps);}
-const WARMQ=[];let warmBusy=0;
-function warmLater(list){WARMQ.push(...list.filter(s=>!WARMED[s]));while(warmBusy<3&&WARMQ.length)warmNext();}
-function warmNext(){let src;do{src=WARMQ.shift();}while(src&&WARMED[src]);if(!src)return;warmBusy++;
-  const i=new Image();i.decoding="async";WARMED[src]=i;i.onload=i.onerror=()=>{warmBusy--;warmNext();};i.src=src;}
-function warmAll(){const L=[];CANON_IDS.forEach(id=>["happy","sad","surprised","angry"].forEach(m=>L.push(stand(id,"fight",m))));
-  CANON_IDS.forEach(id=>["happy","flustered","pout"].forEach(m=>L.push(stand(id,"casual",m))));
-  Object.values(BGIMG).concat(Object.values(TIER_BG),["gym2.webp","gym3.webp"]).filter(Boolean).forEach(b=>L.push(ASSET+b));warmLater(L);}
 function playScene(steps,done,opts={}){warmSteps(steps,opts.look||"fight");if(opts.bg&&BGIMG[opts.bg])warm(ASSET+BGIMG[opts.bg]);UI.scene={steps:[...steps],i:0,done,bg:opts.bg||"night",look:opts.look||"fight",cur:null,cast:[],coachOK:!!opts.coachOK};sceneNext();}
 function sceneNext(){const S=UI.scene;if(!S)return;
   while(S.i<S.steps.length){const st=S.steps[S.i];
@@ -6470,7 +6460,7 @@ document.addEventListener("keydown",e=>{
   if(!G&&UI.title==="tap"&&(e.key===" "||e.key==="Enter")){e.preventDefault();ACT.tapstart();return;}
   if(UI.scene&&!(UI.scene.cur&&UI.scene.cur.choice)&&(e.key===" "||e.key==="Enter")){e.preventDefault();sceneNext();return;}
   if(e.key==="Enter"&&e.target&&e.target.id){const b={petname:"petnamebtn",redeemcode:null,gatecode:null}[e.target.id];const el=b?document.getElementById(b):e.target.id==="redeemcode"?document.querySelector("[data-act=redeem]"):e.target.id==="gatecode"?document.querySelector("[data-act=gatego]"):null;if(el){e.preventDefault();el.click();}}});
-preloadCore();["happy","surprised","sad"].forEach(m=>warm(stand("kati","fight",m)));warm(`${ASSET}coach.webp`);render();setTimeout(warmAll,1500);
+preloadCore();["happy","surprised","sad"].forEach(m=>warm(stand("kati","fight",m)));warm(`${ASSET}coach.webp`);render();
 
 // ================= MUAY THAI MOE v1.23 — MAILBOX, SIDE QUESTS, ODD FIGHTS, CALENDAR, GRAPHS, NEWS BAR =================
 // ---------- odd opponents (sprite sheets in a/<sprite>_sheet.webp, same 6-row layout as the girls) ----------
@@ -8927,21 +8917,18 @@ const PROLOGUE_B=[
   {n:"nar",t:"Year one goals: save the camp from debt, and take a fighter to the provincial final in week 49"}];
 const EVENTS=[
  {id:"prologue",look:"train",bg:"bus",steps:[
-  {n:"nar",t:"The rain has just let up. The bus that left Bangkok before dawn turns into a small northern town. Wet streets reflect the lights of roadside shops."},
-  {n:"nar",t:"You have not been back in years, but you still know the bend before the camp. As a child, you always found Grandpa Chai waiting at the bus stop with a towel over his shoulder."},
-  {n:"nar",t:"On the empty seat beside you is the letter that arrived with news of his death. You took leave from work and boarded this bus to inherit the camp he left you."},
-  {n:"nar",t:"“My dear grandchild, if this letter has reached you, I will not be waiting at the bus stop anymore.”"},
-  {n:"nar",t:"“I leave you Sirichai camp, the place I built over a lifetime. Not because you must be better than me, but because you once called it home.”"},
-  {n:"nar",t:"“Kati is still there. She does not give up easily. If you come back, listen to the heavy bag before deciding what to do next. Please look after each other. — Grandpa Chai”"},
-  {n:"nar",t:"The bus comes to a stop. You fold the letter away. The smell of earth after rain recalls summers when you woke to kicks on a heavy bag and fell asleep to the scent of liniment."},
-  {n:"nar",bg:"gym",t:"The door to Sirichai camp is still ajar. The sign has faded and the heavy bags are patched with tape, but inside, fists are striking pads in a steady rhythm."},
+  {n:"nar",t:"The rain has stopped. After a long bus ride from Bangkok, you reach the small town where you spent your childhood. You take out Grandpa Chai's letter and read it once more."},
+  {n:"nar",t:"It arrived before you left. His handwriting is shaky, but still neat."},
+  {n:"nar",t:"“My dear grandchild, if this letter has reached you, I have passed on. I leave you Sirichai Muay Thai camp, the place I built over a lifetime.”"},
+  {n:"nar",t:"“Only one fighter remains at the camp. Her name is Kati, and she has the heart of a fighter. Please look after her. — Grandpa Chai”"},
+  {n:"nar",bg:"gym",t:"You fold the letter away and pass Sirichai's faded sign. Inside, you can still hear fists striking pads. Someone is training."},
   {n:"kati",f:"surprised",t:"…Who is there? Oh, sorry. The door startled me."},
   {n:"kati",f:"flustered",t:"Wait… you are Grandpa Chai’s grandchild? I am Kati! He took me in when I was eight. That summer you taught me to ride a bike, and we both fell into the ditch. Remember?"},
   {choice:[
    {t:"Yes. Grandpa asked me to take care of the camp",fx:G=>add(G,"kati","bond",4),then:[{n:"kati",f:"happy",t:"Grandpa talked about you all the time! He said you would come back someday."}]},
    {t:"I want to know if the camp can keep going",fx:G=>add(G,"kati","trust",4),then:[{n:"kati",f:"flustered",t:"It can! If just one more person believes in this place, I will prove it."}]}]},
   {n:"kati",f:"sad",t:"I am the only fighter left. Coach Daeng is still here, but everyone else moved to Golden Tiger."},
-  {n:"nar",t:"A grey-haired man steps out from behind the camp with a towel over his shoulder. For a moment, he reminds you of Grandpa waiting at the bus stop."},
+  {n:"nar",t:"A grey-haired man steps out from behind the camp with a towel over his shoulder. His arms are still strong, like someone who never stopped training."},
   {n:"coach",t:"Name is Daeng. The kids call me Coach Daeng. I was Grandpa Chai’s first student, and I have been here thirty years."},
   {n:"coach",t:"I will be straight with you. The camp owes 120,000 baht. We have to pay 5,000 every month."},
   {n:"nar",t:"Coach Daeng lets the numbers settle in the silence. Kati grips her hand wraps tighter but does not look away."},
@@ -11079,7 +11066,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.6";
+const VERSION="1.80.7";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -11830,13 +11817,6 @@ function warmChar(id,look){if(id==="coach"){warm(`${ASSET}coach.webp`);return;}i
   (look==="casual"?["happy","flustered","pout"]:["happy","sad","surprised","angry"]).forEach(m=>warm(stand(id,look,m)));}
 function warmSteps(steps,look){const walk=list=>(list||[]).forEach(st=>{if(!st)return;const n=typeof st.n==="function"?null:st.n;if(n)warmChar(n,st.l==="casual"?"casual":look==="casual"&&!st.l?"casual":"fight");
   if(st.with)warmChar(st.with,look==="casual"?"casual":"fight");if(st.bg&&BGIMG[st.bg])warm(ASSET+BGIMG[st.bg]);if(st.choice)st.choice.forEach(c=>walk(c.then));});walk(steps);}
-const WARMQ=[];let warmBusy=0;
-function warmLater(list){WARMQ.push(...list.filter(s=>!WARMED[s]));while(warmBusy<3&&WARMQ.length)warmNext();}
-function warmNext(){let src;do{src=WARMQ.shift();}while(src&&WARMED[src]);if(!src)return;warmBusy++;
-  const i=new Image();i.decoding="async";WARMED[src]=i;i.onload=i.onerror=()=>{warmBusy--;warmNext();};i.src=src;}
-function warmAll(){const L=[];CANON_IDS.forEach(id=>["happy","sad","surprised","angry"].forEach(m=>L.push(stand(id,"fight",m))));
-  CANON_IDS.forEach(id=>["happy","flustered","pout"].forEach(m=>L.push(stand(id,"casual",m))));
-  Object.values(BGIMG).concat(Object.values(TIER_BG),["gym2.webp","gym3.webp"]).filter(Boolean).forEach(b=>L.push(ASSET+b));warmLater(L);}
 function playScene(steps,done,opts={}){warmSteps(steps,opts.look||"fight");if(opts.bg&&BGIMG[opts.bg])warm(ASSET+BGIMG[opts.bg]);UI.scene={steps:[...steps],i:0,done,bg:opts.bg||"night",look:opts.look||"fight",cur:null,cast:[],coachOK:!!opts.coachOK};sceneNext();}
 function sceneNext(){const S=UI.scene;if(!S)return;
   while(S.i<S.steps.length){const st=S.steps[S.i];
@@ -12404,7 +12384,7 @@ document.addEventListener("keydown",e=>{
   if(!G&&UI.title==="tap"&&(e.key===" "||e.key==="Enter")){e.preventDefault();ACT.tapstart();return;}
   if(UI.scene&&!(UI.scene.cur&&UI.scene.cur.choice)&&(e.key===" "||e.key==="Enter")){e.preventDefault();sceneNext();return;}
   if(e.key==="Enter"&&e.target&&e.target.id){const b={petname:"petnamebtn",redeemcode:null,gatecode:null}[e.target.id];const el=b?document.getElementById(b):e.target.id==="redeemcode"?document.querySelector("[data-act=redeem]"):e.target.id==="gatecode"?document.querySelector("[data-act=gatego]"):null;if(el){e.preventDefault();el.click();}}});
-preloadCore();["happy","surprised","sad"].forEach(m=>warm(stand("kati","fight",m)));warm(`${ASSET}coach.webp`);render();setTimeout(warmAll,1500);
+preloadCore();["happy","surprised","sad"].forEach(m=>warm(stand("kati","fight",m)));warm(`${ASSET}coach.webp`);render();
 
 // ================= MUAY THAI MOE v1.23 — MAILBOX, SIDE QUESTS, ODD FIGHTS, CALENDAR, GRAPHS, NEWS BAR =================
 // ---------- odd opponents (sprite sheets in a/<sprite>_sheet.webp, same 6-row layout as the girls) ----------
