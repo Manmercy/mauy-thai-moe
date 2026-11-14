@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.10";
+const VERSION="1.80.11";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -201,7 +201,7 @@ const GLOSS=[["ความพร้อม","สภาพร่างกาย�
  ["กำลังใจ","ยิ่งสูงยิ่งชกแม่น ขึ้นจากชนะ เดต ทำบุญ ลดเมื่อแพ้หรือซ้อมหนักเกิน"],["ความสนิท","ความผูกพันกับคุณ ปลดฉากพิเศษ ท่าไม้ตายที่ 60 และเพิ่มโอกาสโหมดเลือดเดือด"],
  ["ความเชื่อใจ","นักมวยเชื่อคำสั่งของคุณแค่ไหน ยิ่งสูง คำสั่งจากมุมเวทีได้ผลดีขึ้น (สูงสุด +4% ความแม่น) ถึง 60 แพ้แล้วกำลังใจลดน้อยลง และมีผลกับฉากสารภาพใจ · เพิ่มได้จากฉากทำบุญ ไหว้ครู ไม่ซ้อมหนักเกินไป และค่ายที่ไม่ติดหนี้"],["ชื่อเสียง","คนรู้จักค่ายแค่ไหน ยิ่งสูงนักเรียนยิ่งมาเรียน"],
  ["แต้มสกิล","ได้ทุกเลเวลอัป ใช้อัปท่ามวยโบราณตามสำนักของนักมวย"],["ฝึกแก้ทาง","ดูเทปคู่ชกแล้ว ฝึกโปรแกรมที่แก้อาวุธหลักของคู่ชกในสัปดาห์ก่อนชก ได้โบนัสวันชก"],
- ["โหมดเลือดเดือด","เมื่อเจ็บหนักหรือตามคะแนน นักมวยอาจ 'ตาเปลี่ยน' ชั่วครู่ สวนแรงและคริติคอลง่าย ไฟต์ละครั้ง"],["ไหว้ครูรำมวย","พิธีก่อนชกทุกไฟท์เพื่อระลึกถึงครู เลือกท่ารำได้ แต่ละท่าให้ผลต่างกัน"]];
+ ["โหมดเลือดเดือด","เมื่อเจ็บหนักหรือตามคะแนน นักมวยอาจ 'ตาเปลี่ยน' ชั่วครู่ สวนแรงและคริติคอลง่าย ไฟต์ละครั้ง"],["ไหว้ครูรำมวย","พิธีก่อนชกไฟท์แรก ไฟท์กับตัวละครหลัก และไฟท์สำคัญ เลือกท่ารำได้ แต่ละท่าให้ผลต่างกัน"]];
 
 // ---------- creator (manager look) ----------
 function creatorHTML(){const c=UI.creator,O=CHIBI.OPT;
@@ -911,27 +911,27 @@ function fightFaceoff(b){const me=G.F[b.a],op=G.F[b.b],key=`${b.a}_${b.b}`,h=G.h
   const opener=last?(last.win==="A"?`คราวก่อนเธอชนะฉัน ไฟท์นี้ฉันเตรียมแก้ทางมาแล้ว`:last.win==="B"?`คราวก่อนฉันชนะ แต่วันนี้เธอดูไม่เหมือนเดิม`:"คราวก่อนเสมอกัน วันนี้ต้องมีคนชนะ")+tally
     :s?`เราเจอกันมา ${s.w+s.l+s.d} ครั้งแล้ว เธอชนะ ${s.w} ฉันชนะ ${s.l}${s.d?` เสมอ ${s.d}`:""} วันนี้มาดูกันอีกที`
     :met?"เราเคยเจอกันมาแล้ว วันนี้มาดูกันว่าใครเตรียมตัวมาดีกว่า"
-    :(personaOf(op)?.line||rival[op.id]||vary(`face_open_${op.id}`,["ขอไฟท์ที่ดีนะ วันนี้ฉันเตรียมตัวมาเต็มที่","ได้ยินเรื่องค่ายศิริชัยมานาน วันนี้ขอลองฝีมือหน่อย","ขึ้นเวทีแล้วไม่มีใครออมมือกันนะ"]));
+    :rival[op.id];
   const reply=last?(last.win==="A"?`ครั้งก่อนฉันชนะ แต่วันนี้จะไม่ประมาทเธอ`:last.win==="B"?`ครั้งก่อนฉันแพ้ วันนี้ฉันกลับมาแก้มือ`:"คราวก่อนยังไม่รู้ผล วันนี้ชกให้ชัดไปเลย")
     :({kati:"ค่ายศิริชัยกลับมาแล้วค่ะ หนูจะชกให้เต็มที่!",mali:"ได้เลย~ มะลิพร้อมแล้ว!",rin:"ข้อมูลอยู่ในหัวแล้วค่ะ มาเริ่มกันเลย",ploy:"ฉันจะให้คำตอบบนเวที",fah:"ดี! ฉันชอบคนที่กล้าสู้"})[me.id]||"ฉันพร้อมแล้ว มาเริ่มกันเลย";
   return [{n:"nar",t:`${me.name}กับ${op.name}เดินมาพบกันกลางเวทีก่อนเสียงปี่ชวา`},
-    {n:op.canon?op.id:"npc",who:op.name,f:"angry",l:"fight",t:opener},
-    {n:me.canon?me.id:"npc",who:me.name,f:"angry",l:"fight",with:op.canon?op.id:null,t:reply}];}
+    {n:op.id,f:"angry",l:"fight",t:opener},
+    {n:me.id,f:"angry",l:"fight",with:op.id,t:reply}];}
 function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.week)}`;
+  if(!op.canon){openFight2(b,done);return;}
   let sc=null;const key=`${b.a}_${b.b}`;
   if(op.canon&&!G.seen[k]&&!(G.faceoffLast&&G.faceoffLast[key])&&!(b.tier==="final"&&(G.seen.ploy_prefinal||G.seen.fah_prefinal))){sc=tauntScene(G,b.a,b.b);if(sc)G.seen[k]=true;}
   playScene(sc||fightFaceoff(b),()=>openFight2(b,done),{bg:TIER_BG[b.tier]?TIER_BG[b.tier].replace(/^bg_|\.webp$/g,""):"local",look:"fight"});}
-// Every bout opens with wai khru; the first one also teaches the ritual.
+// Wai khru opens the first bout, canon matchups, and major bouts.
 const RAM={phrom:{name:"พรหมสี่หน้า",hint:"ไหว้ครบสี่ทิศ · ใจนิ่ง แม่นขึ้นยกแรก"},hong:{name:"หงส์เหิน",hint:"สง่างามดั่งหงส์ · กำลังใจ +6"},
   phra:{name:"พระรามแผลงศร",hint:"น้าวคันศร · ยกแรกออกอาวุธดุดัน"}};
-function waiKhruScene(b){const me=G.F[b.a],op=G.F[b.b],first=!(G.flags&&G.flags.waiSeen);const away=!!(G.coachAway&&G.week<G.coachAway);
+function waiKhruScene(b){const me=G.F[b.a],first=!(G.flags&&G.flags.waiSeen);const away=!!(G.coachAway&&G.week<G.coachAway);
   const own=vary("own_"+me.id,{kati:["คุณปู่คะ… ไฟต์นี้หนูไหว้ครูให้คุณปู่นะคะ","ปู่คะ ดูหนูนะ หนูจะรำให้เหมือนที่ปู่สอนทุกท่าเลย","หนูซ้อมท่ารำทุกเช้าเลยนะคะปู่ วันนี้ไม่พลาดแน่!"],mali:["แม่จ๋า มะลิจะรำให้สวยที่สุดเลย","แม่ดูไลฟ์อยู่ไหมน้า~ มะลิจะโบกมือให้ตอนรำท่าสุดท้าย!","รำเสร็จแล้วมะลิจะได้หายตื่นเต้น… มั้งนะ~"],rin:["ไหว้ครูไม่ใช่แค่พิธี มันคือการตั้งสมาธิ… ฉันพร้อมแล้ว","ระหว่างรำฉันจะสังเกตการยืนของคู่ชก …ครูไม่ว่าใช่ไหมคะ","ชีพจรฉันลดจาก 112 เหลือ 88 ทุกครั้งที่รำจบ น่าสนใจมากค่ะ"],ploy:["ครูสอนว่าก่อนชนะคนอื่น ต้องชนะใจตัวเองก่อน"],fah:["รำให้คนดูจำได้เลย คอยดูนะ!"]}[me.id]||["ขอไหว้ครูก่อนนะคะ"]);
   return [{n:"nar",t:vary("wai1",["ปี่ชวาขึ้นเสียงแหลมยาว กลองแขกตีเป็นจังหวะช้า ฉิ่งดังกังวาน ถึงเวลา \"ไหว้ครูรำมวย\"","เสียงปี่ชวาดังขึ้น คนดูลดเสียงลงเอง ถึงเวลาไหว้ครู","กลองแขกเริ่มตีช้า ๆ ทั้งเวทีเงียบลง นักมวยค่อย ๆ ก้าวขึ้นเชือก","ฉิ่งดังสามที เพลงไหว้ครูเริ่มขึ้น ลมเย็นพัดผ่านเวทีพอดี"])},
     ...(first&&!away?[{n:"coach",t:"ไหว้ครูคือการระลึกถึงครูบาอาจารย์ พ่อแม่ และสิ่งศักดิ์สิทธิ์ นักมวยจะเดินรอบเวที \"ปิดเวที\" ก่อน แล้วค่อยรำ"}]:[]),
     {n:"nar",t:vary("wai2_"+me.id,({kati:[`กะทิสวมมงคลบนศีรษะ ผูกประเจียดที่ต้นแขน ก้มกราบสามครั้งกลางเวที`,`กะทิเดินปิดเวทีเร็วกว่าทุกคน ก้าวยาวจนผ้าประเจียดสะบัด แล้วกราบหนักแน่นสามที`,`ก่อนกราบ กะทิแตะประเจียดของปู่ชัยที่ผูกต้นแขนอยู่ แล้วยิ้มกับตัวเอง`],
       mali:[`มะลิสวมมงคล ยิ้มให้กล้องที่แม่ดูอยู่ แล้วก้มกราบช้า ๆ สามครั้ง`,`มะลิรำท่าแบบสายไชยาที่แม่สอน มือนุ่มเหมือนรำละคร คนดูปรบมือก่อนรำจบ`,`มะลิเผลอยิ้มแป้นตอนรำ พอนึกได้ก็รีบทำหน้าขรึม แต่ก็ยิ้มอีกอยู่ดี`],
       rin:[`รินถอดแว่นยื่นให้ครูแดง สวมมงคล แล้วกราบสามครั้งอย่างเป็นระเบียบ`,`รินเดินปิดเวทีนับก้าวในใจ ทุกมุมเท่ากันเป๊ะสิบสองก้าว`,`รินหลับตารำ ไม่เหลียวมองคนดูเลยสักครั้ง สมาธิแน่นิ่งจนคนรอบเวทีเงียบตาม`]})[me.id]||[`${me.name}สวมมงคลบนศีรษะ ผูกประเจียดที่ต้นแขน ก้มกราบสามครั้งกลางเวที`])},
-    {n:"nar",t:vary(`opwai_${op.id}`,[`อีกมุม ${op.name}ไหว้ครูเช่นกัน ก่อนก้มกราบครูผู้สอนสามครั้ง`,`${op.name}เดินปิดเวทีช้า ๆ แล้วรำในแบบของค่ายตัวเอง`])},
     {n:me.id,f:"happy",l:"fight",t:own},
     {choice:Object.entries(RAM).map(([k,r])=>({t:`รำท่า${r.name} — ${r.hint}`,fx:()=>{b.wai=k;if(k==="hong")me.morale=Math.min(100,me.morale+6);}}))},
     ...(away?[{n:"nar",t:"จบท่ารำ ครูแดงลาพักอยู่ คุณจึงเป็นคนถอดมงคลออกจากศีรษะให้เอง"}]:[{n:"nar",t:vary("wai3",["จบท่ารำ ครูแดงถอดมงคลออกจากศีรษะ เป่ากระหม่อมเบา ๆ แล้วตบไหล่หนึ่งที","ครูแดงถอดมงคลออก กระซิบคาถาสั้น ๆ ข้างหู","ครูแดงยื่นน้ำให้หนึ่งอึก แล้วถอดมงคลออกอย่างช้า ๆ"])},
@@ -1150,8 +1150,8 @@ function fightEnd(){const U=UI.fight;U.stage="done";{const w=U.F.result.win;U.bu
   AU.cheer(r.win==="A"?1:.4);
   U.caption={text:r.win==="A"?`${me.name} ชนะ! ${r.type}`:r.win==="D"?"เสมอกันไป":`${G.F[U.b.b].name} ชนะ ${r.type}`,side:r.win==="A"?"A":"B"};
   G.log.push(`${me.name} ${r.win==="A"?"ชนะ":r.win==="B"?"แพ้":"เสมอ"} ${G.F[U.b.b].name} (${r.type})`);
-  G.faceoffLast=G.faceoffLast||{};G.faceoffLast[`${U.b.a}_${U.b.b}`]={win:r.win,week:G.week};
-  G.faceoffStats=G.faceoffStats||{};const key=`${U.b.a}_${U.b.b}`,s=G.faceoffStats[key]=G.faceoffStats[key]||{w:0,l:0,d:0};s[r.win==="A"?"w":r.win==="B"?"l":"d"]++;
+  if(G.F[U.b.b].canon){G.faceoffLast=G.faceoffLast||{};G.faceoffLast[`${U.b.a}_${U.b.b}`]={win:r.win,week:G.week};
+    G.faceoffStats=G.faceoffStats||{};const key=`${U.b.a}_${U.b.b}`,s=G.faceoffStats[key]=G.faceoffStats[key]||{w:0,l:0,d:0};s[r.win==="A"?"w":r.win==="B"?"l":"d"]++;}
   {const op=G.F[U.b.b];if(r.win!=="D"&&!TIER[U.b.tier].off&&(op.canon||U.b.tier==="semi"||U.b.tier==="final"||/KO/.test(r.type)))G.lastBig={a:me.id,b:op.id,win:r.win,wk:G.week,shown:false};}
   if(r.win==="B"){const F=U.F,st=s=>({landed:s.landed,thrown:s.thrown,wl:{...s.wl},sta:Math.round(s.sta),kd:s.kd,legs:Math.round(s.legs)});
     G.losses=(G.losses||[]).concat([{wk:G.week,a:me.id,b:U.b.b,type:r.type,round:r.round,cards:F.cards.map(c=>[...c]),A:st(F.A),B:st(F.B),sc:scouted(U.b.b),od:Math.round(ovr(G.F[U.b.b])-ovr(me)),plan:U.plan||"balanced",tg:(F.A.tac&&F.A.tac.target)||"",care:U.careOK||0}]).slice(-6);}
@@ -1164,7 +1164,8 @@ function giftScene(id,res){const f=G.F[id];const mood=res.t==="dislike"?"pout":r
     ...((()=>{const k=f.giftTot===5?0:f.giftTot===10?1:-1;if(k<0||!GIFT_FREQ[id]||(f.giftFreq||0)>k)return [];f.giftFreq=k+1;
       return [...GIFT_FREQ[id][k].map(s=>({...s,l:"casual"})),k===1?{inject:G2=>{add(G2,id,"bond",3);G2.F[id].morale=Math.min(100,G2.F[id].morale+8);return [{n:"nar",t:`ได้ของตอบแทนจาก${f.name} · ความสนิท +3 · กำลังใจ${f.name} +8`}];}}:{inject:()=>[]}];})())],()=>{AU.startMusic("hub");render();},{bg:f.camp==="player"?"gym":"fair",look:"casual"});}
 function goalHidden(){try{return localStorage.getItem("mtm-goalhide")==="1"}catch(e){return !!UI.goalHide}}
-function beginFight(quick){const b=UI.fight.b;if(!b.waiDone){b.waiDone=true;
+function beginFight(quick){const b=UI.fight.b,op=G.F[b.b],first=!(G.flags&&G.flags.waiSeen);
+  if(!b.waiDone&&(first||b.tier==="semi"||b.tier==="final"||op.canon||op.camp==="rival")){b.waiDone=true;
     const sc=waiKhruScene(b);G.flags=G.flags||{};G.flags.waiSeen=true;const keep=UI.fight;UI.fight=null;AU.startMusic("waikhru");
     playScene(sc,()=>{UI.fight=keep;fightStart(quick);},{bg:(TIER_BG[b.tier]||"bg_local.webp").replace(/^bg_|\.webp$/g,""),look:"fight"});return;}
   fightStart(quick);}
