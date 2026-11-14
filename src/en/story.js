@@ -29,20 +29,27 @@ const PROLOGUE_B=[
   {n:"kati",f:"happy",t:"I'll give it everything. I'm in your hands, Manager!"},
   {n:"nar",t:"Year one goals: save the camp from debt, and take a fighter to the provincial final in week 49"}];
 const EVENTS=[
- {id:"prologue",look:"fight",bg:"night",steps:[
-  {n:"nar",t:"Every summer as a kid, you were sent to stay with Grandpa Chai at his little Muay Thai camp up north. You grew up, moved to Bangkok and became a marketing manager. Life is good, but every day is the same."},
-  {n:"nar",t:"That rainy season, a letter in shaky handwriting arrives. \"If this reaches you, Grandpa has passed on. I leave Sirichai camp to you. Our last fighter is Kati. Please look after her. — Grandpa Chai\""},
-  {n:"nar",bg:"camp",t:G=>`After Grandpa's funeral, ${ME(G)} arrives at Sirichai Muay Thai camp. The tin roof is rusted and the heavy bags are torn, but inside you can still hear fists hitting pads. Someone is still training.`},
-  {n:"kati",f:"surprised",t:"…Who's there! Oh, sorry, I thought the bank people came to collect again"},
-  {n:"kati",f:"flustered",t:"Wait… you're Grandpa Chai's grandchild! It's me, Kati! Grandpa took me in when I was eight. That summer you taught me to ride a bike and we both fell in the ditch, remember?"},
+ {id:"prologue",look:"train",bg:"bus",steps:[
+  {n:"nar",t:"The rain has just let up. The bus that left Bangkok before dawn turns into a small northern town. Wet streets reflect the lights of roadside shops."},
+  {n:"nar",t:"You have not been back in years, but you still know the bend before the camp. As a child, you always found Grandpa Chai waiting at the bus stop with a towel over his shoulder."},
+  {n:"nar",t:"On the empty seat beside you is the letter that arrived with news of his death. You took leave from work and boarded this bus to inherit the camp he left you."},
+  {n:"nar",t:"“My dear grandchild, if this letter has reached you, I will not be waiting at the bus stop anymore.”"},
+  {n:"nar",t:"“I leave you Sirichai camp, the place I built over a lifetime. Not because you must be better than me, but because you once called it home.”"},
+  {n:"nar",t:"“Kati is still there. She does not give up easily. If you come back, listen to the heavy bag before deciding what to do next. Please look after each other. — Grandpa Chai”"},
+  {n:"nar",t:"The bus comes to a stop. You fold the letter away. The smell of earth after rain recalls summers when you woke to kicks on a heavy bag and fell asleep to the scent of liniment."},
+  {n:"nar",bg:"gym",t:"The door to Sirichai camp is still ajar. The sign has faded and the heavy bags are patched with tape, but inside, fists are striking pads in a steady rhythm."},
+  {n:"kati",f:"surprised",t:"…Who is there? Oh, sorry. The door startled me."},
+  {n:"kati",f:"flustered",t:"Wait… you are Grandpa Chai’s grandchild? I am Kati! He took me in when I was eight. That summer you taught me to ride a bike, and we both fell into the ditch. Remember?"},
   {choice:[
-   {t:G=>`Yes. Grandpa left this camp to me ${PR(G)}`,fx:G=>add(G,"kati","bond",4),then:[{n:"kati",f:"happy",t:"Grandpa talked about you so often! He said someday you'd come back"}]},
-   {t:G=>`${PR(G)} I came to see whether this camp can keep going`,fx:G=>add(G,"kati","trust",4),then:[{n:"kati",f:"flustered",t:"Of course it can! If just one more person believes in it, I'll prove it myself"}]}]},
-  {n:"nar",t:"A grey-haired older man walks out from behind the camp, a towel over his shoulder, his arms still solid with muscle."},
-  {n:"coach",t:"Name's Daeng. The kids call me Coach Daeng, Grandpa Chai's first student. Kati's all we have left; the rest moved to Golden Tiger. And the camp owes 120,000 baht, paid off at 5,000 a month."},
-  {n:"coach",t:"Right now our main income is lesson fees from course students. The more famous the camp, the more people come to train. The other way is fight purses."},
-  {n:"coach",bg:"fair",t:"There's a bout at the temple fair tonight. Kati already signed on, and the purse goes toward the debt. Come work her corner, boss. You pick the plan, you call the shots. I'll be right beside you."},
-  {n:"kati",f:"happy",t:"My first fight with you, Manager! I won't let you down!"}]},
+   {t:"Yes. Grandpa asked me to take care of the camp",fx:G=>add(G,"kati","bond",4),then:[{n:"kati",f:"happy",t:"Grandpa talked about you all the time! He said you would come back someday."}]},
+   {t:"I want to know if the camp can keep going",fx:G=>add(G,"kati","trust",4),then:[{n:"kati",f:"flustered",t:"It can! If just one more person believes in this place, I will prove it."}]}]},
+  {n:"kati",f:"sad",t:"I am the only fighter left. Coach Daeng is still here, but everyone else moved to Golden Tiger."},
+  {n:"nar",t:"A grey-haired man steps out from behind the camp with a towel over his shoulder. For a moment, he reminds you of Grandpa waiting at the bus stop."},
+  {n:"coach",t:"Name is Daeng. The kids call me Coach Daeng. I was Grandpa Chai’s first student, and I have been here thirty years."},
+  {n:"coach",t:"I will be straight with you. The camp owes 120,000 baht. We have to pay 5,000 every month."},
+  {n:"nar",t:"Coach Daeng lets the numbers settle in the silence. Kati grips her hand wraps tighter but does not look away."},
+  {n:"coach",bg:"fair",t:"Kati has a bout at the temple fair tonight. One purse will not clear the debt, but it can keep the doors open tomorrow. Come work her corner with me, boss?"},
+  {n:"kati",f:"happy",t:"I am ready, Manager… Grandpa always stood in that corner. Will you stand there tonight?"}]},
 
  {id:"kati_why",look:"train",when:G=>G.week>=2,bg:"night",steps:[
   {n:"nar",t:"Nine at night. One light is still on in camp; Kati is kicking a heavy bag patched with duct tape"},
