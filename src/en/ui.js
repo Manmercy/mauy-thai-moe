@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.4";
+const VERSION="1.80.5";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -22,6 +22,12 @@ const stand=(id,look,mood)=>{if(id==="coach")return `${ASSET}coach.webp`;
   return `${ASSET}${id}_fight_${FMOOD(mood)}.webp`;};
 const faceSrc=(id,mood,look)=>id==="coach"?`${ASSET}coach_face.webp`:look&&look!=="fight"?`${ASSET}${id}_${look}_face.webp`:`${ASSET}${id}_${["happy","sad","flustered"].includes(mood)?mood:"happy"}_face.webp`;
 const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp",market:"bg_market.webp",rooster:"bg_rooster.webp",farm:"bg_farm.webp"};
+const cardFaceSrc=C=>{const scene=(C.steps||[]).find(s=>s.n===C.c)||{},mood=scene.f||"happy",look=scene.l||"casual";
+  if(look==="train")return `${ASSET}${C.c}_train_face.webp`;
+  if(look==="fight")return `${ASSET}${C.c}_${["happy","sad","flustered","angry"].includes(mood)?mood:"happy"}_face.webp`;
+  const suffix=["pout","sad","angry"].includes(mood)?"_pout":["flustered","surprised"].includes(mood)?"_flustered":"";
+  return `${ASSET}${C.c}_casual${suffix}_face.webp`;};
+const cardArtHTML=(C,lazy=false)=>`<span class="card-art" style="--card-scene:url('${ASSET}${BGIMG[C.bg]||BGIMG.camp}')"><img src="${cardFaceSrc(C)}" alt="" ${lazy?'loading="lazy" decoding="async"':""}></span>`;
 // v1.34: portraits for the market and helmet-gang side characters (matched by speaker name, or st.img)
 const NPC_IMG=[[/แม่ค้า|ป้าศรี|Auntie Sri|vendor/,"vendor_green"],[/ป้าแต๋ว|เจ๊หมวย|ป้าขาย|Auntie Taew|Jae Muay/,"vendor_red"],[/เสี่ยหมวกทองคำ|Big Boss Golden Helmet/,"gang_boss"],[/หมวก|แจ็กเก็ต|Helmet|Jacket/,"gang_group"],[/ยาย|Grandma/,"grandma"]];
 const npcImg=st=>st.img||(st.who&&(NPC_IMG.find(([r])=>r.test(st.who))||[])[1])||null;
@@ -123,8 +129,10 @@ function render(){
   if(UI.scene)h+=sceneHTML();
   if(UI.toast)h+=`<div class="toast" role="status">${esc(UI.toast.msg)}</div>`;
   const keep={};document.querySelectorAll(".pxscroll[data-sk]").forEach(e=>keep[e.dataset.sk]=e.scrollTop);const fsEl=document.querySelector(".fight"),fsTop=fsEl?fsEl.scrollTop:0;
+  const albumTop=document.querySelector(".m-album")?.parentElement.scrollTop||0;
   $app.innerHTML=h;
   document.querySelectorAll(".pxscroll[data-sk]").forEach(e=>{const k=e.dataset.sk;if(keep[k]!=null&&!UI.resetScroll)e.scrollTop=keep[k];});{const f2=document.querySelector(".fight");if(f2&&fsTop)f2.scrollTop=fsTop;} /* v1.80: the fight screen re-renders every beat; keep its scroll put */UI.resetScroll=false;{const cb=document.querySelector(".cbody");if(cb)cb.scrollTop=cb.scrollHeight;}
+  if(albumTop&&UI.modal?.type==="album"){const modal=document.querySelector(".m-album");if(modal)modal.parentElement.scrollTop=albumTop;}
   const fc=document.getElementById("fstage");if(fc)FS.attach(fc);
   const lg=document.querySelector(".flog");if(lg)lg.scrollTop=lg.scrollHeight;
   mountCanvases();if(typeof mountQSprites==="function")mountQSprites();pxBars();spotPaint();
@@ -691,12 +699,12 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
     body=`<h2>Card album</h2><p class="meta">Collected ${Object.keys(own).length}/${Object.keys(CARDS).length} cards · tap a card to view its story · cards you don't have yet show as a silhouette with a hint</p>
      <div class="gacha"><span><b class="goldt">✦ ${G.dust||0}</b> stardust<small>Earned from wins, new cards and duplicates · guaranteed SSR in ${GACHA_PITY-(G.pity||0)} more</small></span><button class="btn sm gold" data-act="gacha" ${(G.dust||0)<GACHA_COST?"disabled":""}>Pull a card ${GACHA_COST}✦</button></div>
      ${CANON_IDS.filter(c=>byC[c]).map(c=>`<h4 class="albh">${esc(G.F[c].name)}</h4><div class="albg">${byC[c].map(id=>{const C=CARDS[id],o=own[id],R=CARD_R[C.r];
-       return o?`<button class="ccard pxc" style="--rc:${R.c}" data-act="cardplay" data-v="${id}" title="${esc(C.t)}">${!o.seen?'<i class="ndot"></i>':""}<img src="${faceSrc(C.c,"happy","casual")}" alt="" loading="lazy" decoding="async"><i class="rr">${C.r}${(o.lv||1)>1?`<u>${o.lv}</u>`:""}</i><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b></button>`
-         :`<button class="ccard pxc lock" style="--rc:${R.c}" data-act="cardhint" data-v="${id}" aria-label="Card not yet collected"><img src="${faceSrc(C.c,"happy","casual")}" alt="" loading="lazy" decoding="async"><i class="rr">${C.r}</i><span class="tstar">${"★".repeat(R.s)}</span><b>???</b></button>`;}).join("")}</div>`).join("")}<p class="meta center">Tap a shadow card to see how to get it</p>`;}
-  if(m.type==="cardnew"){const P=G.cardPend||[];const id=P[0];const C=CARDS[id];if(!C){G.cardPend=[];UI.modal=null;return "";}const RR=CARD_R[C.r];body=`<h2>New card!</h2><div class="gres" style="--rc: ${RR.c}"><div class="ccard big" style="--rc:${RR.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
+       return o?`<button class="ccard pxc" data-rarity="${C.r}" style="--rc:${R.c}" data-act="cardplay" data-v="${id}" title="${esc(C.t)}">${!o.seen?'<i class="ndot"></i>':""}${cardArtHTML(C,true)}<i class="rr">${C.r}${(o.lv||1)>1?`<u>${o.lv}</u>`:""}</i><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b></button>`
+         :`<button class="ccard pxc lock" data-rarity="${C.r}" style="--rc:#77747d" data-act="cardhint" data-v="${id}" aria-label="Card not yet collected">${cardArtHTML(C,true)}<i class="rr">${C.r}</i><span class="tstar">${"★".repeat(R.s)}</span><b>???</b></button>`;}).join("")}</div>`).join("")}<p class="meta center">Tap a shadow card to see how to get it</p>`;}
+  if(m.type==="cardnew"){const P=G.cardPend||[];const id=P[0];const C=CARDS[id];if(!C){G.cardPend=[];UI.modal=null;return "";}const RR=CARD_R[C.r];body=`<h2>New card!</h2><div class="gres" style="--rc: ${RR.c}"><div class="ccard big" data-rarity="${C.r}" style="--rc:${RR.c}">${cardArtHTML(C)}<span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
     <p class="center meta">${C.hint?esc(C.hint)+" · ":""} Stardust <b class="goldt">✦ 5</b>${P.length>1?` · new cards left: ${P.length-1} more`:""}</p></div>
     <div class="mfoot roadbtns"><button class="btn primary" data-act="cardplay" data-v="${id}" data-from="new">View story now</button><button class="btn" data-act="cardlater">Save for later</button></div>`;foot=false;}
-  if(m.type==="gacha"){const R=m.res,C=CARDS[R.id],RR=CARD_R[C.r];body=`<h2>Pull result</h2><div class="gres" style="--rc: ${RR.c}"><div class="ccard big" style="--rc:${RR.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
+  if(m.type==="gacha"){const R=m.res,C=CARDS[R.id],RR=CARD_R[C.r];body=`<h2>Pull result</h2><div class="gres" style="--rc: ${RR.c}"><div class="ccard big" data-rarity="${C.r}" style="--rc:${RR.c}">${cardArtHTML(C)}<span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
     <p class="center">${R.isNew?"<b class=\"goldt\">New card!</b>":R.up?`Duplicate · upgraded to <b>Lv.${R.up}</b> · Bond +`:`Card already maxed · converted to <b class="goldt">✦ ${R.dust}</b>`}</p></div>
     <div class="mfoot roadbtns">${R.isNew?`<button class="btn" data-act="cardplay" data-v="${R.id}">View story</button>`:""}<button class="btn gold" data-act="gacha" ${(G.dust||0)<GACHA_COST?"disabled":""}>Pull again ${GACHA_COST}✦ (have ${G.dust||0})</button><button class="btn primary" data-act="album">Back to album</button></div>`;foot=false;}
   if(m.type==="masters"){body=`<h2>Invite an old-school master</h2><p class="meta">${fmt(18000)} per session · each fighter can learn once per season</p><div class="mlist">${Object.entries(MASTERS).map(([k,M])=>`<div class="mrow"><b>${M.name}</b><small>Boosts ${M.attrs.map(a=>ATTR_LABEL[a]).join(" · ")}</small><div class="obtns">${roster(G).map(f=>`<button class="btn sm" data-act="hiremaster" data-id="${f.id}" data-v="${k}" ${G.cash<M.cost||f.masterSeason===(G.season||1)?"disabled":""}>${esc(f.name)}</button>`).join("")}</div></div>`).join("")}</div>`;}
