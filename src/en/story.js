@@ -15,26 +15,13 @@ const BOND_MUL=.3,BOND_LATE=["mali","rin"];
 const absWeek=G=>((G.season||1)-1)*52+G.week;
 const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)f.lastTouch=absWeek(G);if(k==="bond"&&v>0)v=Math.max(.5,Math.round(v*BOND_MUL*(BOND_LATE.includes(id)&&(f.bond||0)<50?1.6:1)*2)/2);f[k]=Math.max(0,Math.min(100,f[k]+v));};
 
-// v1.71: the prologue now puts the player in Kati's corner at the temple fair within the first minutes
-const PROLOGUE_B=[
-  {inject:G=>{const c=(G.cal||[]).slice(-1)[0],w=!!(c&&c.res==="W"),pay=c?c.pay:0;G.seen.first_win=true;G.seen.first_loss=true;
-    if(w){add(G,"kati","bond",5);add(G,"kati","trust",3);}else add(G,"kati","trust",3);
-    return w?[{n:"nar",bg:"fair",t:"The final bell rings. The temple fair crowd jumps to its feet, and the commentator's crackling loudspeaker shouts Sirichai's name across the fair."},
-      {n:"kati",f:"happy",t:"I won! Our first fight together, and I won!"},
-      {n:"coach",t:`The camp's first win in two years. Grandpa Chai must be smiling up there. Tonight's purse: ${pay.toLocaleString()} baht, already in the camp's pocket.`}]
-     :[{n:"nar",bg:"fair",t:"The final bell rings. Kati walks slowly down from the ring, and the crowd still applauds her fighting spirit."},
-      {n:"kati",f:"sad",t:"…I'm sorry. It was our very first fight together."},
-      {n:"coach",t:`Losing a temple fair bout is fine. What matters is remembering where it went wrong. We still got the purse: ${pay.toLocaleString()} baht. From now on you plan the training, boss, and I'll keep an eye on it.`}];}},
-  {n:"coach",bg:"camp",t:"When I was young I fought on the provincial stage and lost only the title bout, on a busted knee. If we want the camp's name back, our fighters have to climb from the sub-district ring to the district, then win the provincial title this year."},
-  {n:"kati",f:"happy",t:"I'll give it everything. I'm in your hands, Manager!"},
-  {n:"nar",t:"Year one goals: save the camp from debt, and take a fighter to the provincial final in week 49"}];
 const EVENTS=[
  {id:"prologue",look:"train",bg:"bus",steps:[
   {n:"nar",t:"The rain has stopped. After a long bus ride from Bangkok, you reach the small town where you spent your childhood. You take out Grandpa Chai's letter and read it once more."},
   {n:"nar",t:"It arrived before you left. His handwriting is shaky, but still neat."},
   {n:"nar",t:"“My dear grandchild, if this letter has reached you, I have passed on. I leave you Sirichai Muay Thai camp, the place I built over a lifetime.”"},
   {n:"nar",t:"“Only one fighter remains at the camp. Her name is Kati, and she has the heart of a fighter. Please look after her. — Grandpa Chai”"},
-  {n:"nar",bg:"gym",t:"You fold the letter away and pass Sirichai's faded sign. Inside, you can still hear fists striking pads. Someone is training."},
+  {n:"nar",bg:"gymdusk",t:"You fold the letter away and pass Sirichai's faded sign. Inside, you can still hear fists striking pads. Someone is training."},
   {n:"kati",f:"surprised",t:"…Who is there? Oh, sorry. The door startled me."},
   {n:"kati",f:"flustered",t:"Wait… you are Grandpa Chai’s grandchild? I am Kati! He took me in when I was eight. That summer you taught me to ride a bike, and we both fell into the ditch. Remember?"},
   {choice:[
@@ -45,8 +32,8 @@ const EVENTS=[
   {n:"coach",t:"Name is Daeng. The kids call me Coach Daeng. I was Grandpa Chai’s first student, and I have been here thirty years."},
   {n:"coach",t:"I will be straight with you. The camp owes 120,000 baht. We have to pay 5,000 every month."},
   {n:"nar",t:"Coach Daeng lets the numbers settle in the silence. Kati grips her hand wraps tighter but does not look away."},
-  {n:"coach",bg:"fair",t:"Kati has a bout at the temple fair tonight. One purse will not clear the debt, but it can keep the doors open tomorrow. Come work her corner with me, boss?"},
-  {n:"kati",f:"happy",t:"I am ready, Manager… Grandpa always stood in that corner. Will you stand there tonight?"}]},
+  {n:"coach",t:"Students still come to train here, and Kati has not stopped either. Take a look around the camp first. Then we can plan this week together."},
+  {n:"kati",f:"happy",t:"If you stay, I will keep fighting. I am in your hands, Manager!"}]},
 
  {id:"kati_why",look:"train",when:G=>G.week>=2,bg:"night",steps:[
   {n:"nar",t:"Nine at night. One light is still on in camp; Kati is kicking a heavy bag patched with duct tape"},

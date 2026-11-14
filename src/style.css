@@ -479,6 +479,7 @@ td,th{padding:6px 6px}
 .txt{font-size:19px;line-height:1.65;min-height:0}
 @media (max-width:760px){.vn{--vb:calc(max(7dvh,28px) + 150px)}.vbox{min-height:172px}.txt{font-size:17px}.vbox{width:calc(100% - 16px);padding:12px 14px}}
 .vbg.bg-gym{background-position:center 70%}
+.vbg.bg-gymdusk{background-position:center 70%;filter:brightness(.68) saturate(.85)}
 .montage .mt-bg{background-position:center 75%}
 /* v1.3 additions: confirm, skills by school, tutorial checklist, goal line */
 .confirm{padding:12px 14px;display:grid;gap:4px;box-shadow:inset 0 0 0 3px var(--gold)}

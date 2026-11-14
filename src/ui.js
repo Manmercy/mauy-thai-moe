@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.7";
+const VERSION="1.80.8";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -21,7 +21,7 @@ const stand=(id,look,mood)=>{if(id==="coach")return `${ASSET}coach.webp`;
   // v1.8: one main outfit — training scenes use the fight outfit too, so clothes never flip mid-scene
   return `${ASSET}${id}_fight_${FMOOD(mood)}.webp`;};
 const faceSrc=(id,mood,look)=>id==="coach"?`${ASSET}coach_face.webp`:look&&look!=="fight"?`${ASSET}${id}_${look}_face.webp`:`${ASSET}${id}_${["happy","sad","flustered"].includes(mood)?mood:"happy"}_face.webp`;
-const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",bus:"bg_bus_rain.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp",market:"bg_market.webp",rooster:"bg_rooster.webp",farm:"bg_farm.webp"};
+const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",bus:"bg_bus_rain.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,gymdusk:"gym1.webp",food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp",market:"bg_market.webp",rooster:"bg_rooster.webp",farm:"bg_farm.webp"};
 const cardFaceSrc=C=>{const scene=(C.steps||[]).find(s=>s.n===C.c)||{},mood=scene.f||"happy",look=scene.l||"casual";
   if(look==="train")return `${ASSET}${C.c}_train_face.webp`;
   if(look==="fight")return `${ASSET}${C.c}_${["happy","sad","flustered","angry"].includes(mood)?mood:"happy"}_face.webp`;
@@ -904,14 +904,10 @@ function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
    <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · ปีที่ ${G.season||1}</p>${!DEMO&&G.ended==="season"&&!gateOpen()?gateHTML():""}<div class="center endbtns">${!DEMO&&G.ended==="season"&&gateOpen()?`<button class="btn primary" data-act="newseason">เล่นต่อ ปีที่ ${(G.season||1)+1} ▸</button><p class="meta center">ค่าย นักมวย และความสัมพันธ์ไปต่อทั้งหมด · คู่แข่งก็ซ้อมหนักขึ้นเหมือนกัน</p>`:""}<button class="btn primary" data-act="replay">เล่นใหม่อีกรอบ</button><button class="btn" data-act="restart">กลับหน้าแรก</button></div></main>`;}
 
 // ---------- FIGHT ----------
-/* v1.71: the opening temple-fair bout — Kati against the weakest local in her division, off the ranking */
-function prologueFight(done){const k=G.F.kati;if(!k){done();return;}const pool=Object.values(G.F).filter(o=>o.div===k.div&&o.camp!=="player"&&o.camp!=="free"&&!o.canon&&!o.injury);if(!pool.length){done();return;}
-  const o=pool.map(x=>[x,ovr(x.a)-ovr(k.a)+((x.lvl||1)-(k.lvl||1))*.15]).sort((a,b)=>a[1]-b[1])[0][0]; /* the weakest local: Kati wins about 8 in 10 */
-  openFight({id:"bpro",a:k.id,b:o.id,week:G.week,tier:"pro",rounds:3,win:1500,lose:1000,pro:1},done);}
 function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.week)}`;
   if(op.canon&&!G.seen[k]&&!(b.tier==="final"&&(G.seen.ploy_prefinal||G.seen.fah_prefinal))){const sc=tauntScene(G,b.a,b.b);if(sc){G.seen[k]=true;playScene(sc,()=>openFight2(b,done),{bg:TIER_BG[b.tier]?TIER_BG[b.tier].replace(/^bg_|\.webp$/g,""):"local",look:"fight"});return;}}
   openFight2(b,done);}
-// v1.12: wai khru ram muay before the first fight and every semi/final
+// Wai khru ram muay is reserved for major and rivalry fights.
 const RAM={phrom:{name:"พรหมสี่หน้า",hint:"ไหว้ครบสี่ทิศ · ใจนิ่ง แม่นขึ้นยกแรก"},hong:{name:"หงส์เหิน",hint:"สง่างามดั่งหงส์ · กำลังใจ +6"},
   phra:{name:"พระรามแผลงศร",hint:"น้าวคันศร · ยกแรกออกอาวุธดุดัน"}};
 function waiKhruScene(b){const me=G.F[b.a],first=!(G.flags&&G.flags.waiSeen);const away=!!(G.coachAway&&G.week<G.coachAway);
@@ -1180,7 +1176,7 @@ const ACT={
   ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator.tab=d.v;render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"ต้น":"ดาว");
     crSeed();const {name,diff,seed,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look,seed:seedFrom(seed)});if(seed&&!/^\d{1,10}$/.test(seed))G.seedText=seed;genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();AU.startMusic("date");
-    playScene(EVENTS[0].steps,()=>prologueFight(()=>playScene(PROLOGUE_B,()=>{save();UI.tab="home";UI.spot=0;render();},{bg:"fair",look:"fight"})),{bg:"bus",look:"train"});},
+    playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=null;AU.startMusic("hub");render();},{bg:"bus",look:"train"});},
   continue:()=>{let si=0;for(let i=1;i<=SLOTS;i++)if(loadSlot(i)){si=i;break;}if(!si)return;backupSlot(si);const s=safeFix(loadSlot(si));if(!s){toast("เซฟนี้เปิดกับเวอร์ชันนี้ไม่ได้ ข้อมูลยังอยู่ครบ ไม่ถูกลบ");return;}G=s;UI.slot=si;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
   bakrestore:()=>{const b=bakInfo(UI.slot);if(!b)return;UI.modal={type:"confirm",title:"กู้เซฟก่อนอัปเดต?",text:`จะย้อนกลับไปสัปดาห์ ${b.week} (v${b.ver}) ความคืบหน้าหลังจากนั้นในช่องนี้จะหายไป`,yes:"bakyes"};render();},
@@ -1253,7 +1249,7 @@ const ACT={
   vnext:()=>sceneNext(),vchoose:d=>{if(Date.now()-(UI._ct||0)<500)return;sceneChoose(+d.v);},vskip:()=>sceneSkip(),
   montageDone:()=>montageDone(),
   plan:d=>{UI.fight.plan=d.v;render();},
-  fstart:()=>{const b=UI.fight.b;if(!b.waiDone&&(b.tier==="semi"||b.tier==="final"||!(G.flags&&G.flags.waiSeen)||G.F[b.b].canon||G.F[b.b].camp==="rival")){b.waiDone=true;
+  fstart:()=>{const b=UI.fight.b;if(!b.waiDone&&(b.tier==="semi"||b.tier==="final"||G.F[b.b].canon||G.F[b.b].camp==="rival")){b.waiDone=true;
       const sc=waiKhruScene(b);G.flags=G.flags||{};G.flags.waiSeen=true;const keep=UI.fight;UI.fight=null;AU.startMusic("waikhru");
       playScene(sc,()=>{UI.fight=keep;fightStart(false);},{bg:(TIER_BG[b.tier]||"bg_local.webp").replace(/^bg_|\.webp$/g,""),look:"fight"});return;}
     fightStart(false);},fquick:()=>fightStart(true),fskip:()=>fskip(),fskill:d=>fskill(d.v),
