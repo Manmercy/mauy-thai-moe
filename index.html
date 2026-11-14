@@ -2982,7 +2982,7 @@ const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)f.lastTou
 const EVENTS=[
  {id:"prologue",look:"train",bg:"bus",steps:[
   {n:"nar",t:"ฝนเพิ่งหยุด หลังนั่งรถบัสจากกรุงเทพฯ มาทั้งวัน คุณก็มาถึงตำบลเล็ก ๆ ที่เคยอยู่ตอนเด็ก และหยิบจดหมายของปู่ชัยขึ้นมาอ่านอีกครั้ง"},
-  {n:"nar",t:"จดหมายฉบับนั้นส่งมาถึงคุณก่อนออกเดินทาง ลายมือสั่นเครือแต่ยังเป็นระเบียบ"},
+  {n:"nar",bg:"letter",t:"จดหมายฉบับนั้นส่งมาถึงคุณก่อนออกเดินทาง ลายมือสั่นเครือแต่ยังเป็นระเบียบ"},
   {n:"nar",t:"“ถึงหลานรัก ถ้าจดหมายนี้ถึงมือหลาน แปลว่าปู่ไปสบายแล้ว ค่ายมวยศิริชัยที่ปู่สร้างมาทั้งชีวิต ปู่ขอฝากไว้กับหลาน”"},
   {n:"nar",t:"“ค่ายเหลือนักมวยคนเดียวชื่อกะทิ เด็กคนนี้มีหัวใจนักสู้ ช่วยดูแลเธอด้วยนะ — ปู่ชัย”"},
   {n:"nar",bg:"gymdusk",t:"คุณพับจดหมายเก็บ เดินผ่านป้ายค่ายศิริชัยที่สีซีดจนแทบอ่านไม่ออก ข้างในยังมีเสียงหมัดกระทบเป้า ใครบางคนยังซ้อมอยู่"},
@@ -5130,7 +5130,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.8";
+const VERSION="1.80.9";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -5152,7 +5152,7 @@ const stand=(id,look,mood)=>{if(id==="coach")return `${ASSET}coach.webp`;
   // v1.8: one main outfit — training scenes use the fight outfit too, so clothes never flip mid-scene
   return `${ASSET}${id}_fight_${FMOOD(mood)}.webp`;};
 const faceSrc=(id,mood,look)=>id==="coach"?`${ASSET}coach_face.webp`:look&&look!=="fight"?`${ASSET}${id}_${look}_face.webp`:`${ASSET}${id}_${["happy","sad","flustered"].includes(mood)?mood:"happy"}_face.webp`;
-const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",bus:"bg_bus_rain.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,gymdusk:"gym1.webp",food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp",market:"bg_market.webp",rooster:"bg_rooster.webp",farm:"bg_farm.webp"};
+const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",bus:"bg_bus_rain.webp",letter:"bg_grandpa_letter.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,gymdusk:"gym1.webp",food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp",market:"bg_market.webp",rooster:"bg_rooster.webp",farm:"bg_farm.webp"};
 const cardFaceSrc=C=>{const scene=(C.steps||[]).find(s=>s.n===C.c)||{},mood=scene.f||"happy",look=scene.l||"casual";
   if(look==="train")return `${ASSET}${C.c}_train_face.webp`;
   if(look==="fight")return `${ASSET}${C.c}_${["happy","sad","flustered","angry"].includes(mood)?mood:"happy"}_face.webp`;
@@ -6307,7 +6307,7 @@ const ACT={
   ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator.tab=d.v;render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"ต้น":"ดาว");
     crSeed();const {name,diff,seed,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look,seed:seedFrom(seed)});if(seed&&!/^\d{1,10}$/.test(seed))G.seedText=seed;genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();AU.startMusic("date");
-    playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=null;AU.startMusic("hub");render();},{bg:"bus",look:"train"});},
+    playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;AU.startMusic("hub");render();},{bg:"bus",look:"train"});},
   continue:()=>{let si=0;for(let i=1;i<=SLOTS;i++)if(loadSlot(i)){si=i;break;}if(!si)return;backupSlot(si);const s=safeFix(loadSlot(si));if(!s){toast("เซฟนี้เปิดกับเวอร์ชันนี้ไม่ได้ ข้อมูลยังอยู่ครบ ไม่ถูกลบ");return;}G=s;UI.slot=si;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
   bakrestore:()=>{const b=bakInfo(UI.slot);if(!b)return;UI.modal={type:"confirm",title:"กู้เซฟก่อนอัปเดต?",text:`จะย้อนกลับไปสัปดาห์ ${b.week} (v${b.ver}) ความคืบหน้าหลังจากนั้นในช่องนี้จะหายไป`,yes:"bakyes"};render();},
@@ -8889,7 +8889,7 @@ const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)f.lastTou
 const EVENTS=[
  {id:"prologue",look:"train",bg:"bus",steps:[
   {n:"nar",t:"The rain has stopped. After a long bus ride from Bangkok, you reach the small town where you spent your childhood. You take out Grandpa Chai's letter and read it once more."},
-  {n:"nar",t:"It arrived before you left. His handwriting is shaky, but still neat."},
+  {n:"nar",bg:"letter",t:"It arrived before you left. His handwriting is shaky, but still neat."},
   {n:"nar",t:"“My dear grandchild, if this letter has reached you, I have passed on. I leave you Sirichai Muay Thai camp, the place I built over a lifetime.”"},
   {n:"nar",t:"“Only one fighter remains at the camp. Her name is Kati, and she has the heart of a fighter. Please look after her. — Grandpa Chai”"},
   {n:"nar",bg:"gymdusk",t:"You fold the letter away and pass Sirichai's faded sign. Inside, you can still hear fists striking pads. Someone is training."},
@@ -11037,7 +11037,7 @@ try{Object.assign(SETTINGS,JSON.parse(localStorage.getItem("mtm-settings")||"{}"
 function saveSettings(){try{localStorage.setItem("mtm-settings",JSON.stringify(SETTINGS));}catch(e){}}
 
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.8";
+const VERSION="1.80.9";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -11059,7 +11059,7 @@ const stand=(id,look,mood)=>{if(id==="coach")return `${ASSET}coach.webp`;
   // v1.8: one main outfit — training scenes use the fight outfit too, so clothes never flip mid-scene
   return `${ASSET}${id}_fight_${FMOOD(mood)}.webp`;};
 const faceSrc=(id,mood,look)=>id==="coach"?`${ASSET}coach_face.webp`:look&&look!=="fight"?`${ASSET}${id}_${look}_face.webp`:`${ASSET}${id}_${["happy","sad","flustered"].includes(mood)?mood:"happy"}_face.webp`;
-const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",bus:"bg_bus_rain.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,gymdusk:"gym1.webp",food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp",market:"bg_market.webp",rooster:"bg_rooster.webp",farm:"bg_farm.webp"};
+const BGIMG={camp:"bg_camp.webp",night:"bg_camp.webp",bus:"bg_bus_rain.webp",letter:"bg_grandpa_letter.webp",fair:"bg_fair.webp",local:"bg_local.webp",district:"bg_district.webp",ring:"bg_local.webp",final:"bg_final.webp",hall:"bg_hall.webp",gym:null,gymdusk:"gym1.webp",food:"bg_food.webp",temple:"bg_temple.webp",cafe:"bg_cafe.webp",river:"bg_river.webp",market:"bg_market.webp",rooster:"bg_rooster.webp",farm:"bg_farm.webp"};
 const cardFaceSrc=C=>{const scene=(C.steps||[]).find(s=>s.n===C.c)||{},mood=scene.f||"happy",look=scene.l||"casual";
   if(look==="train")return `${ASSET}${C.c}_train_face.webp`;
   if(look==="fight")return `${ASSET}${C.c}_${["happy","sad","flustered","angry"].includes(mood)?mood:"happy"}_face.webp`;
@@ -12214,7 +12214,7 @@ const ACT={
   ctab:d=>{UI.creator.name=(document.getElementById("pname")||{}).value||UI.creator.name;crSeed();UI.creator.tab=d.v;render();},
   startGame:()=>{const c=UI.creator;c.name=((document.getElementById("pname")||{}).value||"").trim()||(c.gender==="m"?"Start":"Dao");
     crSeed();const {name,diff,seed,...look}=c;G=newGame({name,gender:c.gender,diff:diff||"normal",avatar:look,seed:seedFrom(seed)});if(seed&&!/^\d{1,10}$/.test(seed))G.seedText=seed;genOffers(G);UI.creator=null;UI.tab="home";G.seen.prologue=true;AU.resume();AU.startMusic("date");
-    playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=null;AU.startMusic("hub");render();},{bg:"bus",look:"train"});},
+    playScene(EVENTS[0].steps,()=>{save();UI.tab="home";UI.spot=0;AU.startMusic("hub");render();},{bg:"bus",look:"train"});},
   continue:()=>{let si=0;for(let i=1;i<=SLOTS;i++)if(loadSlot(i)){si=i;break;}if(!si)return;backupSlot(si);const s=safeFix(loadSlot(si));if(!s){toast("This save can't be opened in this version. Nothing was deleted");return;}G=s;UI.slot=si;UI.tab="home";UI.modal=null;AU.startMusic("hub");if(G.ended){UI.ending=endingScene(G);}render();},
   exportsave:()=>exportSave(),
   bakrestore:()=>{const b=bakInfo(UI.slot);if(!b)return;UI.modal={type:"confirm",title:"Restore the pre-update save?",text:`This goes back to week ${b.week} (v${b.ver}). Progress after that in this slot will be lost`,yes:"bakyes"};render();},

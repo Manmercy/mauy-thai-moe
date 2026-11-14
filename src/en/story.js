@@ -18,7 +18,7 @@ const add=(G,id,k,v)=>{const f=G.F[id];if(!f)return;if(k==="bond"&&v>0)f.lastTou
 const EVENTS=[
  {id:"prologue",look:"train",bg:"bus",steps:[
   {n:"nar",t:"The rain has stopped. After a long bus ride from Bangkok, you reach the small town where you spent your childhood. You take out Grandpa Chai's letter and read it once more."},
-  {n:"nar",t:"It arrived before you left. His handwriting is shaky, but still neat."},
+  {n:"nar",bg:"letter",t:"It arrived before you left. His handwriting is shaky, but still neat."},
   {n:"nar",t:"“My dear grandchild, if this letter has reached you, I have passed on. I leave you Sirichai Muay Thai camp, the place I built over a lifetime.”"},
   {n:"nar",t:"“Only one fighter remains at the camp. Her name is Kati, and she has the heart of a fighter. Please look after her. — Grandpa Chai”"},
   {n:"nar",bg:"gymdusk",t:"You fold the letter away and pass Sirichai's faded sign. Inside, you can still hear fists striking pads. Someone is training."},
