@@ -1,5 +1,5 @@
 // ================= MUAY THAI MOE v1.3 — UI =================
-const VERSION="1.80.9";
+const VERSION="1.80.10";
 const CUR_LANG=(typeof window!=="undefined"&&window.LANG)||"th";
 const TH_LABEL=String.fromCharCode(3652,3607,3618);
 function langSwitch(cls){return `<div class="langsw ${cls||""}" role="group" aria-label="Language">${[["th",TH_LABEL],["en","EN"]].map(([k,l])=>`<button class="lsb ${CUR_LANG===k?"on":""}" data-act="setlang" data-v="${k}" aria-pressed="${CUR_LANG===k}">${l}</button>`).join("")}</div>`;}
@@ -201,7 +201,7 @@ const GLOSS=[["Readiness","Condition on fight day. The higher, the better she fi
  ["Morale","Higher morale means sharper strikes. Rises with wins, dates, merit-making; drops with losses or overtraining"],["Bond","Her closeness to you. Unlocks special scenes, the signature move at 60, and raises the chance of blood-boil mode"],
  ["Trust","How much a fighter trusts your orders. Higher trust makes corner orders work better (up to +4% accuracy); at 60 losses hurt morale less, and it affects confession scenes · raise it with merit-making scenes, wai khru, not overtraining, and a camp out of debt"],["Fame","How well-known the camp is. The higher, the more students come"],
  ["Skill points","Earned every level-up, spent on the ancient techniques of the fighter's school"],["Counter-training","After scouting a tape, train the program that counters the opponent's main weapon in the week before the fight for a fight-day bonus"],
- ["Blood-boil mode","When badly hurt or behind on points, a fighter may 'change eyes' for a moment: stronger counters, easier criticals. Once per fight"],["Wai khru ram muay","Pre-fight ritual honoring one's teachers. Choose a dance before important fights; each gives a different effect"]];
+ ["Blood-boil mode","When badly hurt or behind on points, a fighter may 'change eyes' for a moment: stronger counters, easier criticals. Once per fight"],["Wai khru ram muay","Ritual before every fight honoring one's teachers. Choose a dance; each gives a different effect"]];
 
 // ---------- creator (manager look) ----------
 function creatorHTML(){const c=UI.creator,O=CHIBI.OPT;
@@ -904,19 +904,34 @@ function endingHTML(){const E=UI.ending,all=roster(G),res=seasonResult();
    <p class="meta center">Seed ${esc(G.seedText||String(G.seed))} · Year ${G.season||1}</p>${!DEMO&&G.ended==="season"&&!gateOpen()?gateHTML():""}<div class="center endbtns">${!DEMO&&G.ended==="season"&&gateOpen()?`<button class="btn primary" data-act="newseason">Continue to Year ${(G.season||1)+1} ▸</button><p class="meta center">The camp, fighters and relationships all carry over · the rivals trained harder too</p>`:""}<button class="btn primary" data-act="replay">Play again</button><button class="btn" data-act="restart">Back to title</button></div></main>`;}
 
 // ---------- FIGHT ----------
+function fightFaceoff(b){const me=G.F[b.a],op=G.F[b.b],key=`${b.a}_${b.b}`,h=G.h2h&&G.h2h[op.id],s=G.faceoffStats&&G.faceoffStats[key],last=G.faceoffLast&&G.faceoffLast[key];
+  const met=h&&(h.w+h.l+h.d)>0;
+  const tally=s&&(s.w+s.l+s.d)>=2?` We've met ${s.w+s.l+s.d} times now: you've won ${s.w}, I've won ${s.l}${s.d?`, with ${s.d} draws`:""}`:"";
+  const rival={ploy:"Let's see if you can read me this time",fah:"Come on! I've been waiting for this bout",kati:"I won't back down",mali:"I'll make this a beautiful fight~",rin:"I've studied the way you fight"};
+  const opener=last?(last.win==="A"?"You beat me last time. I've trained to counter you":last.win==="B"?"I won last time, but you look different today":"We drew last time. Today there'll be a winner")+tally
+    :s?`We've met ${s.w+s.l+s.d} times. You've won ${s.w}, I've won ${s.l}${s.d?`, with ${s.d} draws`:""}. Let's see what happens today`
+    :met?"We've met before. Let's see who prepared better this time"
+    :(personaOf(op)?.line||rival[op.id]||vary(`face_open_${op.id}`,["Let's have a good fight. I've come prepared","I've heard about Sirichai Camp. Show me what you can do","Once we're in the ring, neither of us holds back"]));
+  const reply=last?(last.win==="A"?"I won last time, but I won't underestimate you":last.win==="B"?"I lost last time. I'm here for a rematch":"Last time settled nothing. Let's finish it today")
+    :({kati:"Sirichai Camp is back. I'll give this everything I've got!",mali:"All right~ I'm ready!",rin:"I've got the data in my head. Let's begin",ploy:"I'll give you my answer in the ring",fah:"Good! I like someone who fights back"})[me.id]||"I'm ready. Let's begin";
+  return [{n:"nar",t:`${me.name} and ${op.name} meet at center ring before the pi chawa begins`},
+    {n:op.canon?op.id:"npc",who:op.name,f:"angry",l:"fight",t:opener},
+    {n:me.canon?me.id:"npc",who:me.name,f:"angry",l:"fight",with:op.canon?op.id:null,t:reply}];}
 function openFight(b,done){const op=G.F[b.b],k=`taunt_${b.a}_${b.b}_${stageOf(G.week)}`;
-  if(op.canon&&!G.seen[k]&&!(b.tier==="final"&&(G.seen.ploy_prefinal||G.seen.fah_prefinal))){const sc=tauntScene(G,b.a,b.b);if(sc){G.seen[k]=true;playScene(sc,()=>openFight2(b,done),{bg:TIER_BG[b.tier]?TIER_BG[b.tier].replace(/^bg_|\.webp$/g,""):"local",look:"fight"});return;}}
-  openFight2(b,done);}
-// Wai khru ram muay is reserved for major and rivalry fights.
+  let sc=null;const key=`${b.a}_${b.b}`;
+  if(op.canon&&!G.seen[k]&&!(G.faceoffLast&&G.faceoffLast[key])&&!(b.tier==="final"&&(G.seen.ploy_prefinal||G.seen.fah_prefinal))){sc=tauntScene(G,b.a,b.b);if(sc)G.seen[k]=true;}
+  playScene(sc||fightFaceoff(b),()=>openFight2(b,done),{bg:TIER_BG[b.tier]?TIER_BG[b.tier].replace(/^bg_|\.webp$/g,""):"local",look:"fight"});}
+// Every bout opens with wai khru; the first one also teaches the ritual.
 const RAM={phrom:{name:"Four-Faced Brahma",hint:"Bow to all four directions · calm mind, sharper in round one"},hong:{name:"Soaring Swan",hint:"Graceful as a swan · morale +6"},
   phra:{name:"Rama Draws His Bow",hint:"Drawing the bow · aggressive first round"}};
-function waiKhruScene(b){const me=G.F[b.a],first=!(G.flags&&G.flags.waiSeen);const away=!!(G.coachAway&&G.week<G.coachAway);
+function waiKhruScene(b){const me=G.F[b.a],op=G.F[b.b],first=!(G.flags&&G.flags.waiSeen);const away=!!(G.coachAway&&G.week<G.coachAway);
   const own=vary("own_"+me.id,{kati:["Grandpa… I'm dedicating this wai khru to you","Grandpa, watch me. I'll dance every move just like you taught me","I practiced the dance every morning, Grandpa. No mistakes today!"],mali:["Mom, Mali will dance the most beautiful one ever","Is Mom watching live~? Mali will wave at the end of the dance!","Once the dance is done Mali won't be nervous anymore… probably~"],rin:["Wai khru isn't just ritual, it's focus… I'm ready","During the dance I'll observe how my opponent stands… Coach doesn't mind, right?","My pulse drops from 112 to 88 every time I finish the dance. Very interesting"],ploy:["Coach taught me: before you beat others, beat yourself"],fah:["I'll dance so the crowd remembers. Watch!"]}[me.id]||["Let me pay respects first"]);
   return [{n:"nar",t:vary("wai1",["The pi chawa rises in a long shrill note, the khaek drums beat slowly, the ching rings out. Time for the \"wai khru ram muay\"","The pi chawa sounds and the crowd hushes on its own. Time for the wai khru","The khaek drums begin slowly; the whole ring falls quiet as the fighter steps through the ropes","The cymbals ring three times and the wai khru music begins, a cool breeze sweeping the ring"])},
     ...(first&&!away?[{n:"coach",t:"Wai khru honors one's teachers, parents and the sacred. The fighter first walks around the ring to \"seal the ring\", then dances"}]:[]),
     {n:"nar",t:vary("wai2_"+me.id,({kati:[`Kati puts on the mongkhon, ties the prajiad on her arm, and bows three times in the center of the ring`,`Kati circles the ring faster than anyone, long strides making her prajiad snap, then bows three solid times`,`Before bowing, Kati touches Grandpa Chai's prajiad tied on her arm and smiles to herself`],
       mali:[`Mali puts on the mongkhon, smiles at the camera her mom is watching through, and bows slowly three times`,`Mali dances the Chaiya style her mom taught her, hands soft as classical dance; the crowd claps before she even finishes`,`Mali breaks into a huge grin mid-dance, remembers, puts on a serious face… and grins again anyway`],
       rin:[`Rin hands her glasses to Coach Daeng, puts on the mongkhon, and bows three precise times`,`Rin walks the ring counting steps in her head: exactly twelve to every corner`,`Rin dances with her eyes closed, never glancing at the crowd; her focus is so still the ringside goes quiet too`]})[me.id]||[`${me.name} The mongkhon on her head, the prajiad on her arm, she bows three times at center ring`])},
+    {n:"nar",t:vary(`opwai_${op.id}`,[`Across the ring, ${op.name} performs her wai khru and bows three times to honor her teachers`,`${op.name} circles the ring slowly, then dances in her own camp's style`])},
     {n:me.id,f:"happy",l:"fight",t:own},
     {choice:Object.entries(RAM).map(([k,r])=>({t:`She dances the ${r.name} — ${r.hint}`,fx:()=>{b.wai=k;if(k==="hong")me.morale=Math.min(100,me.morale+6);}}))},
     ...(away?[{n:"nar",t:"The dance ends. Coach Daeng is on leave, so you remove the mongkhon from her head yourself"}]:[{n:"nar",t:vary("wai3",["The dance ends. Coach Daeng removes the mongkhon, blows softly on the crown of her head, and pats her shoulder once","Coach Daeng removes the mongkhon and whispers a short blessing in her ear","Coach Daeng offers a sip of water, then slowly lifts the mongkhon off"])},
@@ -1135,6 +1150,8 @@ function fightEnd(){const U=UI.fight;U.stage="done";{const w=U.F.result.win;U.bu
   AU.cheer(r.win==="A"?1:.4);
   U.caption={text:r.win==="A"?`${me.name} wins! ${r.type}`:r.win==="D"?"A draw":`${G.F[U.b.b].name} wins · ${r.type}`,side:r.win==="A"?"A":"B"};
   G.log.push(`${me.name} ${r.win==="A"?"Win":r.win==="B"?"Loss":"Draw"} ${G.F[U.b.b].name} (${r.type})`);
+  G.faceoffLast=G.faceoffLast||{};G.faceoffLast[`${U.b.a}_${U.b.b}`]={win:r.win,week:G.week};
+  G.faceoffStats=G.faceoffStats||{};const key=`${U.b.a}_${U.b.b}`,s=G.faceoffStats[key]=G.faceoffStats[key]||{w:0,l:0,d:0};s[r.win==="A"?"w":r.win==="B"?"l":"d"]++;
   {const op=G.F[U.b.b];if(r.win!=="D"&&!TIER[U.b.tier].off&&(op.canon||U.b.tier==="semi"||U.b.tier==="final"||/KO/.test(r.type)))G.lastBig={a:me.id,b:op.id,win:r.win,wk:G.week,shown:false};}
   if(r.win==="B"){const F=U.F,st=s=>({landed:s.landed,thrown:s.thrown,wl:{...s.wl},sta:Math.round(s.sta),kd:s.kd,legs:Math.round(s.legs)});
     G.losses=(G.losses||[]).concat([{wk:G.week,a:me.id,b:U.b.b,type:r.type,round:r.round,cards:F.cards.map(c=>[...c]),A:st(F.A),B:st(F.B),sc:scouted(U.b.b),od:Math.round(ovr(G.F[U.b.b])-ovr(me)),plan:U.plan||"balanced",tg:(F.A.tac&&F.A.tac.target)||"",care:U.careOK||0}]).slice(-6);}
@@ -1147,6 +1164,10 @@ function giftScene(id,res){const f=G.F[id];const mood=res.t==="dislike"?"pout":r
     ...((()=>{const k=f.giftTot===5?0:f.giftTot===10?1:-1;if(k<0||!GIFT_FREQ[id]||(f.giftFreq||0)>k)return [];f.giftFreq=k+1;
       return [...GIFT_FREQ[id][k].map(s=>({...s,l:"casual"})),k===1?{inject:G2=>{add(G2,id,"bond",3);G2.F[id].morale=Math.min(100,G2.F[id].morale+8);return [{n:"nar",t:`A gift in return from ${f.name} · Bond +3 · Morale: ${f.name} +8`}];}}:{inject:()=>[]}];})())],()=>{AU.startMusic("hub");render();},{bg:f.camp==="player"?"gym":"fair",look:"casual"});}
 function goalHidden(){try{return localStorage.getItem("mtm-goalhide")==="1"}catch(e){return !!UI.goalHide}}
+function beginFight(quick){const b=UI.fight.b;if(!b.waiDone){b.waiDone=true;
+    const sc=waiKhruScene(b);G.flags=G.flags||{};G.flags.waiSeen=true;const keep=UI.fight;UI.fight=null;AU.startMusic("waikhru");
+    playScene(sc,()=>{UI.fight=keep;fightStart(quick);},{bg:(TIER_BG[b.tier]||"bg_local.webp").replace(/^bg_|\.webp$/g,""),look:"fight"});return;}
+  fightStart(quick);}
 const ACT={
   goaltog:()=>{const h=!goalHidden();UI.goalHide=h;try{localStorage.setItem("mtm-goalhide",h?"1":"0")}catch(e){}render();},
   spotnext:()=>{UI.spot++;if(UI.spot>=SPOT.length){UI.spot=null;G.seen.spot=true;save();}render();},
@@ -1249,10 +1270,7 @@ const ACT={
   vnext:()=>sceneNext(),vchoose:d=>{if(Date.now()-(UI._ct||0)<500)return;sceneChoose(+d.v);},vskip:()=>sceneSkip(),
   montageDone:()=>montageDone(),
   plan:d=>{UI.fight.plan=d.v;render();},
-  fstart:()=>{const b=UI.fight.b;if(!b.waiDone&&(b.tier==="semi"||b.tier==="final"||G.F[b.b].canon||G.F[b.b].camp==="rival")){b.waiDone=true;
-      const sc=waiKhruScene(b);G.flags=G.flags||{};G.flags.waiSeen=true;const keep=UI.fight;UI.fight=null;AU.startMusic("waikhru");
-      playScene(sc,()=>{UI.fight=keep;fightStart(false);},{bg:(TIER_BG[b.tier]||"bg_local.webp").replace(/^bg_|\.webp$/g,""),look:"fight"});return;}
-    fightStart(false);},fquick:()=>fightStart(true),fskip:()=>fskip(),fskill:d=>fskill(d.v),
+  fstart:()=>beginFight(false),fquick:()=>beginFight(true),fskip:()=>fskip(),fskill:d=>fskill(d.v),
   fspeed:d=>{UI.speed=+d.v===2?2:1;render();},
   tac:d=>{UI.fight.tac[d.k]=d.v;render();},
   tpick:d=>{if(trLocked(G.F[d.id]))return;UI.modal={type:"tpick",id:d.id};render();},
