@@ -127,7 +127,7 @@ function render(){
   document.querySelectorAll(".pxscroll[data-sk]").forEach(e=>{const k=e.dataset.sk;if(keep[k]!=null&&!UI.resetScroll)e.scrollTop=keep[k];});{const f2=document.querySelector(".fight");if(f2&&fsTop)f2.scrollTop=fsTop;} /* v1.80: the fight screen re-renders every beat; keep its scroll put */UI.resetScroll=false;{const cb=document.querySelector(".cbody");if(cb)cb.scrollTop=cb.scrollHeight;}
   const fc=document.getElementById("fstage");if(fc)FS.attach(fc);
   const lg=document.querySelector(".flog");if(lg)lg.scrollTop=lg.scrollHeight;
-  mountCanvases();if(typeof mountQSprites==="function")mountQSprites();mountPxFaces();pxBars();spotPaint();
+  mountCanvases();if(typeof mountQSprites==="function")mountQSprites();pxBars();spotPaint();
   if(typeof newsSync==="function")newsSync();
 }
 // v1.12.1 spotlight intro: dim the screen and teach one part of it at a time
@@ -153,9 +153,6 @@ function spotPaint(){document.querySelectorAll(".spot-ov").forEach(e=>e.remove()
   document.body.appendChild(ov);}
 
 // v1.11: retro pixel scrollbars — the page stays put, panels scroll inside themselves
-/* v1.80: album cards draw their portraits at 30×40 and scale up crisp, so the album reads as pixel cards */
-const PXF={};function mountPxFaces(){document.querySelectorAll("canvas[data-pxf]").forEach(cv=>{const src=cv.dataset.pxf;const draw=im=>{const x=cv.getContext("2d");x.imageSmoothingEnabled=true;const w=im.naturalWidth,h=im.naturalHeight,r=30/40;let sw=w,sh=w/r;if(sh>h){sh=h;sw=h*r;}x.clearRect(0,0,30,40);x.drawImage(im,(w-sw)/2,0,sw,sh,0,0,30,40);};
-  if(PXF[src]&&PXF[src].complete)draw(PXF[src]);else{const im=PXF[src]||(PXF[src]=new Image());im.addEventListener("load",()=>draw(im),{once:true});if(!im.src)im.src=src;}});}
 function pxBars(){document.querySelectorAll(".pxbar").forEach(b=>b.remove());if(UI.fight||UI.scene)return; /* v1.80: no hub scrollbar flickering over the fight */
   document.querySelectorAll(".pxscroll").forEach(el=>{if(el.scrollHeight<=el.clientHeight+4)return;const bar=document.createElement("div");bar.className="pxbar";bar.innerHTML="<i></i>";document.body.appendChild(bar);
     let hide=0;const upd=show=>{if(!el.isConnected){bar.remove();return;}const r=el.getBoundingClientRect();const top=Math.max(r.top,0),bot=Math.min(r.bottom,innerHeight);
@@ -694,8 +691,8 @@ function modalHTML(){const m=UI.modal;let body="",foot=true;
     body=`<h2>Card album</h2><p class="meta">Collected ${Object.keys(own).length}/${Object.keys(CARDS).length} cards · tap a card to view its story · cards you don't have yet show as a silhouette with a hint</p>
      <div class="gacha"><span><b class="goldt">✦ ${G.dust||0}</b> stardust<small>Earned from wins, new cards and duplicates · guaranteed SSR in ${GACHA_PITY-(G.pity||0)} more</small></span><button class="btn sm gold" data-act="gacha" ${(G.dust||0)<GACHA_COST?"disabled":""}>Pull a card ${GACHA_COST}✦</button></div>
      ${CANON_IDS.filter(c=>byC[c]).map(c=>`<h4 class="albh">${esc(G.F[c].name)}</h4><div class="albg">${byC[c].map(id=>{const C=CARDS[id],o=own[id],R=CARD_R[C.r];
-       return o?`<button class="ccard pxc" style="--rc:${R.c}" data-act="cardplay" data-v="${id}" title="${esc(C.t)}">${!o.seen?'<i class="ndot"></i>':""}<canvas width="30" height="40" data-pxf="${faceSrc(C.c,"happy","casual")}"></canvas><i class="rr">${C.r}${(o.lv||1)>1?`<u>${o.lv}</u>`:""}</i><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b></button>`
-         :`<button class="ccard pxc lock" style="--rc:${R.c}" data-act="cardhint" data-v="${id}" aria-label="Card not yet collected"><canvas width="30" height="40" data-pxf="${faceSrc(C.c,"happy","casual")}"></canvas><i class="rr">${C.r}</i><span class="tstar">${"★".repeat(R.s)}</span><b>???</b></button>`;}).join("")}</div>`).join("")}<p class="meta center">Tap a shadow card to see how to get it</p>`;}
+       return o?`<button class="ccard pxc" style="--rc:${R.c}" data-act="cardplay" data-v="${id}" title="${esc(C.t)}">${!o.seen?'<i class="ndot"></i>':""}<img src="${faceSrc(C.c,"happy","casual")}" alt="" loading="lazy" decoding="async"><i class="rr">${C.r}${(o.lv||1)>1?`<u>${o.lv}</u>`:""}</i><span class="tstar">${"★".repeat(R.s)}</span><b>${esc(C.t)}</b></button>`
+         :`<button class="ccard pxc lock" style="--rc:${R.c}" data-act="cardhint" data-v="${id}" aria-label="Card not yet collected"><img src="${faceSrc(C.c,"happy","casual")}" alt="" loading="lazy" decoding="async"><i class="rr">${C.r}</i><span class="tstar">${"★".repeat(R.s)}</span><b>???</b></button>`;}).join("")}</div>`).join("")}<p class="meta center">Tap a shadow card to see how to get it</p>`;}
   if(m.type==="cardnew"){const P=G.cardPend||[];const id=P[0];const C=CARDS[id];if(!C){G.cardPend=[];UI.modal=null;return "";}const RR=CARD_R[C.r];body=`<h2>New card!</h2><div class="gres" style="--rc: ${RR.c}"><div class="ccard big" style="--rc:${RR.c}"><img src="${faceSrc(C.c,"happy","casual")}" alt=""><span class="tstar">${"★".repeat(RR.s)}</span><b>${esc(C.t)}</b><small>${C.r}</small></div>
     <p class="center meta">${C.hint?esc(C.hint)+" · ":""} Stardust <b class="goldt">✦ 5</b>${P.length>1?` · new cards left: ${P.length-1} more`:""}</p></div>
     <div class="mfoot roadbtns"><button class="btn primary" data-act="cardplay" data-v="${id}" data-from="new">View story now</button><button class="btn" data-act="cardlater">Save for later</button></div>`;foot=false;}
